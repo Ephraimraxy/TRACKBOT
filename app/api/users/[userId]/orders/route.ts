@@ -87,7 +87,7 @@ export async function GET(
 
     return NextResponse.json(
       {
-        message: "Commandes récupérées avec succès",
+        message: "Orders retrieved successfully",
         pagination,
         data: formattedData,
       },

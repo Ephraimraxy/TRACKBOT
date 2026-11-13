@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import { SellFromAPI } from "./types";
 import { extractDateString, getImageUrlFromPublicId } from "@/lib/utils";
 
@@ -25,7 +25,7 @@ export default function SaleDetailModal({
   };
 
   const getClientName = (sale: SellFromAPI) => {
-    if (!sale.commande.client) return "Client inconnu";
+    if (!sale.commande.client) return "Unknown customer";
     return `${sale.commande.client.nom} ${sale.commande.client.prenom}`;
   };
 
@@ -63,7 +63,7 @@ export default function SaleDetailModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="bg-gray-50 p-2 rounded-lg">
                 <span className="text-gray-700 font-medium text-xs sm:text-sm">
-                  Client :
+                  Customer:
                 </span>
                 <span className="text-gray-900 font-semibold block text-xs sm:text-sm">
                   {getClientName(sale)}
@@ -71,7 +71,7 @@ export default function SaleDetailModal({
               </div>
               <div className="bg-gray-50 p-2 rounded-lg">
                 <span className="text-gray-700 font-medium text-xs sm:text-sm">
-                  Email :
+                  Email:
                 </span>
                 <span className="text-gray-900 block text-xs sm:text-sm">
                   {sale.commande.client?.email || "N/A"}
@@ -79,7 +79,7 @@ export default function SaleDetailModal({
               </div>
               <div className="bg-gray-50 p-2 rounded-lg">
                 <span className="text-gray-700 font-medium text-xs sm:text-sm">
-                  Date :
+                  Date:
                 </span>
                 <span className="text-gray-900 block text-xs sm:text-sm">
                   {extractDateString(sale.commande.date)}
@@ -87,7 +87,7 @@ export default function SaleDetailModal({
               </div>
               <div className="bg-gray-50 p-2 rounded-lg">
                 <span className="text-gray-700 font-medium text-xs sm:text-sm">
-                  Quantité :
+                  Quantity:
                 </span>
                 <span className="text-gray-900 font-semibold block text-xs sm:text-sm">
                   {sale.quantite}
@@ -95,15 +95,15 @@ export default function SaleDetailModal({
               </div>
               <div className="bg-gray-50 p-2 rounded-lg">
                 <span className="text-gray-700 font-medium text-xs sm:text-sm">
-                  Prix Unitaire :
+                  Unit price:
                 </span>
                 <span className="text-gray-900 block text-xs sm:text-sm">
-                  {sale.prixUnit.toFixed(2)} DA
+                  ₦{sale.prixUnit.toFixed(2)}
                 </span>
               </div>
               <div className="bg-gray-50 p-2 rounded-lg">
                 <span className="text-gray-700 font-medium text-xs sm:text-sm">
-                  Statut :
+                  Status:
                 </span>
                 <span className="text-gray-900 block text-xs sm:text-sm">
                   {sale.commande.statut}
@@ -112,32 +112,32 @@ export default function SaleDetailModal({
             </div>
             <div className="bg-green-50 p-2 rounded-lg flex justify-between items-center">
               <span className="text-green-700 font-medium text-xs sm:text-sm">
-                Total :
+                Total:
               </span>
               <span className="text-green-900 font-bold text-base sm:text-lg">
-                {sale.total.toFixed(2)} DA
+                ₦{sale.total.toFixed(2)}
               </span>
             </div>
             <div className="bg-gray-50 p-2 rounded-lg">
               <span className="text-gray-700 font-medium block mb-1 text-xs sm:text-sm">
-                Détails :
+                Details:
               </span>
               <div className="space-y-1">
                 <div className="flex justify-between text-xs sm:text-sm text-gray-900">
-                  <span>Couleur :</span>
+                  <span>Colour:</span>
                   <span className="font-semibold">
                     {sale.couleur?.nom || "N/A"}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs sm:text-sm text-gray-900">
-                  <span>Taille :</span>
+                  <span>Size:</span>
                   <span className="font-semibold">
                     {sale.taille?.nom || "N/A"}
                   </span>
                 </div>
                 {sale.commande.client?.tel && (
                   <div className="flex justify-between text-xs sm:text-sm text-gray-900">
-                    <span>Téléphone :</span>
+                    <span>Phone:</span>
                     <span className="font-semibold">
                       {sale.commande.client.tel}
                     </span>

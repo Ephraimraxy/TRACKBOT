@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import { SellFromAPI } from "./types";
 import { extractDateString, getImageUrlFromPublicId } from "@/lib/utils";
 
@@ -21,7 +21,7 @@ export default function DesktopSalesTable({
   };
 
   const getClientName = (sale: SellFromAPI) => {
-    if (!sale.commande.client) return "Client inconnu";
+    if (!sale.commande.client) return "Unknown customer";
     return `${sale.commande.client.nom} ${sale.commande.client.prenom}`;
   };
 
@@ -32,14 +32,14 @@ export default function DesktopSalesTable({
           width={100}
           height={100}
           src="/images/not-found.png"
-          alt="Aucune vente"
+          alt="No sales"
           className="mx-auto w-24 h-24 sm:w-32 sm:h-32 mb-4"
         />
         <p className="text-lg sm:text-xl font-semibold text-gray-800">
-          Aucune vente trouvée
+          No sales found
         </p>
         <p className="text-gray-600 mt-2 text-sm sm:text-base">
-          Aucun résultat ne correspond à votre recherche.
+          No results match your search.
         </p>
       </div>
     );
@@ -55,19 +55,19 @@ export default function DesktopSalesTable({
                 Image
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                Produit
+                Product
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                Quantité
+                Quantity
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden md:table-cell">
-                Couleur
+                Colour
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden lg:table-cell">
-                Taille
+                Size
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden md:table-cell">
-                Client
+                Customer
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden lg:table-cell">
                 Date
@@ -129,7 +129,7 @@ export default function DesktopSalesTable({
                   {extractDateString(sale.commande.date)}
                 </td>
                 <td className="px-4 py-2 sm:px-6 sm:py-4 text-xs sm:text-sm font-semibold text-green-600">
-                  {sale.total.toFixed(2)} DA
+                  ₦{sale.total.toFixed(2)}
                 </td>
               </tr>
             ))}

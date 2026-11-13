@@ -45,7 +45,7 @@ export async function GET(
     const data = responses.map(formatReviewResponsesData);
 
     return NextResponse.json(
-      { message: "Les réponses ont été récupérées avec succès", data },
+      { message: "Replies were retrieved successfully", data },
       { status: 200 }
     );
   } catch (error) {
@@ -130,7 +130,7 @@ export async function POST(
 
     return NextResponse.json(
       {
-        message: "Réponse ajoutée avec succès.",
+        message: "Reply added successfully.",
         data: formatted,
       },
       { status: 201 }
@@ -189,7 +189,7 @@ export async function DELETE(
 
     return NextResponse.json(
       {
-        message: "Toutes les réponses ont été supprimées avec succès.",
+        message: "All replies were deleted successfully.",
         count: deleted.count,
       },
       { status: 200 }

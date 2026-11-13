@@ -10,10 +10,8 @@ import {
   getSortingProductsParams,
 } from "@/lib/utils/params";
 import { formatProductData, getProductSelect } from "@/lib/helpers/products";
-import {
-  deleteFromCloudinary,
-  uploadToCloudinary,
-} from "@/lib/helpers/cloudinary";
+import { deleteStoredImage, requireStorage } from "@/lib/helpers/storage";
+import { storageErrorResponse } from "@/lib/utils/storageErrorResponse";
 
 // Fetch all products
 export async function GET(req: NextRequest) {
@@ -50,7 +48,7 @@ export async function GET(req: NextRequest) {
     // Return response
     return NextResponse.json(
       {
-        message: "Les produits ont été récupérés avec succès",
+        message: "Products were retrieved successfully",
         pagination,
         data,
       },
@@ -106,22 +104,22 @@ export async function POST(req: NextRequest) {
       return formatValidationErrors(parsedData);
     }
 
-    // Upload Images to Cloudinary
+    // Upload images to R2 storage
     const { images } = parsedData.data;
     let uploadedImages: string[] = [];
 
     try {
       uploadedImages = await Promise.all(
         images.map(async (image) => {
-          const result = await uploadToCloudinary(image, "products");
-          return result.public_id;
+          const result = await requireStorage().uploadImage(image, "products");
+          return result.key;
         })
       );
     } catch (uploadError) {
       console.error("Image upload failed:", uploadError);
-      return NextResponse.json(
-        { error: "Échec du téléversement des images." },
-        { status: 500 }
+      return (
+        storageErrorResponse(uploadError) ??
+        NextResponse.json({ error: "Image upload failed." }, { status: 500 })
       );
     }
 
@@ -174,7 +172,7 @@ export async function POST(req: NextRequest) {
       const data = formatProductData(product);
 
       return NextResponse.json(
-        { message: "Produit créé avec succès", data },
+        { message: "Product created successfully", data },
         { status: 201 }
       );
     } catch (dbError) {
@@ -184,7 +182,7 @@ export async function POST(req: NextRequest) {
       await Promise.all(
         uploadedImages.map(async (publicId) => {
           try {
-            await deleteFromCloudinary(publicId);
+            await deleteStoredImage(publicId);
           } catch (deleteError) {
             console.error(`Failed to delete image ${publicId}:`, deleteError);
           }
@@ -244,7 +242,7 @@ export async function DELETE(_req: NextRequest) {
             images: true,
           },
         });
-        message = "Tous les produits boutique ont été supprimés avec succès.";
+        message = "All shop products were deleted successfully.";
         break;
 
       case UserRole.VENDEUR:
@@ -260,7 +258,7 @@ export async function DELETE(_req: NextRequest) {
             images: true,
           },
         });
-        message = "Tous vos produits ont été supprimés avec succès.";
+        message = "All your products were deleted successfully.";
         break;
 
       default:
@@ -270,15 +268,15 @@ export async function DELETE(_req: NextRequest) {
         );
     }
 
-    // Delete all related images from Cloudinary
+    // Delete all related images from R2 storage
 
-    // Uncomment the following lines if you want to delete images from Cloudinary
+    // Uncomment the following lines if you want to delete images from R2 storage
     // Keep it commented for now to avoid accidental deletions
 
     // await Promise.all(
     //   produitsToDelete.flatMap((produit) =>
     //     (produit.images || []).map((img) =>
-    //       deleteFromCloudinary(img.imagePublicId)
+    //       deleteStoredImage(img.imagePublicId)
     //     )
     //   )
     // );

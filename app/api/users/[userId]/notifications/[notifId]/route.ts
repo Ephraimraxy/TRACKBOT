@@ -41,7 +41,7 @@ export async function GET(
 
     if (!notification || notification.userId !== userId) {
       return NextResponse.json(
-        { error: "Notification introuvable" },
+        { error: "Notification not found" },
         { status: 404 }
       );
     }
@@ -51,7 +51,7 @@ export async function GET(
 
     // Return the response
     return NextResponse.json(
-      { message: "Notification récupérée avec succès", data },
+      { message: "Notification retrieved successfully", data },
       { status: 200 }
     );
   } catch (error) {
@@ -93,7 +93,7 @@ export async function PATCH(
 
     if (typeof body.estLu !== "boolean") {
       return NextResponse.json(
-        { error: "`estLu` doit être un booléen" },
+        { error: "`estLu` must be a boolean" },
         { status: 400 }
       );
     }
@@ -106,7 +106,7 @@ export async function PATCH(
 
     if (!notification || notification.userId !== userId) {
       return NextResponse.json(
-        { error: "Notification introuvable" },
+        { error: "Notification not found" },
         { status: 404 }
       );
     }
@@ -118,7 +118,7 @@ export async function PATCH(
     });
 
     return NextResponse.json(
-      { message: "Statut de lecture mis à jour avec succès" },
+      { message: "Read status updated successfully" },
       { status: 200 }
     );
   } catch (error) {
@@ -164,7 +164,7 @@ export async function DELETE(
 
     if (!notification || notification.userId !== userId) {
       return NextResponse.json(
-        { error: "Notification introuvable" },
+        { error: "Notification not found" },
         { status: 404 }
       );
     }
@@ -175,7 +175,7 @@ export async function DELETE(
     });
 
     return NextResponse.json(
-      { message: "Notification supprimée avec succès" },
+      { message: "Notification deleted successfully" },
       { status: 200 }
     );
   } catch (error) {

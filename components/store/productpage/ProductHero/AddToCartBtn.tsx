@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 // Redux
 import { RootState } from "@/redux/store";
 import { addToCart } from "@/redux/features/carts/cartsSlice";
@@ -19,19 +21,23 @@ const AddToCartBtn = ({
     (state: RootState) => state.products
   );
 
+  // A product with no colours (or no sizes) has nothing to pick, so it must not be required.
+  const needsColor = (data.couleurs?.length ?? 0) > 0;
+  const needsSize = (data.tailles?.length ?? 0) > 0;
+  const canAdd =
+    (!needsColor || !!colorSelection.id) && (!needsSize || !!sizeSelection.id) && data.quantity > 0;
+
   return (
     <button
       type="button"
       className={cn(
         "bg-black w-full ml-3 sm:ml-5 rounded-full h-11 md:h-[52px] text-sm sm:text-base text-white transition-all",
         {
-          "hover:bg-black/80 cursor-pointer":
-            sizeSelection.id && colorSelection.id && data.quantity > 0,
-          "bg-gray-400 cursor-not-allowed opacity-60":
-            !sizeSelection.id || !colorSelection.id || data.quantity === 0,
+          "hover:bg-black/80 cursor-pointer": canAdd,
+          "bg-gray-400 cursor-not-allowed opacity-60": !canAdd,
         }
       )}
-      disabled={!sizeSelection.id || !colorSelection.id || data.quantity === 0}
+      disabled={!canAdd}
       onClick={() =>
         dispatch(
           addToCart({
@@ -52,7 +58,7 @@ const AddToCartBtn = ({
         )
       }
     >
-      Ajouter au panier
+      <T>Add to cart</T>
     </button>
   );
 };

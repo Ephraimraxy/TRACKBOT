@@ -13,8 +13,12 @@ import InputGroup from "@/components/ui/input-group";
 import { Button } from "@/components/ui/button";
 import CartBtn from "./CartBtn";
 import UserMenu from "./UserMenu";
+import { BRAND } from "@/lib/config/brand";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
+import { getT } from "@/lib/i18n/server";
 
 const NavBar = async () => {
+  const t = await getT();
   return (
     <nav className="flex max-w-frame mx-auto items-center justify-between py-2 px-4 xl:px-0">
       <div className="flex items-center">
@@ -25,14 +29,14 @@ const NavBar = async () => {
             src="/manifest/favicon.svg"
             height={65}
             width={65}
-            alt="logo"
+            alt={`${BRAND.name} logo`}
             className="h-[50px] md:h-[55px] w-auto"
           />
           <span className="hidden sm:block bg-black w-[5px] mt-2 h-[28px]"></span>
           <h1
             className={cn([integralCF.className, "hidden sm:block text-3xl"])}
           >
-            MEGA SHOP
+            {BRAND.name}
           </h1>
         </Link>
       </div>
@@ -50,14 +54,14 @@ const NavBar = async () => {
               src="/icons/search.svg"
               height={20}
               width={20}
-              alt="rechercher"
+              alt="search"
               className="min-w-5 min-h-5"
             />
           </InputGroup.Text>
           <InputGroup.Input
             type="search"
             name="query"
-            placeholder="Rechercher des produits..."
+            placeholder={t("Search products...")}
             className="bg-transparent placeholder:text-black/40"
           />
         </InputGroup>
@@ -79,6 +83,7 @@ const NavBar = async () => {
           </Button>
         </Link>
 
+        <LanguageSwitcher className="hidden sm:inline-flex" />
         <CartBtn />
         <UserMenu />
       </div>

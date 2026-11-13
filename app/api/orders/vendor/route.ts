@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Commandes du vendeur récupérées avec succès",
+        message: "Vendor orders retrieved successfully",
         pagination,
         data: formattedData,
       },

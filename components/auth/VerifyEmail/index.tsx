@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
+import { useEffect, useRef, useState, FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { User } from "next-auth";
@@ -22,6 +25,7 @@ interface VerifyEmailProps {
 }
 
 export default function VerifyEmail({ user }: VerifyEmailProps) {
+  const { t } = useI18n();
   const { data: session, update } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -63,12 +67,12 @@ export default function VerifyEmail({ user }: VerifyEmailProps) {
 
       if (!response.ok) {
         const { error } = await response.json();
-        throw new Error(error || "Une erreur inconnue est survenue.");
+        throw new Error(error || "An unknown error occurred.");
       }
 
       const { message } = await response.json();
       await update({ ...session });
-      toast(message || "Vérification réussie");
+      toast(message || "Verification successful");
 
       // Valider l'URL de redirection (interne uniquement)
       const callbackUrl = searchParams.get("callbackUrl");
@@ -83,16 +87,16 @@ export default function VerifyEmail({ user }: VerifyEmailProps) {
     } catch (error) {
       console.error("Error verifying email:", error);
       setErrorMessage(
-        (error as Error).message || "Erreur réseau. Veuillez réessayer."
+        (error as Error).message || "Network error. Please try again."
       );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleResendCode = async () => {
-    if (countdown > 0) return;
+  const sentKey = `verify-code-sent:${user.email}`;
 
+  const sendCode = async () => {
     try {
       const response = await fetch("/api/auth/email/send-verification-code", {
         method: "POST",
@@ -101,38 +105,72 @@ export default function VerifyEmail({ user }: VerifyEmailProps) {
       });
 
       if (!response.ok)
-        throw new Error("Impossible d'envoyer l'email. Veuillez réessayer.");
+        throw new Error("Unable to send the email. Please try again.");
 
+      try {
+        sessionStorage.setItem(sentKey, String(Date.now()));
+      } catch {
+        // Private window: the code was still sent, we just cannot remember when.
+      }
       setEmailSent(true);
       setCountdown(60);
       setErrorMessage(null);
-      toast("Un code a été envoyé à votre adresse e-mail.");
+      toast(t("A code was sent to your email address."));
     } catch (error) {
       console.error("Error sending verification code:", error);
-      setErrorMessage("Impossible d'envoyer l'email. Veuillez réessayer.");
+      setErrorMessage(t("Unable to send the email. Please try again."));
     }
   };
+
+  const handleResendCode = async () => {
+    if (countdown > 0) return;
+    await sendCode();
+  };
+
+  // A new customer lands here straight after signing up, so the code is sent automatically.
+  // If one was sent in the last minute (a page refresh), wait out the rest of that minute instead
+  // of sending another.
+  const autoSent = useRef(false);
+  useEffect(() => {
+    if (autoSent.current) return;
+    autoSent.current = true;
+
+    let last = 0;
+    try {
+      last = Number(sessionStorage.getItem(sentKey) ?? 0);
+    } catch {
+      // Unreadable storage counts as "never sent".
+    }
+    const waitMs = 60_000 - (Date.now() - last);
+    if (waitMs > 0) {
+      setEmailSent(true);
+      setCountdown(Math.ceil(waitMs / 1000));
+      return;
+    }
+    void sendCode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Vérifiez votre adresse e-mail</CardTitle>
+        <CardTitle><T>Verify your email address</T></CardTitle>
         <CardDescription>
           {emailSent
-            ? `Entrez le code de vérification envoyé à `
-            : "Cliquez ci-dessous pour recevoir un code de vérification à "}
+            ? t("Enter the verification code sent to")
+            : t("Click below to receive a verification code at")}{" "}
           <strong>{user.email}</strong>.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmitForm} className="flex flex-col gap-6">
           <div className="grid gap-3">
-            <Label htmlFor="verification-code">Code de vérification</Label>
+            <Label htmlFor="verification-code"><T>Verification code</T></Label>
             <Input
               id="verification-code"
               name="verification-code"
               type="text"
-              placeholder="Entrez le code à 6 chiffres"
+              placeholder={t("Enter the 6-digit code")}
               maxLength={6}
               required
               disabled={isSubmitting}
@@ -140,7 +178,7 @@ export default function VerifyEmail({ user }: VerifyEmailProps) {
           </div>
           <FormErrorMessage message={errorMessage} />
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Vérification..." : "Vérifier l'e-mail"}
+            {isSubmitting ? t("Verifying...") : t("Verify email")}
           </Button>
         </form>
 
@@ -152,10 +190,10 @@ export default function VerifyEmail({ user }: VerifyEmailProps) {
           disabled={countdown > 0}
         >
           {countdown > 0
-            ? `Renvoyer le code (${countdown}s)`
+            ? t("Resend code ({n}s)", { n: countdown })
             : emailSent
-            ? "Renvoyer le code"
-            : "Envoyer le code"}
+            ? t("Resend code")
+            : t("Send code")}
         </Button>
       </CardContent>
     </Card>

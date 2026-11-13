@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import { SellFromAPI } from "@/lib/types/sell.types";
 import { extractDateString, getImageUrlFromPublicId } from "@/lib/utils";
 
@@ -48,15 +48,15 @@ export default function SellDetailModal({ selectedSell, onClose }: SellDetailMod
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="bg-gray-50 p-2 rounded-lg">
                 <span className="text-gray-700 font-medium text-xs sm:text-sm">
-                  Client :
+                  Customer:
                 </span>
                 <span className="text-gray-900 font-semibold block text-xs sm:text-sm">
-                  {selectedSell.commande.client ? `${selectedSell.commande.client.nom} ${selectedSell.commande.client.prenom}` : "Client inconnu"}
+                  {selectedSell.commande.client ? `${selectedSell.commande.client.nom} ${selectedSell.commande.client.prenom}` : "Unknown customer"}
                 </span>
               </div>
               <div className="bg-gray-50 p-2 rounded-lg">
                 <span className="text-gray-700 font-medium text-xs sm:text-sm">
-                  Email :
+                  Email:
                 </span>
                 <span className="text-gray-900 block text-xs sm:text-sm">
                   {selectedSell.commande.client?.email || "Email non disponible"}
@@ -64,7 +64,7 @@ export default function SellDetailModal({ selectedSell, onClose }: SellDetailMod
               </div>
               <div className="bg-gray-50 p-2 rounded-lg">
                 <span className="text-gray-700 font-medium text-xs sm:text-sm">
-                  Date :
+                  Date:
                 </span>
                 <span className="text-gray-900 block text-xs sm:text-sm">
                   {extractDateString(selectedSell.commande.date)}
@@ -72,7 +72,7 @@ export default function SellDetailModal({ selectedSell, onClose }: SellDetailMod
               </div>
               <div className="bg-gray-50 p-2 rounded-lg">
                 <span className="text-gray-700 font-medium text-xs sm:text-sm">
-                  Quantité :
+                  Quantity:
                 </span>
                 <span className="text-gray-900 font-semibold block text-xs sm:text-sm">
                   {selectedSell.quantite}
@@ -81,34 +81,34 @@ export default function SellDetailModal({ selectedSell, onClose }: SellDetailMod
             </div>
             <div className="bg-green-50 p-2 rounded-lg flex justify-between items-center">
               <span className="text-green-700 font-medium text-xs sm:text-sm">
-                Total :
+                Total:
               </span>
               <span className="text-green-900 font-bold text-base sm:text-lg">
-                {selectedSell.total.toFixed(2)} DA
+                ₦{selectedSell.total.toFixed(2)}
               </span>
             </div>
             <div className="bg-gray-50 p-2 rounded-lg">
               <span className="text-gray-700 font-medium block mb-1 text-xs sm:text-sm">
-                Détails :
+                Details:
               </span>
               <div className="flex justify-between text-xs sm:text-sm text-gray-900 mb-1">
-                <span>Prix unitaire :</span>
-                <span className="font-semibold">{selectedSell.prixUnit.toFixed(2)} DA</span>
+                <span>Unit price:</span>
+                <span className="font-semibold">₦{selectedSell.prixUnit.toFixed(2)}</span>
               </div>
               {selectedSell.couleur && (
                 <div className="flex justify-between text-xs sm:text-sm text-gray-900 mb-1">
-                  <span>Couleur :</span>
+                  <span>Colour:</span>
                   <span className="font-semibold">{selectedSell.couleur.nom}</span>
                 </div>
               )}
               {selectedSell.taille && (
                 <div className="flex justify-between text-xs sm:text-sm text-gray-900 mb-1">
-                  <span>Taille :</span>
+                  <span>Size:</span>
                   <span className="font-semibold">{selectedSell.taille.nom}</span>
                 </div>
               )}
               <div className="flex justify-between text-xs sm:text-sm text-gray-900">
-                <span>Statut :</span>
+                <span>Status:</span>
                 <span className="font-semibold">{selectedSell.commande.statut}</span>
               </div>
             </div>

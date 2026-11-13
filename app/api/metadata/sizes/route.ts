@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest) {
     });
 
     return NextResponse.json(
-      { message: "Les tailles ont été récupérées avec succès", data: sizes },
+      { message: "Sizes were retrieved successfully", data: sizes },
       { status: 200 }
     );
   } catch (error) {

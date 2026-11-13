@@ -26,7 +26,7 @@ const ReportCard = ({
       </span>
     </div>
     <div className="text-xs text-gray-600 mb-1">
-      Produit: {report.produit?.nom || "Aucun produit"}
+      Product: {report.produit?.nom || "No products"}
     </div>
     <div className="text-xs text-gray-600 mb-1">
       Date: {extractDateString(report.date)}

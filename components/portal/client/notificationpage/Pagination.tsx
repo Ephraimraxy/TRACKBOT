@@ -1,5 +1,8 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
@@ -18,6 +21,7 @@ export default function Pagination({
   totalItems,
   pageSize,
 }: PaginationProps) {
+  const { t } = useI18n();
   const [visiblePages, setVisiblePages] = useState<(number | string)[]>([]);
 
   useEffect(() => {
@@ -66,9 +70,9 @@ export default function Pagination({
   return (
     <div className="mt-6 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
       <p className="text-sm text-gray-600">
-        Affichage de <span className="font-medium">{startItem}</span> à{" "}
-        <span className="font-medium">{endItem}</span> sur{" "}
-        <span className="font-medium">{totalItems}</span> notifications
+        <T>Showing</T> <span className="font-medium">{startItem}</span> à{" "}
+        <span className="font-medium">{endItem}</span> <T>of</T>{" "}
+        <span className="font-medium">{totalItems}</span> <T>notifications</T>
       </p>
 
       <div className="flex items-center space-x-1">
@@ -80,7 +84,7 @@ export default function Pagination({
               ? "text-gray-400 cursor-not-allowed"
               : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
           }`}
-          aria-label="Page précédente"
+          aria-label={t("Previous page")}
         >
           <svg
             className="w-5 h-5"
@@ -130,7 +134,7 @@ export default function Pagination({
               ? "text-gray-400 cursor-not-allowed"
               : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
           }`}
-          aria-label="Page suivante"
+          aria-label={t("Next page")}
         >
           <svg
             className="w-5 h-5"

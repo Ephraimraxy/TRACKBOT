@@ -14,11 +14,11 @@ export default function LoadingState() {
               className={`text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.className}`}
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
-              Tableau de bord
+              Dashboard
             </h1>
           </div>
           <p className="mt-1 sm:mt-2 text-base sm:text-lg text-gray-600">
-            Aperçu des performances de votre boutique
+            Overview of your shop&apos;s performance
           </p>
         </div>
 

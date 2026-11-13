@@ -1,3 +1,4 @@
+import { T } from "@/components/i18n/T";
 import Link from "next/link";
 
 export default function NotFound() {
@@ -13,12 +14,12 @@ export default function NotFound() {
 
         {/* Titre */}
         <h2 className="text-4xl font-bold text-gray-900">
-          Oups ! Page non trouvée
+          <T>Oops! Page not found</T>
         </h2>
 
         {/* Message d'erreur */}
         <p className="text-lg text-gray-600">
-          La page que vous recherchez n&apos;existe pas ou a été déplacée.
+          <T>The page you are looking for does not exist or has been moved.</T>
         </p>
 
         {/* Bouton pour retourner à l'accueil */}
@@ -26,7 +27,7 @@ export default function NotFound() {
           href="/"
           className="mt-6 px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors duration-300"
         >
-          Retour à l&apos;accueil
+          <T>Back to home</T>
         </Link>
       </main>
     </>

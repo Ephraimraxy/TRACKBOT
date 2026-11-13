@@ -14,7 +14,7 @@ export async function GET(_req: NextRequest) {
     });
 
     return NextResponse.json(
-      { message: "Les couleurs ont été récupérées avec succès", data: colors },
+      { message: "Colours were retrieved successfully", data: colors },
       { status: 200 }
     );
   } catch (error) {

@@ -41,9 +41,9 @@ const Pagination = ({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
       <p className="text-sm text-gray-600">
-        Affichage de {(currentPage - 1) * pageSize + 1} à{" "}
-        {Math.min(currentPage * pageSize, totalItems)} sur {totalItems}{" "}
-        signalements
+        Showing {(currentPage - 1) * pageSize + 1} to{" "}
+        {Math.min(currentPage * pageSize, totalItems)} of {totalItems}{" "}
+        reports
       </p>
       <div className="flex items-center gap-2">
         <button
@@ -51,7 +51,7 @@ const Pagination = ({
           disabled={currentPage === 1}
           className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Précédent
+          Previous
         </button>
         {pages.map((page) => (
           <button
@@ -71,7 +71,7 @@ const Pagination = ({
           disabled={currentPage === totalPages}
           className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Suivant
+          Next
         </button>
       </div>
     </div>
@@ -120,7 +120,7 @@ export default function ReportsPage() {
         }
 
         const res = await fetch(`/api/reports?${queryParams.toString()}`);
-        if (!res.ok) throw new Error("Erreur réseau");
+        if (!res.ok) throw new Error("Network error");
         const response: PaginatedApiResponse<ReportFromAPI[]> =
           await res.json();
 
@@ -134,7 +134,7 @@ export default function ReportsPage() {
         setPageSize(response.pagination.pageSize);
         setCurrentPage(response.pagination.currentPage);
       } catch {
-        toast.error("Erreur lors de la récupération des signalements.");
+        toast.error("Error while retrieving reports.");
       } finally {
         setIsLoading(false);
       }
@@ -193,12 +193,12 @@ export default function ReportsPage() {
   const handleDelete = async (reportId: string) => {
     try {
       const res = await fetch(`/api/reports/${reportId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Erreur réseau");
+      if (!res.ok) throw new Error("Network error");
       setReports((prev) => prev.filter((r) => r.id !== reportId));
       setSelectedReport(null);
-      toast.success("Signalement supprimé avec succès !");
+      toast.success("Report deleted successfully!");
     } catch {
-      toast.error("Erreur lors de la suppression du signalement.");
+      toast.error("Error while deleting the report.");
     }
   };
 
@@ -206,19 +206,19 @@ export default function ReportsPage() {
     const data = filteredReports.map((report) => ({
       Client: report.client
         ? `${report.client.prenom} ${report.client.nom}`
-        : "Inconnu",
-      Email: report.client?.email || "Inconnu",
-      Produit: report.produit?.nom || "Aucun",
-      Signalement: report.text || "Aucun",
+        : "Unknown",
+      Email: report.client?.email || "Unknown",
+      Produit: report.produit?.nom || "None",
+      Signalement: report.text || "None",
       Date: extractDateString(report.date),
       Statut: report.statut,
-      Objet: report.objet || "Aucun",
+      Objet: report.objet || "None",
     }));
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Signalements");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Reports");
     XLSX.writeFile(workbook, "signalements.xlsx");
-    toast.success("Signalements exportés avec succès !");
+    toast.success("Reports exported successfully!");
   };
 
   const handlePageChange = (page: number) => {
@@ -230,7 +230,7 @@ export default function ReportsPage() {
       <div className="max-w-7xl mx-auto">
         <PageHeader handleExport={handleExport} />
         <p className="mb-6 text-base sm:text-lg text-gray-700">
-          Consultez et gérez les signalements envoyés par vos clients ici.
+          View and manage the reports sent by your customers here.
         </p>
         <SearchAndFilters
           searchQuery={searchQuery}

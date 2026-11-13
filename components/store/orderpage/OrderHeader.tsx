@@ -1,3 +1,4 @@
+import { T } from "@/components/i18n/T";
 import Link from "next/link";
 import { FaArrowLeft } from "react-icons/fa6";
 import { integralCF } from "@/styles/fonts";
@@ -15,7 +16,7 @@ export default function OrderHeader() {
           "font-bold text-[32px] md:text-[40px] text-black uppercase"
         )}
       >
-        Passer la commande
+        <T>Place order</T>
       </h2>
     </div>
   );

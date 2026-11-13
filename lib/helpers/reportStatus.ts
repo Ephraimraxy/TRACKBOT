@@ -18,11 +18,11 @@ export const getStatusColor = (statut: string): string => {
 export const getStatusLabel = (statut: string): string => {
   switch (statut) {
     case SignalementStatut.EN_ATTENTE:
-      return "En attente";
+      return "Pending";
     case SignalementStatut.TRAITE:
-      return "Traité";
+      return "Handled";
     case SignalementStatut.REJETE:
-      return "Rejeté";
+      return "Rejected";
     default:
       return statut;
   }

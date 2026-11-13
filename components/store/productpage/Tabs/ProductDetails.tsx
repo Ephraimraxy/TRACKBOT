@@ -1,4 +1,5 @@
 import React from "react";
+import { T } from "@/components/i18n/T";
 
 export type SpecItem = {
   label: string;
@@ -31,7 +32,7 @@ const ProductDetails = () => {
         <div className="grid grid-cols-3" key={i}>
           <div>
             <p className="text-sm py-3 w-full leading-7 lg:py-4 pr-2 text-neutral-500">
-              {item.label}
+              <T>{item.label}</T>
             </p>
           </div>
           <div className="col-span-2 py-3 lg:py-4 border-b">

@@ -1,3 +1,4 @@
+import { T } from "@/components/i18n/T";
 import React from "react";
 
 // UI Components
@@ -56,7 +57,7 @@ const ReviewCard = ({
       <p className="text-sm sm:text-base text-black/60">{review.text}</p>
       {isDate && (
         <p className="text-black/60 text-sm font-medium mt-4 sm:mt-6">
-          Publié le {extractDateString(review.date)}
+          <T>Published on</T> {extractDateString(review.date)}
         </p>
       )}
     </div>

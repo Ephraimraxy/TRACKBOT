@@ -1,17 +1,12 @@
 import { prisma } from "@/lib/utils/prisma";
 
-// Création des genres
+// Product audiences (reference data). Idempotent.
 async function insertGenders() {
   await prisma.genre.createMany({
-    data: [
-      { nom: "Homme" },
-      { nom: "Femme" },
-      { nom: "Enfant" },
-      { nom: "Unisexe" },
-    ],
+    data: [{ nom: "Men" }, { nom: "Women" }, { nom: "Children" }, { nom: "Unisex" }],
+    skipDuplicates: true,
   });
-
-  console.log("Genres ajoutés !");
+  console.log("Genders ready.");
 }
 
 export default insertGenders;

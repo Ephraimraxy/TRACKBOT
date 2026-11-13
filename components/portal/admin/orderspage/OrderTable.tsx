@@ -1,6 +1,7 @@
 "use client";
 
 import { Settings, ChevronDown } from "lucide-react";
+import PaymentStatus from "@/components/common/PaymentStatus";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { extractDateString } from "@/lib/utils";
@@ -57,7 +58,7 @@ export default function OrderTable({
             >
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-sm font-semibold text-gray-900">
-                  Commande N°{index + 1}
+                  Order No.{index + 1}
                 </h3>
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold shadow-md ${getStatusColor(
@@ -66,15 +67,16 @@ export default function OrderTable({
                 >
                   {statusLabels[order.statut as CommandeStatut] || order.statut}
                 </span>
+                <PaymentStatus orderId={order.id} payment={order.paiement} />
               </div>
               <div className="text-xs text-gray-600 mb-1">
-                Client: {order.client?.prenom} {order.client?.nom}
+                Customer: {order.client?.prenom} {order.client?.nom}
               </div>
               <div className="text-xs text-gray-600 mb-1">
                 Date: {extractDateString(order.date)}
               </div>
               <div className="text-xs font-semibold text-green-600 mb-2">
-                Total: {order.montant.toFixed(2)} DA
+                Total: ₦{order.montant.toFixed(2)}
               </div>
               <div
                 className="relative overflow-visible"
@@ -103,7 +105,7 @@ export default function OrderTable({
                   }
                 >
                   <Settings className="h-4 w-4" />
-                  Changer le statut
+                  Change status
                   <ChevronDown
                     className={`h-4 w-4 transition-transform ${
                       openDropdownId === order.id ? "rotate-180" : ""
@@ -144,8 +146,8 @@ export default function OrderTable({
           ))
         ) : (
           <EmptyState
-            title="Aucune commande trouvée"
-            description="Aucun résultat ne correspond à votre recherche."
+            title="No orders found"
+            description="No results match your search."
           />
         )}
       </div>
@@ -157,16 +159,16 @@ export default function OrderTable({
             <thead className="bg-black text-white">
               <tr>
                 <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                  N°
+                  No.
                 </th>
                 <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                  Client
+                  Customer
                 </th>
                 <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden md:table-cell">
                   Date
                 </th>
                 <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden lg:table-cell">
-                  Statut
+                  Status
                 </th>
                 <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
                   Total
@@ -208,9 +210,10 @@ export default function OrderTable({
                       {statusLabels[order.statut as CommandeStatut] ||
                         order.statut}
                     </span>
+                    <PaymentStatus orderId={order.id} payment={order.paiement} />
                   </td>
                   <td className="px-4 py-2 sm:px-6 sm:py-4 text-xs sm:text-sm font-semibold text-green-600">
-                    {order.montant.toFixed(2)} DA
+                    ₦{order.montant.toFixed(2)}
                   </td>
                   <td className="px-4 py-2 sm:px-6 sm:py-4 text-xs sm:text-sm">
                     <div
@@ -240,7 +243,7 @@ export default function OrderTable({
                         }
                       >
                         <Settings className="h-4 w-4" />
-                        Changer
+                        Change
                         <ChevronDown
                           className={`h-4 w-4 transition-transform ${
                             openDropdownId === order.id ? "rotate-180" : ""

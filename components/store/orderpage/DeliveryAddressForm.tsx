@@ -1,3 +1,4 @@
+import { T } from "@/components/i18n/T";
 import InputGroup from "@/components/ui/input-group";
 import { satoshi } from "@/styles/fonts";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,7 @@ export default function DeliveryAddressForm({
         <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gray-100">
           <MapPin className="h-5 w-5 text-gray-700" />
         </div>
-        Adresse de livraison
+        <T>Delivery address</T>
       </h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -39,14 +40,14 @@ export default function DeliveryAddressForm({
             <InputGroup.Text
               className={cn(satoshi.className, "text-gray-700 font-medium")}
             >
-              Rue
+              <T>Street</T>
             </InputGroup.Text>
             <InputGroup.Input
               type="text"
               name="street"
               value={deliveryAddress.street}
               onChange={onChange}
-              placeholder="Entrez votre rue"
+              placeholder="Enter your street"
               className={cn(
                 satoshi.className,
                 "text-black placeholder:text-gray-400 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none transition-all duration-200",
@@ -67,14 +68,14 @@ export default function DeliveryAddressForm({
             <InputGroup.Text
               className={cn(satoshi.className, "text-gray-700 font-medium")}
             >
-              Ville
+              <T>City</T>
             </InputGroup.Text>
             <InputGroup.Input
               type="text"
               name="city"
               value={deliveryAddress.city}
               onChange={onChange}
-              placeholder="Entrez votre ville"
+              placeholder="Enter your city"
               className={cn(
                 satoshi.className,
                 "text-black placeholder:text-gray-400 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none transition-all duration-200",
@@ -95,14 +96,14 @@ export default function DeliveryAddressForm({
             <InputGroup.Text
               className={cn(satoshi.className, "text-gray-700 font-medium")}
             >
-              Wilaya
+              <T>State</T>
             </InputGroup.Text>
             <InputGroup.Input
               type="text"
               name="wilaya"
               value={deliveryAddress.wilaya}
               onChange={onChange}
-              placeholder="Entrez votre wilaya"
+              placeholder="Enter your state"
               className={cn(
                 satoshi.className,
                 "text-black placeholder:text-gray-400 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none transition-all duration-200",
@@ -123,14 +124,14 @@ export default function DeliveryAddressForm({
             <InputGroup.Text
               className={cn(satoshi.className, "text-gray-700 font-medium")}
             >
-              Code postal
+              <T>Postcode</T>
             </InputGroup.Text>
             <InputGroup.Input
               type="text"
               name="postalCode"
               value={deliveryAddress.postalCode}
               onChange={onChange}
-              placeholder="Entrez votre code postal"
+              placeholder="Enter your postcode"
               className={cn(
                 satoshi.className,
                 "text-black placeholder:text-gray-400 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none transition-all duration-200",

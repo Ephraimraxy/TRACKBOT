@@ -1,6 +1,6 @@
 {
-  "name": "MEGA SHOP",
-  "short_name": "MEGA SHOP",
+  "name": "TrackBot",
+  "short_name": "TrackBot",
   "icons": [
     {
       "src": "/manifest/web-app-manifest-192x192.png",

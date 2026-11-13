@@ -1,26 +1,25 @@
 import { prisma } from "@/lib/utils/prisma";
 
-// Insertion des couleurs
+// Colours offered in the product form (reference data). Idempotent.
 async function insertColors() {
   await prisma.couleur.createMany({
     data: [
-      { nom: "Noir", code: "#000000" },
-      { nom: "Blanc", code: "#FFFFFF" },
-      { nom: "Rouge", code: "#FF0000" },
-      { nom: "Bleu", code: "#0000FF" },
-      { nom: "Vert", code: "#008000" },
-      { nom: "Jaune", code: "#FFFF00" },
+      { nom: "Black", code: "#000000" },
+      { nom: "White", code: "#FFFFFF" },
+      { nom: "Red", code: "#FF0000" },
+      { nom: "Blue", code: "#0000FF" },
+      { nom: "Green", code: "#008000" },
+      { nom: "Yellow", code: "#FFFF00" },
       { nom: "Orange", code: "#FFA500" },
-      { nom: "Rose", code: "#FFC0CB" },
-      { nom: "Gris", code: "#808080" },
-      { nom: "Marron", code: "#8B4513" },
-      { nom: "Violet", code: "#800080" },
+      { nom: "Pink", code: "#FFC0CB" },
+      { nom: "Grey", code: "#808080" },
+      { nom: "Brown", code: "#8B4513" },
+      { nom: "Purple", code: "#800080" },
       { nom: "Beige", code: "#F5F5DC" },
     ],
     skipDuplicates: true,
   });
-
-  console.log("Couleurs insérées avec succès !");
+  console.log("Colours ready.");
 }
 
 export default insertColors;

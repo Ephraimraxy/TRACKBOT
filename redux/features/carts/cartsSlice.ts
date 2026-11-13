@@ -113,6 +113,13 @@ export const cartsSlice = createSlice({
       state.totalPrice -= existing.price;
     },
 
+    /** Empty the cart: on sign-out (so the next person on this device does not see it) and once an order is placed. */
+    clearCart: (state) => {
+      state.cart = null;
+      state.totalPrice = 0;
+      state.action = null;
+    },
+
     remove: (
       state,
       action: PayloadAction<RemoveCartItem & { quantity: number }>
@@ -141,6 +148,6 @@ export const cartsSlice = createSlice({
   },
 });
 
-export const { addToCart, removeCartItem, remove } = cartsSlice.actions;
+export const { addToCart, removeCartItem, remove, clearCart } = cartsSlice.actions;
 
 export default cartsSlice.reducer;

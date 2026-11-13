@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 // Components
 import BreadcrumbCart from "@/components/store/cartpage/BreadcrumbCart";
 import ProductList from "@/components/store/cartpage/ProductList";
@@ -34,7 +36,7 @@ export default function CartPage() {
                 "font-bold text-[32px] md:text-[40px] text-black uppercase mb-5 md:mb-6"
               )}
             >
-              votre panier
+              <T>your cart</T>
             </h2>
             <div className="flex flex-col lg:flex-row space-y-5 lg:space-y-0 lg:space-x-5 items-start">
               <ProductList products={cart.items} />

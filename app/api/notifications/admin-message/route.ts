@@ -49,13 +49,13 @@ export async function POST(req: Request) {
       data: {
         userId: validatedData.userId,
         text: validatedData.text,
-        objet: "Message de l'administrateur",
+        objet: "Message from the administrator",
         type: NotificationType.MESSAGE,
       },
     });
 
     return NextResponse.json({
-      message: "La notification a été envoyée avec succès",
+      message: "The notification was sent successfully",
       data: notification,
     });
   } catch (error) {

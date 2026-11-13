@@ -25,25 +25,25 @@ export default function NotificationFilters({
 
   const typeOptions = [
     { value: "", label: "Type" },
-    { value: NotificationType.DEFAULT, label: "Défaut" },
+    { value: NotificationType.DEFAULT, label: "Default" },
     { value: NotificationType.MESSAGE, label: "Message" },
-    { value: NotificationType.COMMANDE, label: "Commande" },
-    { value: NotificationType.LIVRAISON, label: "Livraison" },
-    { value: NotificationType.PAIEMENT, label: "Paiement" },
-    { value: NotificationType.SIGNALEMENT, label: "Signalement" },
-    { value: NotificationType.EVALUATION, label: "Évaluation" },
+    { value: NotificationType.COMMANDE, label: "Order" },
+    { value: NotificationType.LIVRAISON, label: "Delivery" },
+    { value: NotificationType.PAIEMENT, label: "Payment" },
+    { value: NotificationType.SIGNALEMENT, label: "Report" },
+    { value: NotificationType.EVALUATION, label: "Review" },
   ];
 
   const statusOptions = [
-    { value: "", label: "Statut" },
+    { value: "", label: "Status" },
     { value: "lu", label: "Lu" },
-    { value: "nonlu", label: "Non lu" },
+    { value: "nonlu", label: "Unread" },
   ];
 
   const sortOptions = [
     { value: "", label: "Date" },
-    { value: "desc", label: "Plus récent" },
-    { value: "asc", label: "Plus ancien" },
+    { value: "desc", label: "Newest" },
+    { value: "asc", label: "Oldest" },
   ];
 
   return (

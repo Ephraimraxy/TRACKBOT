@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
     // Return response
     return NextResponse.json(
       {
-        message: "Les résultats de la recherche ont été récupérés avec succès",
+        message: "Search results were retrieved successfully",
         pagination,
         data,
       },

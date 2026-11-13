@@ -7,9 +7,13 @@ import {
   Package,
   ShieldAlert,
   Briefcase,
+  Truck,
+  HelpCircle,
 } from "lucide-react";
 
 export const ICON_MAP = {
+  Truck,
+  HelpCircle,
   BarChart2,
   ShoppingBag,
   DollarSign,

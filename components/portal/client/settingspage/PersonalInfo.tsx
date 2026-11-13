@@ -1,3 +1,4 @@
+import { T } from "@/components/i18n/T";
 import { useState } from "react";
 import { toast } from "sonner";
 import { fetchDataFromAPI } from "@/lib/utils/fetchData";
@@ -40,14 +41,14 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
       toast.error(result.error);
     } else {
       onUpdate(result.data!);
-      toast.success("Informations personnelles mises à jour avec succès");
+      toast.success("Personal information updated successfully");
     }
     setIsLoading(false);
   };
 
   const handleVerifyEmail = async () => {
     if (verificationCode.length !== 6) {
-      toast.error("Le code doit contenir 6 caractères");
+      toast.error("The code must contain 6 characters");
       return;
     }
     setIsVerifying(true);
@@ -66,7 +67,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
     if (result.error) {
       toast.error(result.error);
     } else {
-      toast.success("Email vérifié avec succès");
+      toast.success("Email verified successfully");
       setVerificationCode("");
       onUpdate({ ...user, email: user.emailEnAttente!, emailEnAttente: null });
       await update({ ...session });
@@ -80,17 +81,17 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <User className="h-5 w-5 text-black" />
-            Informations personnelles
+            <T>Personal information</T>
           </h2>
           <p className="text-sm text-gray-500">
-            Mettez à jour vos informations personnelles et de contact.
+            <T>Update your personal and contact information.</T>
           </p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="prenom" className="block text-sm font-medium">
-                Prénom
+                <T>First name</T>
               </label>
               <input
                 id="prenom"
@@ -102,7 +103,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
             </div>
             <div className="space-y-2">
               <label htmlFor="nom" className="block text-sm font-medium">
-                Nom
+                <T>Last name</T>
               </label>
               <input
                 id="nom"
@@ -115,7 +116,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
           </div>
           <div className="space-y-2">
             <label htmlFor="email" className="block text-sm font-medium">
-              Email
+              <T>Email</T>
             </label>
             <input
               id="email"
@@ -131,7 +132,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
             className="bg-black text-white px-4 py-2 rounded-md hover:bg-black/90 disabled:opacity-50"
             disabled={isLoading}
           >
-            {isLoading ? "Enregistrement..." : "Enregistrer les modifications"}
+            {isLoading ? "Saving..." : "Save changes"}
           </button>
         </form>
       </div>
@@ -141,18 +142,17 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
         <div className="mt-6 p-6 bg-white rounded-xl border shadow-sm">
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
             <Mail className="h-5 w-5 text-black" />
-            Vérification de l&apos;adresse email
+            <T>Email address verification</T>
           </h3>
           <p className="text-sm text-gray-700">
-            Un code de vérification à 6 chiffres a été envoyé à :{" "}
+            <T>A 6-digit verification code was sent to:</T>{" "}
             <span className="font-medium">{user.emailEnAttente}</span>
           </p>
           <p className="text-sm text-gray-600">
-            Veuillez saisir ce code ci-dessous pour confirmer votre nouvelle
-            adresse email.
+            <T>Please enter this code below to confirm your new email address.</T>
             <br />
             <span className="text-red-500 font-medium">
-              ⚠️ Le code est valable pendant 5 minutes.
+              <T>⚠️ The code is valid for 5 minutes.</T>
             </span>
           </p>
 
@@ -161,7 +161,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
               type="text"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
-              placeholder="Entrez le code"
+              placeholder="Enter the code"
               className="w-full px-3 py-2 border rounded-md"
               maxLength={6}
             />
@@ -170,7 +170,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
               className="bg-black text-white px-4 py-2 rounded-md hover:bg-black/90 disabled:opacity-50"
               disabled={isVerifying || verificationCode.length !== 6}
             >
-              {isVerifying ? "Vérification..." : "Vérifier"}
+              {isVerifying ? "Verifying..." : "Verify"}
             </button>
           </div>
         </div>

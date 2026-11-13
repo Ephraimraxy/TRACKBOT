@@ -9,26 +9,26 @@ export const DEFAULT_PAGE_SIZE = 12;
 export const DEFAULT_SHOP_PAGE_SIZE = 12;
 export const MAX_PAGE_SIZE = 100;
 
-// Cloud folder names
+// Storage folder names
 export const ALLOWED_FOLDERS = ["products", "avatars"];
 
 // File Upload Limits
-export const MAX_UPLOAD_SIZE_MB = 1;
+export const MAX_UPLOAD_SIZE_MB = 5;
 export const ALLOWED_IMAGE_FORMATS = ["image/jpeg", "image/png", "image/webp"];
 
 // Error Messages
 export const ERROR_MESSAGES = {
   // 400
   BAD_REQUEST:
-    "La requête est invalide. Veuillez vérifier les données envoyées.",
+    "The request is invalid. Please check the submitted data.",
   BAD_REQUEST_ID:
-    "Échec de la création du produit : Un ou plusieurs IDs fournis sont invalides.",
+    "Failed to create the product: one or more IDs provided are invalid.",
   // 401
-  UNAUTHORIZED: "Vous devez être authentifié pour accéder à cette ressource.",
+  UNAUTHORIZED: "You must be logged in to access this resource.",
   // 403
-  FORBIDDEN: "Vous n'avez pas la permission d'accéder à cette ressource.",
+  FORBIDDEN: "You do not have permission to access this resource.",
   // 404
-  NOT_FOUND: "La ressource demandée n'a pas été trouvée.",
+  NOT_FOUND: "The requested resource was not found.",
   // 500
-  INTERNAL_ERROR: "Une erreur est survenue. Veuillez réessayer plus tard.",
+  INTERNAL_ERROR: "An error occurred. Please try again later.",
 };

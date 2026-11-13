@@ -1,5 +1,8 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { OrderFromAPI } from "@/lib/types/order.types";
@@ -27,6 +30,7 @@ export default function SearchAndFilters({
   toggleTotalDropdown,
   closeDropdowns,
 }: SearchAndFiltersProps) {
+  const { t } = useI18n();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const dateDropdownRef = useRef<HTMLDivElement>(null);
@@ -82,7 +86,7 @@ export default function SearchAndFilters({
           onChange={(e) => setLocalSearch(e.target.value)}
           onFocus={() => setIsSearchFocused(true)}
           onBlur={() => setIsSearchFocused(false)}
-          placeholder="Rechercher par ID ou produit..."
+          placeholder={t("Search by ID or product...")}
           className={`w-full px-4 py-2 sm:py-3 bg-white/80 backdrop-blur-md border ${
             isSearchFocused ? "border-blue-400" : "border-gray-300"
           } rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] focus:ring-2 focus:ring-gradient-to-r focus:from-blue-400 focus:to-blue-600 focus:border-transparent transition-all duration-300 text-gray-800 placeholder-gray-500 hover:shadow-[0_6px_25px_rgba(0,0,0,0.1)] text-sm sm:text-base`}
@@ -95,7 +99,7 @@ export default function SearchAndFilters({
               setSearchQuery("");
             }}
             className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200"
-            aria-label="Clear search"
+            aria-label={t("Clear search")}
           >
             <svg
               className="h-4 w-4 sm:h-5 sm:w-5"
@@ -145,8 +149,8 @@ export default function SearchAndFilters({
           <span>
             {sortConfig?.key === "date"
               ? sortConfig.direction === "asc"
-                ? "Ancien"
-                : "Récent"
+                ? "Old"
+                : "Recent"
               : "Date"}
           </span>
           <svg
@@ -186,7 +190,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Date
+                <T>Date</T>
               </button>
               <button
                 onClick={(e) => {
@@ -200,7 +204,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Ancien
+                <T>Old</T>
               </button>
               <button
                 onClick={(e) => {
@@ -214,7 +218,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Récent
+                <T>Recent</T>
               </button>
             </motion.div>
           )}
@@ -239,8 +243,8 @@ export default function SearchAndFilters({
           <span>
             {sortConfig?.key === "montant"
               ? sortConfig.direction === "asc"
-                ? "Croissant"
-                : "Décroissant"
+                ? "Ascending"
+                : "Descending"
               : "Total"}
           </span>
           <svg
@@ -280,7 +284,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Total
+                <T>Total</T>
               </button>
               <button
                 onClick={(e) => {
@@ -295,7 +299,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Croissant
+                <T>Ascending</T>
               </button>
               <button
                 onClick={(e) => {
@@ -310,7 +314,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Décroissant
+                <T>Descending</T>
               </button>
             </motion.div>
           )}

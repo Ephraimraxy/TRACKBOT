@@ -39,6 +39,7 @@ export type OrderFromAPI = {
     id: string;
     statut: string;
     date: Date;
+    canal?: string | null;
   } | null;
 };
 

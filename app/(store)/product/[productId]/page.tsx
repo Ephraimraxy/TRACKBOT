@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import { useEffect, useRef, useState } from "react";
 import { notFound, useRouter } from "next/navigation";
 
@@ -66,7 +68,7 @@ export default function ProductPage({
       <div className="min-h-[calc(100dvh-125px)] flex flex-col items-center justify-center text-center py-12">
         <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-gray-800 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
         <span className="mt-5 text-lg font-medium">
-          Chargement de la page...
+          <T>Loading page...</T>
         </span>
       </div>
     );

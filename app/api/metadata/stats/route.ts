@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Les stats ont été récupérées avec succès",
+        message: "Stats were retrieved successfully",
         data: {
           totalProducts,
           totalUsers,

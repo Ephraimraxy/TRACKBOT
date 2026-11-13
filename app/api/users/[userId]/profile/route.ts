@@ -28,7 +28,7 @@ export async function GET(
 
     if (!user || !user.client?.vendeur) {
       return NextResponse.json(
-        { error: "Le vendeur n'exite pas" },
+        { error: "The vendor does not exist" },
         { status: 404 }
       );
     }
@@ -43,7 +43,7 @@ export async function GET(
 
     return NextResponse.json(
       {
-        message: "Profile du vendeur récupéré avec succès",
+        message: "Vendor profile retrieved successfully",
         data,
       },
       { status: 200 }

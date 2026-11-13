@@ -40,7 +40,7 @@ export async function GET(
 
     return NextResponse.json(
       {
-        message: "L’évaluation a été récupérée avec succès",
+        message: "The review was retrieved successfully",
         data: formattedReview,
       },
       { status: 200 }
@@ -137,7 +137,7 @@ export async function PUT(
     const data = formatReviewData(updatedReview);
 
     return NextResponse.json(
-      { message: "L'évaluation a été mise à jour avec succès", data },
+      { message: "The review was updated successfully", data },
       { status: 200 }
     );
   } catch (error) {
@@ -231,7 +231,7 @@ export async function DELETE(
     });
 
     return NextResponse.json(
-      { message: "L'évaluation a été supprimée avec succès." },
+      { message: "The review was deleted successfully." },
       { status: 200 }
     );
   } catch (error) {

@@ -21,6 +21,9 @@ model Adresse {
   ville      String     @db.VarChar(100)
   wilaya     String     @db.VarChar(100)
   codePostal String     @map("code_postal") @db.VarChar(20)
+  /// Exact delivery spot, when the customer pinned it on the map. Without it there is no distance or ETA.
+  latitude   Float?
+  longitude  Float?
   commandes  Commande[]
   user       User[]
 
@@ -59,23 +62,97 @@ model Client {
 }
 
 model Commande {
-  id             String            @id @default(cuid()) @db.VarChar(25)
-  date           DateTime          @default(now())
-  montant        Decimal           @db.Decimal(10, 2)
-  statut         CommandeStatut    @default(EN_COURS)
-  adresseId      String?           @map("adresse_id") @db.VarChar(25)
-  panierId       String?           @map("panier_id") @db.VarChar(25)
-  clientId       String?           @map("client_id") @db.VarChar(25)
-  paiementId     String?           @map("paiement_id") @db.VarChar(25)
-  adresse        Adresse?          @relation(fields: [adresseId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  panier         Panier?           @relation(fields: [panierId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  client         Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  id             String                     @id @default(cuid()) @db.VarChar(25)
+  date           DateTime                   @default(now())
+  montant        Decimal                    @db.Decimal(10, 2)
+  statut         CommandeStatut             @default(EN_COURS)
+  adresseId      String?                    @map("adresse_id") @db.VarChar(25)
+  panierId       String?                    @map("panier_id") @db.VarChar(25)
+  clientId       String?                    @map("client_id") @db.VarChar(25)
+  paiementId     String?                    @map("paiement_id") @db.VarChar(25)
+  adresse        Adresse?                   @relation(fields: [adresseId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  panier         Panier?                    @relation(fields: [panierId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  client         Client?                    @relation(fields: [clientId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   lignesCommande LigneCommande[]
   paiement       PaiementCommande?
+  historique     HistoriqueStatutCommande[]
+  livraison      Livraison?
+  positions      PositionLivraison[]
 
   @@index([clientId], map: "index_commande_client_id")
   @@index([panierId], map: "index_commande_panier_id")
   @@map("commande")
+}
+
+// Question/answer pairs the shop owner manages; the chatbot answers policy
+// questions (delivery, payment, returns, opening hours) from these, never from guesses.
+model Faq {
+  id               String   @id @default(cuid()) @db.VarChar(25)
+  question         String   @db.VarChar(255)
+  answer           String   @db.VarChar(1000)
+  keywords         String?  @db.VarChar(255)
+  actif            Boolean  @default(true)
+  dateCreation     DateTime @default(now()) @map("date_creation")
+  dateModification DateTime @default(now()) @updatedAt @map("date_modification")
+
+  @@index([actif], map: "index_faq_actif")
+  @@map("faq")
+}
+
+// Which delivery person is responsible for an order (at most one per order).
+model Livraison {
+  id              String   @id @default(cuid()) @db.VarChar(25)
+  commandeId      String   @unique @map("commande_id") @db.VarChar(25)
+  livreurId       String   @map("livreur_id") @db.VarChar(25)
+  assigneParId    String?  @map("assigne_par_id") @db.VarChar(25)
+  dateAssignation DateTime @default(now()) @map("date_assignation")
+  /// Latest estimate, refreshed while the delivery person shares their position.
+  etaSecondes     Int?     @map("eta_secondes")
+  distanceMetres  Int?     @map("distance_metres")
+  etaMisAJour     DateTime? @map("eta_mis_a_jour")
+  /// When the customer was last sent a "your delivery is N minutes away" reminder.
+  dernierRappel   DateTime? @map("dernier_rappel")
+  /// True once the "almost there" alert has been sent, so it is sent only once.
+  alerteProcheEnvoyee Boolean @default(false) @map("alerte_proche_envoyee")
+  commande        Commande @relation(fields: [commandeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  livreur         User     @relation("LivraisonsLivreur", fields: [livreurId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  assignePar      User?    @relation("LivraisonsAssignePar", fields: [assigneParId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([livreurId], map: "index_livraison_livreur_id")
+  @@map("livraison")
+}
+
+// GPS points reported by the delivery person's phone, only while an order is
+// out for delivery. Customers only ever see the latest point of their own order.
+model PositionLivraison {
+  id         String   @id @default(cuid()) @db.VarChar(25)
+  commandeId String   @map("commande_id") @db.VarChar(25)
+  livreurId  String   @map("livreur_id") @db.VarChar(25)
+  latitude   Float
+  longitude  Float
+  precision  Float?
+  date       DateTime @default(now())
+  commande   Commande @relation(fields: [commandeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  livreur    User     @relation("PositionsLivreur", fields: [livreurId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([commandeId, date], map: "index_position_commande_date")
+  @@map("position_livraison")
+}
+
+// Append-only log of every order status change (drives the tracking timeline).
+model HistoriqueStatutCommande {
+  id            String          @id @default(cuid()) @db.VarChar(25)
+  commandeId    String          @map("commande_id") @db.VarChar(25)
+  ancienStatut  CommandeStatut? @map("ancien_statut")
+  nouveauStatut CommandeStatut  @map("nouveau_statut")
+  modifieParId  String?         @map("modifie_par_id") @db.VarChar(25)
+  note          String?         @db.VarChar(255)
+  date          DateTime        @default(now())
+  commande      Commande        @relation(fields: [commandeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  modifiePar    User?           @relation(fields: [modifieParId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([commandeId, date], map: "index_historique_commande_date")
+  @@map("historique_statut_commande")
 }
 
 model Evaluation {
@@ -162,6 +239,12 @@ model PaiementCommande {
   date       DateTime       @default(now())
   statut     PaiementStatut @default(EN_COURS)
   commandeId String         @unique @map("commande_id") @db.VarChar(25)
+  /// Paystack transaction reference of the latest payment attempt for this order.
+  reference    String?   @unique @db.VarChar(100)
+  /// How the customer paid, as reported by Paystack: card, bank_transfer, ussd, bank, qr, mobile_money...
+  canal        String?   @db.VarChar(30)
+  /// When Paystack confirmed the money was received.
+  datePaiement DateTime? @map("date_paiement")
   commande   Commande       @relation(fields: [commandeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([commandeId], map: "index_commande_id")
@@ -304,26 +387,34 @@ model TOTPSecret {
 }
 
 model User {
-  id                 String              @id @default(cuid()) @db.VarChar(25)
-  email              String              @unique(map: "unique_email") @db.VarChar(255)
-  password           String              @db.VarChar(255)
-  nom                String              @db.VarChar(100)
-  prenom             String              @db.VarChar(100)
-  tel                String?             @db.VarChar(20)
-  adresseId          String?             @map("adresse_id") @db.VarChar(25)
-  imagePublicId      String?             @map("image_public_id") @db.VarChar(255)
-  emailEnAttente     String?             @map("email_en_attente") @db.VarChar(255)
-  emailVerifie       Boolean             @default(false) @map("email_verifie")
-  dateCreation       DateTime            @default(now()) @map("date_creation")
-  role               UserRole            @default(CLIENT)
-  admin              Admin?
-  client             Client?
-  TOTPSecret         TOTPSecret?
-  adresse            Adresse?            @relation(fields: [adresseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  paniers            Panier[]
-  evaluations        Evaluation[]
-  notifications      Notification[]
-  reponsesEvaluation ReponseEvaluation[]
+  id                  String                     @id @default(cuid()) @db.VarChar(25)
+  email               String                     @unique(map: "unique_email") @db.VarChar(255)
+  password            String                     @db.VarChar(255)
+  nom                 String                     @db.VarChar(100)
+  prenom              String                     @db.VarChar(100)
+  tel                 String?                    @db.VarChar(20)
+  adresseId           String?                    @map("adresse_id") @db.VarChar(25)
+  imagePublicId       String?                    @map("image_public_id") @db.VarChar(255)
+  emailEnAttente      String?                    @map("email_en_attente") @db.VarChar(255)
+  emailVerifie        Boolean                    @default(false) @map("email_verifie")
+  dateCreation        DateTime                   @default(now()) @map("date_creation")
+  role                UserRole                   @default(CLIENT)
+  /// Minutes between "your delivery is N minutes away" reminders while an order is out for delivery. 0 = off.
+  rappelLivraisonMinutes Int                     @default(5) @map("rappel_livraison_minutes")
+  /// Send an alert once when the delivery person is almost at the door.
+  alerteProche        Boolean                    @default(true) @map("alerte_proche")
+  admin               Admin?
+  client              Client?
+  TOTPSecret          TOTPSecret?
+  adresse             Adresse?                   @relation(fields: [adresseId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  paniers             Panier[]
+  evaluations         Evaluation[]
+  notifications       Notification[]
+  reponsesEvaluation  ReponseEvaluation[]
+  historiqueStatuts   HistoriqueStatutCommande[]
+  positionsLivraison  PositionLivraison[]        @relation("PositionsLivreur")
+  livraisons          Livraison[]                @relation("LivraisonsLivreur")
+  livraisonsAssignees Livraison[]                @relation("LivraisonsAssignePar")
 
   @@index([email], map: "index_email")
   @@map("user")
@@ -360,9 +451,13 @@ enum SignalementStatut {
   REJETE
 }
 
+// EN_COURS = Pending, EN_PREPARATION = Processing, EXPEDIEE = Shipped,
+// EN_LIVRAISON = Out for delivery, LIVREE = Delivered, ANNULEE = Cancelled
 enum CommandeStatut {
   EN_COURS
+  EN_PREPARATION
   EXPEDIEE
+  EN_LIVRAISON
   LIVREE
   ANNULEE
 }
@@ -371,6 +466,7 @@ enum UserRole {
   CLIENT
   VENDEUR
   ADMIN
+  LIVREUR
 }
 
 enum NotificationType {

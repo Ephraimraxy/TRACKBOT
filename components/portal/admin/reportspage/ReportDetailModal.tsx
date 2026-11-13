@@ -28,7 +28,7 @@ const ReportDetailModal = ({
 
   const handleSubmitResponse = async () => {
     if (!responseText.trim()) {
-      toast.error("Veuillez entrer une réponse avant d'envoyer.");
+      toast.error("Please enter a reply before sending.");
       return;
     }
 
@@ -43,20 +43,20 @@ const ReportDetailModal = ({
           reponse: responseText.trim(),
         }),
       });
-      if (!res.ok) throw new Error("Erreur réseau");
+      if (!res.ok) throw new Error("Network error");
 
-      toast.success("Réponse envoyée avec succès !");
+      toast.success("Reply sent successfully!");
       // Update the report locally with the new response
       setSelectedReport({ ...report, reponse: responseText.trim() });
       handleRespond(report, responseText);
     } catch {
-      toast.error("Erreur lors de l'envoi de la réponse.");
+      toast.error("Error while sending the reply.");
     }
   };
 
   const handleUpdateStatus = async () => {
     if (!selectedStatus) {
-      toast.error("Veuillez sélectionner un statut.");
+      toast.error("Please select a status.");
       return;
     }
 
@@ -68,13 +68,13 @@ const ReportDetailModal = ({
           statut: selectedStatus,
         }),
       });
-      if (!res.ok) throw new Error("Erreur réseau");
+      if (!res.ok) throw new Error("Network error");
 
-      toast.success("Statut mis à jour avec succès !");
+      toast.success("Status updated successfully!");
       // Update the report status locally
       setSelectedReport({ ...report, statut: selectedStatus });
     } catch {
-      toast.error("Erreur lors de la mise à jour du statut.");
+      toast.error("Error while updating the status.");
     }
   };
 
@@ -94,7 +94,7 @@ const ReportDetailModal = ({
         <div className="space-y-4 sm:space-y-6">
           <div className="flex justify-between items-center border-b border-gray-200 pb-4">
             <h3 className="text-lg sm:text-2xl font-bold text-gray-900">
-              Signalement
+              Report
             </h3>
             <button
               onClick={() => setSelectedReport(null)}
@@ -114,7 +114,7 @@ const ReportDetailModal = ({
                 className="px-3 py-1 rounded-full text-xs sm:text-sm font-semibold bg-gray-100 text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
               >
                 <option value="" disabled>
-                  Sélectionner un statut
+                  Select a status
                 </option>
                 {Object.values(SignalementStatut).map((status) => (
                   <option key={status} value={status}>
@@ -126,7 +126,7 @@ const ReportDetailModal = ({
                 onClick={handleUpdateStatus}
                 className="px-3 py-1 bg-black text-white rounded-lg text-xs sm:text-sm hover:bg-gray-800 transition-all duration-300"
               >
-                Mettre à jour
+                Update
               </button>
             </div>
           </div>
@@ -135,7 +135,7 @@ const ReportDetailModal = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 bg-gray-50 p-3 sm:p-4 rounded-xl">
             <div>
               <span className="text-gray-700 font-semibold text-sm sm:text-base">
-                Client :
+                Customer:
               </span>
               <span className="text-gray-900 block text-sm sm:text-base font-semibold">
                 {report.client?.prenom} {report.client?.nom}
@@ -144,7 +144,7 @@ const ReportDetailModal = ({
 
             <div>
               <span className="text-gray-700 font-semibold text-sm sm:text-base">
-                Date :
+                Date:
               </span>
               <span className="text-gray-900 block text-sm sm:text-base font-semibold">
                 {extractDateString(report.date)}
@@ -153,16 +153,16 @@ const ReportDetailModal = ({
 
             <div>
               <span className="text-gray-700 font-medium text-sm sm:text-base">
-                Produit :
+                Product:
               </span>
               <span className="text-gray-900 font-semibold block text-sm sm:text-base">
-                {report.produit?.nom || "Aucun produit"}
+                {report.produit?.nom || "No products"}
               </span>
             </div>
 
             <div>
               <span className="text-gray-700 font-medium text-sm sm:text-base">
-                Statut :
+                Status:
               </span>
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-semibold shadow-md ${getStatusColor(
@@ -177,19 +177,19 @@ const ReportDetailModal = ({
           {/* Contenu du signalement */}
           <div className="space-y-2">
             <h4 className="text-gray-900 font-semibold text-sm sm:text-base">
-              Objet :
+              Subject:
             </h4>
             <p className="text-gray-700 text-sm sm:text-base">
-              {report.objet || "Aucun objet spécifié"}
+              {report.objet || "No subject specified"}
             </p>
           </div>
 
           <div className="space-y-2">
             <h4 className="text-gray-900 font-semibold text-sm sm:text-base">
-              Description :
+              Description:
             </h4>
             <p className="text-gray-700 text-sm sm:text-base">
-              {report.text || "Aucune description"}
+              {report.text || "No description"}
             </p>
           </div>
 
@@ -197,7 +197,7 @@ const ReportDetailModal = ({
           {report.reponse ? (
             <div className="space-y-2">
               <h4 className="text-gray-900 font-semibold text-sm sm:text-base">
-                Réponse envoyée :
+                Reply sent:
               </h4>
               <p className="text-gray-900 text-xs sm:text-sm">
                 {report.reponse}
@@ -206,12 +206,12 @@ const ReportDetailModal = ({
           ) : (
             <div className="space-y-2">
               <h4 className="text-gray-900 font-semibold text-sm sm:text-base">
-                Répondre :
+                Reply:
               </h4>
               <textarea
                 value={responseText}
                 onChange={(e) => setResponseText(e.target.value)}
-                placeholder="Entrez votre réponse ici..."
+                placeholder="Enter your answer here..."
                 className="w-full h-32 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent resize-none"
               />
               <div className="flex justify-end gap-2">
@@ -220,14 +220,14 @@ const ReportDetailModal = ({
                   className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm sm:text-base hover:bg-red-700 transition-all duration-300 flex items-center gap-2"
                 >
                   <Trash2 className="h-4 w-4" />
-                  Supprimer
+                  Delete
                 </button>
                 <button
                   onClick={handleSubmitResponse}
                   className="px-4 py-2 bg-black text-white rounded-lg text-sm sm:text-base hover:bg-gray-800 transition-all duration-300 flex items-center gap-2"
                 >
                   <Send className="h-4 w-4" />
-                  Envoyer
+                  Send
                 </button>
               </div>
             </div>

@@ -27,17 +27,17 @@ export default function ErrorState({ error, onRetry }: ErrorStateProps) {
           </svg>
         </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Erreur de chargement
+          Loading error
         </h3>
         <p className="text-gray-600 text-sm mb-4">
-          {error || "Une erreur s'est produite lors du chargement des ventes."}
+          {error || "An error occurred while loading sales."}
         </p>
         <button
           onClick={onRetry}
           className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 mx-auto hover:bg-gray-800 transition-colors duration-200"
         >
           <RefreshCw className="h-4 w-4" />
-          Réessayer
+          Try again
         </button>
       </div>
     </div>

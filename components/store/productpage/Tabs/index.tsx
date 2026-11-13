@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import ProductDescription from "./ProductDescription";
 import ReviewsContent from "./ProductReviews";
 import { ProductFromAPI } from "@/lib/types/product.types";
+import { T } from "@/components/i18n/T";
 
 type TabBtn = {
   id: number;
@@ -19,7 +20,7 @@ const tabBtnData: TabBtn[] = [
   },
   {
     id: 2,
-    label: "Evaluations",
+    label: "Reviews",
   },
 ];
 
@@ -42,7 +43,7 @@ const Tabs = ({ product }: { product: ProductFromAPI }) => {
             ])}
             onClick={() => setActive(tab.id)}
           >
-            {tab.label}
+            <T>{tab.label}</T>
           </Button>
         ))}
       </div>

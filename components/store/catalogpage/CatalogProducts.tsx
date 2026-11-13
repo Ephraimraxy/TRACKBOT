@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import { ProductFromAPI } from "@/lib/types/product.types";
 import ProductCard from "@/components/common/ProductCard";
 import {
@@ -90,18 +92,16 @@ const CatalogProducts = ({
                   <h2
                     className={`text-2xl font-bold text-gray-800 ${montserrat.className}`}
                   >
-                    Aucun produit trouvé
+                    <T>No products found</T>
                   </h2>
                   <p className="text-base text-gray-600 mt-2 max-w-md">
-                    Vos filtres ou votre recherche n&apos;ont retourné aucun
-                    résultat. Essayez de modifier vos critères ou explorez tous
-                    nos produits.
+                    <T>Your filters or search returned no results. Try changing your criteria or explore all our products.</T>
                   </p>
                   <Button
                     onClick={onResetFilters}
                     className="mt-6 bg-black text-white rounded-full px-6 py-2 text-sm font-medium hover:bg-gray-800"
                   >
-                    Réinitialiser les filtres
+                    <T>Reset filters</T>
                   </Button>
                 </div>
               )}

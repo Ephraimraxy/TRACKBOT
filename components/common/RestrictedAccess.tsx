@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 
@@ -15,11 +17,11 @@ const RestrictedAccess = ({ message }: RestrictedAccessProps) => {
     <div className="min-h-[calc(100dvh-125px)] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center px-4">
       <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md text-center">
         <h1 className="text-2xl font-semibold text-gray-900">
-          🔒 Accès restreint
+          <T>🔒 Restricted access</T>
         </h1>
         <p className="text-gray-700 mt-4">
           {message ||
-            "Vous devez être connecté pour accéder à cette ressource. Veuillez vous connecter pour continuer."}
+            "You must be logged in to access this resource. Please log in to continue."}
         </p>
         <div className="mt-6 space-y-3">
           {message ? (
@@ -32,7 +34,7 @@ const RestrictedAccess = ({ message }: RestrictedAccessProps) => {
                   });
                 }}
               >
-                Se connecter en tant que client
+                <T>Log in as a customer</T>
               </button>
             </>
           ) : (
@@ -41,14 +43,14 @@ const RestrictedAccess = ({ message }: RestrictedAccessProps) => {
                 href={`/auth/login?callbackUrl=${callbackUrl}`}
                 className="block w-full bg-gray-900 text-white font-medium py-2 px-4 rounded-lg hover:bg-gray-800 transition"
               >
-                Se connecter
+                <T>Log in</T>
               </a>
 
               <a
                 href={`/auth/register?callbackUrl=${callbackUrl}`}
                 className="block w-full text-gray-900 font-medium py-2 px-4 border border-gray-900 rounded-lg hover:bg-gray-100 transition"
               >
-                Créer un compte
+                <T>Create an account</T>
               </a>
             </>
           )}

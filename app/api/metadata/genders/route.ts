@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest) {
     });
 
     return NextResponse.json(
-      { message: "Les genres ont été récupérés avec succès", data: genders },
+      { message: "Genders were retrieved successfully", data: genders },
       { status: 200 }
     );
   } catch (error) {

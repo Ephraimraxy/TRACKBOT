@@ -1,5 +1,8 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { fetchDataFromAPI } from "@/lib/utils/fetchData";
@@ -20,6 +23,7 @@ export default function VendorSettings({
   user,
   onUpdate,
 }: VendorSettingsProps) {
+  const { t } = useI18n();
   const { data: session, update } = useSession();
   const router = useRouter();
 
@@ -45,7 +49,7 @@ export default function VendorSettings({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!vendorInfo.nomBoutique || !vendorInfo.nomBanque || !vendorInfo.rib) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
+      toast.error(t("Please fill in all required fields"));
       return;
     }
     setIsLoading(true);
@@ -67,7 +71,7 @@ export default function VendorSettings({
     } else {
       onUpdate(result.data!);
       await update({ ...session });
-      toast.success("Vous êtes maintenant un vendeur");
+      toast.success(t("You are now a vendor"));
       router.push("/vendor/dashboard");
       router.refresh();
     }
@@ -80,18 +84,18 @@ export default function VendorSettings({
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <BadgeCheck className="h-5 w-5 text-black" />
-            Statut de vendeur
+            <T>Vendor status</T>
           </h2>
           <p className="text-sm text-gray-500">
-            Activez votre compte vendeur pour commencer à vendre des produits
+            <T>Activate your vendor account to start selling products</T>
           </p>
         </div>
         <div className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-medium">Devenir vendeur</h4>
+              <h4 className="font-medium"><T>Become a vendor</T></h4>
               <p className="text-sm text-gray-500">
-                Activez les fonctionnalités vendeur sur votre compte
+                <T>Enable vendor features on your account</T>
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -121,10 +125,10 @@ export default function VendorSettings({
             <div className="p-6 border-b">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <Building className="h-5 w-5 text-black" />
-                Informations sur l&apos;entreprise
+                <T>Business information</T>
               </h2>
               <p className="text-sm text-gray-500">
-                Fournissez des détails sur votre entreprise
+                <T>Provide details about your business</T>
               </p>
             </div>
             <div className="p-6 space-y-4">
@@ -133,7 +137,7 @@ export default function VendorSettings({
                   htmlFor="nomBoutique"
                   className="block text-sm font-medium"
                 >
-                  Nom de votre boutique en ligne
+                  <T>Name of your online shop</T>
                 </label>
                 <input
                   id="nomBoutique"
@@ -149,7 +153,7 @@ export default function VendorSettings({
                   htmlFor="description"
                   className="block text-sm font-medium"
                 >
-                  Bio (description)
+                  <T>Bio (description)</T>
                 </label>
                 <MDEditor
                   value={vendorInfo.description}
@@ -158,7 +162,7 @@ export default function VendorSettings({
                 />
                 <div className="text-right text-sm text-gray-500 mt-1">
                   {vendorInfo.description.length} /{" "}
-                  {MAX_VENDOR_DESCRIPTION_LENGTH} caractères
+                  {MAX_VENDOR_DESCRIPTION_LENGTH} <T>characters</T>
                 </div>
               </div>
             </div>
@@ -167,10 +171,10 @@ export default function VendorSettings({
             <div className="p-6 border-b">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-black" />
-                Coordonnées bancaires
+                <T>Bank details</T>
               </h2>
               <p className="text-sm text-gray-500">
-                Ajoutez vos informations bancaires pour les paiements
+                <T>Add your bank details for payouts</T>
               </p>
             </div>
             <div className="p-6 space-y-4">
@@ -180,7 +184,7 @@ export default function VendorSettings({
                     htmlFor="nomBanque"
                     className="block text-sm font-medium"
                   >
-                    Nom de la banque
+                    <T>Bank name</T>
                   </label>
                   <input
                     id="nomBanque"
@@ -193,7 +197,7 @@ export default function VendorSettings({
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="rib" className="block text-sm font-medium">
-                    Numéro de compte (RIB)
+                    <T>Account number</T>
                   </label>
                   <input
                     id="rib"
@@ -213,8 +217,8 @@ export default function VendorSettings({
                 disabled={isLoading}
               >
                 {isLoading
-                  ? "Enregistrement..."
-                  : "Enregistrer les informations"}
+                  ? "Saving..."
+                  : "Save information"}
               </button>
             </div>
           </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import React from "react";
 import Link from "next/link";
 import { FaArrowRight } from "react-icons/fa6";
@@ -26,7 +28,7 @@ export default function CartOrderSummary() {
         <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gray-100">
           <ShoppingBag className="h-5 w-5 text-gray-700" />
         </div>
-        Résumé de la commande
+        <T>Order summary</T>
       </h3>
 
       <div className="flex flex-col space-y-4">
@@ -40,7 +42,9 @@ export default function CartOrderSummary() {
                 {item.quantity} × {item.name}
               </span>
               <span className={cn(satoshi.className, "ml-[25px]")}>
-                Couleur: {item.color.name}, Taille: {item.size.name}
+                {item.color.name && <><T>Colour:</T> {item.color.name}</>}
+                {item.color.name && item.size.name && ", "}
+                {item.size.name && <><T>Size:</T> {item.size.name}</>}
               </span>
             </span>
 
@@ -50,7 +54,7 @@ export default function CartOrderSummary() {
                 "text-sm md:text-base font-medium"
               )}
             >
-              {item.quantity * item.price} DA
+              ₦{item.quantity * item.price}
             </span>
           </div>
         ))}
@@ -64,7 +68,7 @@ export default function CartOrderSummary() {
               "md:text-xl text-gray-800 font-medium"
             )}
           >
-            Total
+            <T>Total</T>
           </span>
           <span
             className={cn(
@@ -72,7 +76,7 @@ export default function CartOrderSummary() {
               "text-xl md:text-2xl font-bold text-black"
             )}
           >
-            {totalPrice} DA
+            ₦{totalPrice}
           </span>
         </div>
       </div>
@@ -86,7 +90,7 @@ export default function CartOrderSummary() {
         asChild
       >
         <Link href="/order">
-          Passer la commande
+          <T>Place order</T>
           <FaArrowRight className="text-xl ml-2 group-hover:translate-x-1 transition-all duration-200" />
         </Link>
       </Button>

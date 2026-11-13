@@ -49,7 +49,7 @@ export default function OrderTable({
             >
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-sm font-semibold text-gray-900">
-                  Commande N°{index + 1}
+                  Order No.{index + 1}
                 </h3>
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold shadow-md ${getStatusColor(
@@ -60,20 +60,20 @@ export default function OrderTable({
                 </span>
               </div>
               <div className="text-xs text-gray-600 mb-1">
-                Client: {order.client?.prenom} {order.client?.nom}
+                Customer: {order.client?.prenom} {order.client?.nom}
               </div>
               <div className="text-xs text-gray-600 mb-1">
                 Date: {extractDateString(order.date)}
               </div>
               <div className="text-xs font-semibold text-green-600 mb-2">
-                Total: {order.montant.toFixed(2)} DA
+                Total: ₦{order.montant.toFixed(2)}
               </div>
             </div>
           ))
         ) : (
           <EmptyState
-            title="Aucune commande trouvée"
-            description="Aucun résultat ne correspond à votre recherche."
+            title="No orders found"
+            description="No results match your search."
           />
         )}
       </div>
@@ -85,16 +85,16 @@ export default function OrderTable({
             <thead className="bg-black text-white">
               <tr>
                 <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                  N°
+                  No.
                 </th>
                 <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                  Client
+                  Customer
                 </th>
                 <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden md:table-cell">
                   Date
                 </th>
                 <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden lg:table-cell">
-                  Statut
+                  Status
                 </th>
                 <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
                   Total
@@ -135,7 +135,7 @@ export default function OrderTable({
                     </span>
                   </td>
                   <td className="px-4 py-2 sm:px-6 sm:py-4 text-xs sm:text-sm font-semibold text-green-600">
-                    {order.montant.toFixed(2)} DA
+                    ₦{order.montant.toFixed(2)}
                   </td>
                 </tr>
               ))}

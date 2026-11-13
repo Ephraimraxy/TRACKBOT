@@ -16,14 +16,14 @@ export default function NotificationActions({
         className="w-full sm:w-auto bg-red-500 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-red-600 transition-all duration-300 shadow-md font-bold text-sm sm:text-base"
       >
         <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-        Supprimer tout
+        Delete all
       </button>
       <button
         onClick={onMarkAllRead}
         className="w-full sm:w-auto bg-black text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition-all duration-300 shadow-md font-bold text-sm sm:text-base"
       >
         <Check className="h-4 w-4 sm:h-5 sm:w-5" />
-        Tout marquer comme lu
+        Mark all as read
       </button>
     </div>
   );

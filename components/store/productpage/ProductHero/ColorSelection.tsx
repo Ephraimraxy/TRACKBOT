@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import { IoMdCheckmark } from "react-icons/io";
 
 // redux
@@ -19,7 +21,7 @@ const ColorSelection = ({ colors }: { colors: Color[] }) => {
   return (
     <div className="flex flex-col">
       <span className="text-sm sm:text-base text-black/60 mb-4">
-        Choisissez la couleur
+        <T>Choose the colour</T>
       </span>
       <div className="flex items-center flex-wrap space-x-3 sm:space-x-4">
         {colors.map((color, index) => (
@@ -33,7 +35,7 @@ const ColorSelection = ({ colors }: { colors: Color[] }) => {
               {colorSelection.nom === color.nom && (
                 <IoMdCheckmark
                   className={`text-base ${
-                    color.nom === "Blanc" ? "text-black" : "text-white"
+                    color.nom === "White" ? "text-black" : "text-white"
                   }`}
                 />
               )}

@@ -36,13 +36,13 @@ export default function NotificationCard({
       );
 
       if (response.ok) {
-        toast.success("Notification marquée comme lue !");
+        toast.success("Notification marked as read!");
         refetch(); // Trigger refetch after successful update
       } else {
-        toast.error("Erreur lors de la mise à jour de la notification");
+        toast.error("Error while updating the notification");
       }
     } catch {
-      toast.error("Erreur réseau lors de la mise à jour");
+      toast.error("Network error during update");
     }
   };
 
@@ -60,13 +60,13 @@ export default function NotificationCard({
       );
 
       if (response.ok) {
-        toast.success("Notification supprimée avec succès !");
+        toast.success("Notification deleted successfully!");
         refetch(); // Trigger refetch after successful deletion
       } else {
-        toast.error("Erreur lors de la suppression de la notification");
+        toast.error("Error while deleting the notification");
       }
     } catch {
-      toast.error("Erreur réseau lors de la suppression");
+      toast.error("Network error during deletion");
     } finally {
       setIsDeleting(false);
     }
@@ -127,7 +127,7 @@ export default function NotificationCard({
                     : "bg-yellow-100 text-yellow-800 border border-yellow-200"
                 }`}
               >
-                {notification.estLu ? "Lu" : "Non lu"}
+                {notification.estLu ? "Lu" : "Unread"}
               </span>
             </div>
             <p className="text-gray-900 text-base sm:text-lg font-semibold mb-1">
@@ -138,7 +138,7 @@ export default function NotificationCard({
             </p>
             <p className="text-gray-500 text-xs sm:text-sm mt-2 flex items-center gap-1">
               <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-              {new Date(notification.date).toLocaleDateString("fr-FR")}
+              {new Date(notification.date).toLocaleDateString("en-NG")}
             </p>
           </div>
           <div className="flex flex-col items-start sm:items-end gap-3 sm:gap-4 w-full sm:w-auto">
@@ -147,7 +147,7 @@ export default function NotificationCard({
                 <Link href={notification.urlRedirection}>
                   <span className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all duration-300 cursor-pointer text-sm sm:text-base">
                     <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="font-medium">Voir</span>
+                    <span className="font-medium">View</span>
                   </span>
                 </Link>
               )}
@@ -157,7 +157,7 @@ export default function NotificationCard({
                 className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-all duration-300 text-sm sm:text-base disabled:opacity-50"
               >
                 <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="font-medium">Supprimer</span>
+                <span className="font-medium">Delete</span>
               </button>
             </div>
             {!notification.estLu && (
@@ -166,7 +166,7 @@ export default function NotificationCard({
                 className="w-full sm:w-auto bg-black text-white px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-md text-sm sm:text-base font-medium flex items-center gap-2"
               >
                 <Check className="h-3 w-3 sm:h-4 sm:w-4" />
-                Marquer comme lu
+                Mark as read
               </button>
             )}
           </div>

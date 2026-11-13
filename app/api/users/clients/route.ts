@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Les clients ont été récupérés avec succès",
+        message: "Customers were retrieved successfully",
         pagination,
         data,
       },

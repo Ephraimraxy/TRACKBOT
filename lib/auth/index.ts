@@ -6,6 +6,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/utils/prisma";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // AUTH_SECRET is preferred; NEXTAUTH_SECRET and JWT_SECRET are accepted names.
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? process.env.JWT_SECRET,
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -44,6 +46,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   session: {
     strategy: "jwt",
+    // A signed-in customer stays signed in on their device for 30 days.
+    maxAge: 60 * 60 * 24 * 30,
   },
 
   callbacks: {

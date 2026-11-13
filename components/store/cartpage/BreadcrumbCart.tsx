@@ -1,3 +1,4 @@
+import { T } from "@/components/i18n/T";
 import Link from "next/link";
 import {
   Breadcrumb,
@@ -14,12 +15,12 @@ const BreadcrumbCart = () => {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href="/">Home</Link>
+            <Link href="/"><T>Home</T></Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>Cart</BreadcrumbPage>
+          <BreadcrumbPage><T>Cart</T></BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>

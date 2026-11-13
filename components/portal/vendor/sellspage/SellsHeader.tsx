@@ -21,9 +21,9 @@ export default function SellsHeader({ sells, onExport }: SellsHeaderProps) {
       Taille: sell.taille?.nom || "N/A",
       Client: sell.commande.client ? `${sell.commande.client.nom} ${sell.commande.client.prenom}` : "N/A",
       Email: sell.commande.client?.email || "N/A",
-      Date: new Date(sell.commande.date).toLocaleDateString("fr-FR"),
-      "Prix unitaire (DA)": sell.prixUnit.toFixed(2),
-      "Total (DA)": sell.total.toFixed(2),
+      Date: new Date(sell.commande.date).toLocaleDateString("en-NG"),
+      "Prix unitaire (₦)": sell.prixUnit.toFixed(2),
+      "Total (₦)": sell.total.toFixed(2),
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
@@ -42,9 +42,9 @@ export default function SellsHeader({ sells, onExport }: SellsHeaderProps) {
       wch: w,
     }));
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Ventes");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sales");
     XLSX.writeFile(workbook, "ventes_chic_et_tendance.xlsx");
-    toast.success("Ventes exportées avec succès !");
+    toast.success("Sales exported successfully!");
   };
 
   return (
@@ -57,7 +57,7 @@ export default function SellsHeader({ sells, onExport }: SellsHeaderProps) {
             className={`text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.className}`}
             style={{ fontFamily: "'Montserrat', sans-serif" }}
           >
-            Mes Ventes
+            My sales
           </h1>
         </div>
         <button
@@ -65,13 +65,13 @@ export default function SellsHeader({ sells, onExport }: SellsHeaderProps) {
           className="bg-black text-white px-4 py-2 sm:px-6 sm:py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-all duration-300 shadow-md text-sm sm:text-base"
         >
           <Download className="h-4 w-4 sm:h-5 sm:w-5" />
-          Exporter
+          Export
         </button>
       </div>
 
       {/* Texte descriptif */}
       <p className="mb-6 text-base sm:text-lg text-gray-700">
-        Vous trouverez ici toutes vos ventes effectuées avec leurs détails.
+        Here you will find all your completed sales with their details.
       </p>
     </>
   );

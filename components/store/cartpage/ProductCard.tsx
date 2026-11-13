@@ -1,6 +1,8 @@
 "use client";
 
-import Image from "next/image";
+import { T } from "@/components/i18n/T";
+
+import Image from "@/components/common/SafeImage";
 import Link from "next/link";
 import { PiTrashFill } from "react-icons/pi";
 
@@ -66,21 +68,21 @@ const ProductCard = ({ data }: ProductCardProps) => {
             <PiTrashFill className="text-xl md:text-2xl text-red-600" />
           </Button>
         </div>
-        <div className="-mt-1">
-          <span className="text-black text-xs md:text-sm mr-1">Taille:</span>
-          <span className="text-black/60 text-xs md:text-sm">
-            {data.color.name}
-          </span>
-        </div>
-        <div className="mb-auto -mt-1.5">
-          <span className="text-black text-xs md:text-sm mr-1">Couleur:</span>
-          <span className="text-black/60 boder-1 border-gray-300 text-xs md:text-sm">
-            {data.size.name}
-          </span>
-        </div>
+        {data.size.name && (
+          <div className="-mt-1">
+            <span className="text-black text-xs md:text-sm mr-1"><T>Size:</T></span>
+            <span className="text-black/60 text-xs md:text-sm">{data.size.name}</span>
+          </div>
+        )}
+        {data.color.name && (
+          <div className="mb-auto -mt-1.5">
+            <span className="text-black text-xs md:text-sm mr-1"><T>Colour:</T></span>
+            <span className="text-black/60 boder-1 border-gray-300 text-xs md:text-sm">{data.color.name}</span>
+          </div>
+        )}
         <div className="flex items-center flex-wrap justify-between">
           <span className="font-bold text-black  text-xl xl:text-2xl">
-            {data.price}DA
+            ₦{data.price}
           </span>
 
           <CartCounter

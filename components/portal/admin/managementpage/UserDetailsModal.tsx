@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import { motion } from "framer-motion";
 
 // Utils & Types
@@ -53,7 +53,7 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
             <div className="w-full space-y-3">
               <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                 <span className="text-gray-700 font-semibold text-xs sm:text-sm">
-                  Date d&apos;inscription :
+                  Registration date:
                 </span>
                 <span className="text-gray-900 text-xs sm:text-sm">
                   {new Date(user.dateCreation).toLocaleDateString()}
@@ -61,27 +61,27 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
               </div>
               <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                 <span className="text-gray-700 font-semibold text-xs sm:text-sm">
-                  Téléphone :
+                  Phone:
                 </span>
                 <span className="text-gray-900 text-xs sm:text-sm">
-                  {user.tel || "Non renseigné"}
+                  {user.tel || "Not provided"}
                 </span>
               </div>
               <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                 <span className="text-gray-700 font-semibold text-xs sm:text-sm">
-                  Adresse :
+                  Address:
                 </span>
                 <span className="text-gray-900 text-xs sm:text-sm">
                   {user.adresse
                     ? `${user.adresse.rue}, ${user.adresse.ville}`
-                    : "Non renseignée"}
+                    : "Not provided"}
                 </span>
               </div>
               {isClient ? (
                 <>
                   <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg">
                     <span className="text-emerald-700 font-semibold text-xs sm:text-sm">
-                      Commandes :
+                      Orders:
                     </span>
                     <span className="text-emerald-900 font-bold text-xs sm:text-sm">
                       {(user as ClientWithStats).stats.totalCommandes}
@@ -89,13 +89,12 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
                   </div>
                   <div className="flex justify-between items-center bg-amber-50 p-3 rounded-lg">
                     <span className="text-amber-700 font-semibold text-xs sm:text-sm">
-                      Total dépensé :
+                      Total spent:
                     </span>
                     <span className="text-amber-900 font-bold text-xs sm:text-sm">
-                      {(user as ClientWithStats).stats.totalDepenses?.toFixed(
+                      ₦{(user as ClientWithStats).stats.totalDepenses?.toFixed(
                         2
-                      ) || "0.00"}{" "}
-                      DZ
+                      ) || "0.00"}
                     </span>
                   </div>
                 </>
@@ -103,7 +102,7 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
                 <>
                   <div className="flex justify-between items-center bg-purple-50 p-3 rounded-lg">
                     <span className="text-purple-700 font-semibold text-xs sm:text-sm">
-                      Boutique :
+                      Shop:
                     </span>
                     <span className="text-purple-900 font-bold text-xs sm:text-sm">
                       {user.vendeur?.nomBoutique || "N/A"}
@@ -111,7 +110,7 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
                   </div>
                   <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg">
                     <span className="text-emerald-700 font-semibold text-xs sm:text-sm">
-                      Produits Vendus :
+                      Products sold:
                     </span>
                     <span className="text-emerald-900 font-bold text-xs sm:text-sm">
                       {(user as VendorWithStats).stats.produitsVendus}
@@ -119,13 +118,12 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
                   </div>
                   <div className="flex justify-between items-center bg-amber-50 p-3 rounded-lg">
                     <span className="text-amber-700 font-semibold text-xs sm:text-sm">
-                      Total Ventes :
+                      Total sales:
                     </span>
                     <span className="text-amber-900 font-bold text-xs sm:text-sm">
-                      {(user as VendorWithStats).stats.totalVentes?.toFixed(
+                      ₦{(user as VendorWithStats).stats.totalVentes?.toFixed(
                         2
-                      ) || "0.00"}{" "}
-                      DZ
+                      ) || "0.00"}
                     </span>
                   </div>
                 </>

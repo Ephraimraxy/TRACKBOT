@@ -8,7 +8,7 @@ export type UserFromDB = Prisma.UserGetPayload<{
 export type UserFromAPI = {
   id: string;
   email: string;
-  role: "CLIENT" | "VENDEUR" | "ADMIN";
+  role: "CLIENT" | "VENDEUR" | "ADMIN" | "LIVREUR";
   nom: string;
   prenom: string;
   tel?: string | null;

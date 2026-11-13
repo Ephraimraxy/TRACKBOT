@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Les catégories ont été récupérées avec succès",
+        message: "Categories were retrieved successfully",
         data: categories,
       },
       { status: 200 }

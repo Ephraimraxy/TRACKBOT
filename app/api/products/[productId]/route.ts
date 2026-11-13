@@ -6,7 +6,6 @@ import { ERROR_MESSAGES } from "@/lib/constants/settings";
 import { formatProductData, getProductSelect } from "@/lib/helpers/products";
 import { auth } from "@/lib/auth";
 import { Prisma, UserRole } from "@prisma/client";
-import { deleteFromCloudinary } from "@/lib/helpers/cloudinary";
 import { updateProductSchema, formatValidationErrors } from "@/lib/validations";
 
 // Fetch product by ID
@@ -35,7 +34,7 @@ export async function GET(
     const data = formatProductData(product);
 
     return NextResponse.json(
-      { message: "Le produit a été récupéré avec succès", data },
+      { message: "The product was retrieved successfully", data },
       { status: 200 }
     );
   } catch (error) {
@@ -99,7 +98,7 @@ export async function DELETE(
           produit.produitMarketplace.vendeurId !== session.user.id
         ) {
           return NextResponse.json(
-            { error: "Vous n'êtes pas autorisé à supprimer ce produit." },
+            { error: "You are not allowed to delete this product." },
             { status: 403 }
           );
         }
@@ -112,13 +111,13 @@ export async function DELETE(
         );
     }
 
-    // Delete associated images from Cloudinary
+    // Delete associated images from R2 storage
 
-    // Uncomment the following lines if you want to delete images from Cloudinary
+    // Uncomment the following lines if you want to delete images from R2 storage
     // Keep it commented for now to avoid accidental deletions
     // await Promise.all(
     //   (produit?.images || []).map((img) =>
-    //     deleteFromCloudinary(img.imagePublicId)
+    //     deleteStoredImage(img.imagePublicId)
     //   )
     // );
 
@@ -128,7 +127,7 @@ export async function DELETE(
     });
 
     return NextResponse.json(
-      { message: "Produit supprimé avec succès." },
+      { message: "Product deleted successfully." },
       { status: 200 }
     );
   } catch (error) {
@@ -252,7 +251,7 @@ export async function PATCH(
     const data = formatProductData(updatedProduct);
 
     return NextResponse.json(
-      { message: "Produit mis à jour avec succès.", data },
+      { message: "Product updated successfully.", data },
       { status: 200 }
     );
   } catch (error) {

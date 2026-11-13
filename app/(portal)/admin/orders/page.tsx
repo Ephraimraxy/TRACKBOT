@@ -20,6 +20,7 @@ import { OrderFromAPI, SortConfig } from "@/lib/types/order.types";
 import { fetchPaginatedDataFromAPI } from "@/lib/utils/fetchData";
 import { extractDateString } from "@/lib/utils";
 import { CommandeStatut } from "@prisma/client";
+import { STATUS_LABELS_EN, STATUS_TRANSITIONS } from "@/lib/orders/workflow";
 
 export default function OrderHistoryPage(): JSX.Element {
   const [orders, setOrders] = useState<OrderFromAPI[]>([]);
@@ -54,23 +55,10 @@ export default function OrderHistoryPage(): JSX.Element {
   const sessionReady = sessionStatus === "authenticated" && !!userId;
 
   // Valid status transitions
-  const statusTransitions: Record<CommandeStatut, CommandeStatut[]> = {
-    [CommandeStatut.EN_COURS]: [
-      CommandeStatut.EXPEDIEE,
-      CommandeStatut.ANNULEE,
-    ],
-    [CommandeStatut.EXPEDIEE]: [CommandeStatut.LIVREE, CommandeStatut.ANNULEE],
-    [CommandeStatut.LIVREE]: [],
-    [CommandeStatut.ANNULEE]: [],
-  };
+  const statusTransitions = STATUS_TRANSITIONS;
 
   // Status labels for display
-  const statusLabels: Record<CommandeStatut, string> = {
-    [CommandeStatut.EN_COURS]: "En attente",
-    [CommandeStatut.EXPEDIEE]: "Expédiée",
-    [CommandeStatut.LIVREE]: "Livrée",
-    [CommandeStatut.ANNULEE]: "Annulée",
-  };
+  const statusLabels = STATUS_LABELS_EN;
 
   /**
    * Debounce search input
@@ -142,13 +130,13 @@ export default function OrderHistoryPage(): JSX.Element {
         );
 
         if (ordersResult.error) {
-          toast.error("Erreur lors de la récupération des commandes.");
+          toast.error("Error while retrieving orders.");
           return;
         }
 
         const ordersData = ordersResult.data;
         if (!ordersData) {
-          toast.error("Aucune commande trouvée.");
+          toast.error("No orders found.");
           return;
         }
 
@@ -158,7 +146,7 @@ export default function OrderHistoryPage(): JSX.Element {
         setCurrentPage(ordersData.pagination.currentPage);
       } catch {
         toast.error(
-          "Une erreur est survenue lors de la récupération des commandes."
+          "An error occurred while retrieving orders."
         );
       } finally {
         setIsLoading(false);
@@ -190,7 +178,7 @@ export default function OrderHistoryPage(): JSX.Element {
       });
 
       if (!response.ok) {
-        throw new Error("Échec de la mise à jour du statut.");
+        throw new Error("Failed to update the status.");
       }
 
       // Refresh orders
@@ -221,9 +209,9 @@ export default function OrderHistoryPage(): JSX.Element {
         setTotalPages(ordersResult.data.pagination.totalPages);
       }
 
-      toast.success(`Statut mis à jour à "${statusLabels[newStatus]}"`);
+      toast.success(`Status updated to "${statusLabels[newStatus]}"`);
     } catch {
-      toast.error("Erreur lors de la mise à jour du statut.");
+      toast.error("Error while updating the status.");
     } finally {
       setIsUpdating(false);
       setStatusChangeOrderId(null);
@@ -237,15 +225,15 @@ export default function OrderHistoryPage(): JSX.Element {
       ID: order.id,
       Client: order.client
         ? `${order.client.prenom} ${order.client.nom}`
-        : "Inconnu",
-      Email: order.client?.email || "Inconnu",
+        : "Unknown",
+      Email: order.client?.email || "Unknown",
       Date: extractDateString(order.date),
       Statut: order.statut,
-      "Total (DA)": order.montant.toFixed(2),
+      "Total (₦)": order.montant.toFixed(2),
       Articles: order.produits
         .map(
           (item) =>
-            `${item.nomProduit} (${item.couleur?.nom}, ${item.taille?.nom}): ${item.quantite} x ${item.prixUnit} DA`
+            `${item.nomProduit} (${item.couleur?.nom}, ${item.taille?.nom}): ${item.quantite} x ₦${item.prixUnit}`
         )
         .join(", "),
     }));
@@ -264,9 +252,9 @@ export default function OrderHistoryPage(): JSX.Element {
     }
     worksheet["!cols"] = [5, 20, 25, 15, 10, 15, 40].map((w) => ({ wch: w }));
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Commandes");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
     XLSX.writeFile(workbook, "commandes_chic_et_tendance.xlsx");
-    toast.success("Commandes exportées avec succès !");
+    toast.success("Orders exported successfully!");
   };
 
   const handleSort = (
@@ -340,8 +328,8 @@ export default function OrderHistoryPage(): JSX.Element {
           </>
         ) : (
           <EmptyState
-            title="Aucune commande trouvée"
-            description="Aucun résultat ne correspond à votre recherche."
+            title="No orders found"
+            description="No results match your search."
           />
         )}
 

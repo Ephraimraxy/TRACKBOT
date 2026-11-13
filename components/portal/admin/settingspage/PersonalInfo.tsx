@@ -5,7 +5,7 @@ import { UserFromAPI } from "@/lib/types/user.types";
 import { getImageUrlFromPublicId } from "@/lib/utils";
 import { User, UserCircle } from "lucide-react";
 import { Mail } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import { useSession } from "next-auth/react";
 
 interface PersonalInfoProps {
@@ -86,7 +86,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
 
   const handleVerifyEmail = async () => {
     if (verificationCode.length !== 6) {
-      toast.error("Le code doit contenir 6 caractères");
+      toast.error("The code must contain 6 characters");
       return;
     }
     setIsVerifying(true);
@@ -127,14 +127,14 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
       <div className="space-y-6 bg-gray-100 p-6 rounded-lg shadow-inner">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <User className="h-6 w-6 text-gray-700" />
-          Informations Personnelles
+          Personal information
         </h2>
         <div className="flex flex-col items-center mb-6">
           <div className="relative w-32 h-32 mb-4">
             {profileImage ? (
               <Image
                 src={profileImage}
-                alt="Profil"
+                alt="Profile"
                 layout="fill"
                 className="rounded-full object-cover border-4 border-gray-200 shadow-lg"
               />
@@ -143,7 +143,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
             )}
           </div>
           <label className="cursor-pointer bg-gray-100 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-200 transition-all duration-200 shadow-md font-medium text-sm">
-            Choisir une photo
+            Choose a photo
             <input
               type="file"
               accept="image/*"
@@ -159,7 +159,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
                 htmlFor="prenom"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Prénom
+                First name
               </label>
               <input
                 type="text"
@@ -168,7 +168,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
                 value={formData.prenom}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-800 placeholder-gray-500 shadow-sm text-base"
-                placeholder="Votre prénom"
+                placeholder="Your first name"
               />
             </div>
             <div>
@@ -176,7 +176,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
                 htmlFor="nom"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Nom
+                Last name
               </label>
               <input
                 type="text"
@@ -185,7 +185,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
                 value={formData.nom}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-800 placeholder-gray-500 shadow-sm text-base"
-                placeholder="Votre nom"
+                placeholder="Your last name"
               />
             </div>
           </div>
@@ -203,7 +203,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
               value={formData.email}
               onChange={handleChange}
               className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-800 placeholder-gray-500 shadow-sm text-base"
-              placeholder="votre.email@example.com"
+              placeholder="your.email@example.com"
             />
           </div>
           <div>
@@ -211,7 +211,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
               htmlFor="tel"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Numéro de téléphone
+              Phone number
             </label>
             <input
               type="tel"
@@ -228,7 +228,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
             className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-md transform hover:-translate-y-1 font-semibold text-base"
             disabled={isLoading}
           >
-            {isLoading ? "Enregistrement..." : "Enregistrer les modifications"}
+            {isLoading ? "Saving..." : "Save changes"}
           </button>
         </div>
       </div>
@@ -237,18 +237,17 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
         <div className="mt-6 p-6 bg-[#f3f4f6] rounded-xl border shadow-sm">
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
             <Mail className="h-5 w-5 text-black" />
-            Vérification de l&apos;adresse email
+            Email address verification
           </h3>
           <p className="text-sm text-gray-700">
-            Un code de vérification à 6 chiffres a été envoyé à :{" "}
+            A 6-digit verification code was sent to:{" "}
             <span className="font-medium">{user.emailEnAttente}</span>
           </p>
           <p className="text-sm text-gray-600">
-            Veuillez saisir ce code ci-dessous pour confirmer votre nouvelle
-            adresse email.
+            Please enter this code below to confirm your new email address.
             <br />
             <span className="text-red-500 font-medium">
-              ⚠️ Le code est valable pendant 5 minutes.
+              ⚠️ The code is valid for 5 minutes.
             </span>
           </p>
           <div className="space-y-2 mt-4">
@@ -256,7 +255,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
               type="text"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
-              placeholder="Entrez le code"
+              placeholder="Enter the code"
               className="w-full px-3 py-2 border rounded-md bg-white shadow-sm"
               maxLength={6}
             />
@@ -265,7 +264,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
               className="bg-black text-white px-4 py-2 rounded-md hover:bg-black/90 disabled:opacity-50"
               disabled={isVerifying || verificationCode.length !== 6}
             >
-              {isVerifying ? "Vérification..." : "Vérifier"}
+              {isVerifying ? "Verifying..." : "Verify"}
             </button>
           </div>
         </div>

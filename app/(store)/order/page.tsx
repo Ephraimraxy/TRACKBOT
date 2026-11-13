@@ -12,7 +12,7 @@ export default async function OrderPage() {
 
   if (session.user.role !== UserRole.CLIENT) {
     return (
-      <RestrictedAccess message="Vous n'avez pas l'autorisation d'accéder à cette page, qui est réservée uniquement aux clients." />
+      <RestrictedAccess message="You do not have permission to access this page, which is reserved for customers only." />
     );
   }
 

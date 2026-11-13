@@ -3,6 +3,7 @@ import {
   MAX_UPLOAD_SIZE_MB,
 } from "@/lib/constants/settings";
 import { z } from "zod";
+import { PASSWORD_MAX, PASSWORD_MIN } from "@/lib/constants/password";
 
 export const updateUserSchema = z
   .object({
@@ -10,13 +11,14 @@ export const updateUserSchema = z
     currentPassword: z.string().optional(),
     newPassword: z
       .string()
-      .min(6, "Le mot de passe doit contenir au moins 6 caractères")
+      .min(PASSWORD_MIN, `The password must contain at least ${PASSWORD_MIN} characters.`)
+      .max(PASSWORD_MAX, `The password must contain at most ${PASSWORD_MAX} characters.`)
       .optional(),
-    nom: z.string().min(1, "Le nom est requis").optional(),
-    prenom: z.string().min(1, "Le prénom est requis").optional(),
+    nom: z.string().min(1, "The name is required").optional(),
+    prenom: z.string().min(1, "The first name is required").optional(),
     tel: z
       .string()
-      .regex(/^[0-9+\-().\s]{7,20}$/, "Numéro de téléphone invalide")
+      .regex(/^[0-9+\-().\s]{7,20}$/, "Invalid phone number")
       .optional(),
   })
   .strict()
@@ -26,17 +28,17 @@ export const updateUserSchema = z
       (data.newPassword && data.currentPassword),
     {
       message:
-        "Les champs 'mot de passe actuel' et 'nouveau mot de passe' doivent être fournis ensemble.",
+        "The 'current password' and 'new password' fields must be provided together.",
       path: ["newPassword"],
     }
   );
 
 // Schema for updating user address
 export const updateAddressSchema = z.object({
-  rue: z.string().min(1, "La rue est requise."),
-  ville: z.string().min(1, "La ville est requise."),
-  wilaya: z.string().min(1, "La wilaya est requise."),
-  codePostal: z.string().min(4, "Code postal invalide."),
+  rue: z.string().min(1, "The street is required."),
+  ville: z.string().min(1, "The city is required."),
+  wilaya: z.string().min(1, "The state is required."),
+  codePostal: z.string().min(4, "Invalid postcode."),
 });
 
 // Schema for updating user avatar
@@ -44,19 +46,19 @@ export const updateUserAvatarSchema = z.object({
   file: z
     .instanceof(File)
     .refine((file) => ALLOWED_IMAGE_FORMATS.includes(file.type), {
-      message: "Format d'image non supporté.",
+      message: "Unsupported image format.",
     })
     .refine((file) => file.size <= MAX_UPLOAD_SIZE_MB * 1024 * 1024, {
-      message: `L'image ne doit pas dépasser ${MAX_UPLOAD_SIZE_MB} Mo.`,
+      message: `The image must not exceed ${MAX_UPLOAD_SIZE_MB} MB.`,
     }),
 });
 
 // Schema for becoming a vendor
 export const becomeVendorSchema = z.object({
-  nomBoutique: z.string().min(1, "Nom boutique requis"),
+  nomBoutique: z.string().min(1, "Shop name is required"),
   description: z.string().optional(),
-  nomBanque: z.string().min(1, "Nom banque requis"),
-  rib: z.string().min(1, "RIB requis"),
+  nomBanque: z.string().min(1, "Bank name is required"),
+  rib: z.string().min(1, "Account number is required"),
 });
 
 // Partial update schema for PATCH
@@ -69,5 +71,5 @@ export const updateVendorSchema = z
   })
   .strict()
   .refine((data) => Object.keys(data).length > 0, {
-    message: "Au moins un champ doit être renseigné.",
+    message: "At least one field must be filled in.",
   });

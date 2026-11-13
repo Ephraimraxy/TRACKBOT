@@ -9,6 +9,8 @@ import { integralCF } from "@/styles/fonts";
 // Components
 import CartBtn from "./CartBtn";
 import UserMenu from "./UserMenu";
+import { BRAND } from "@/lib/config/brand";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 
 const NavBar = async () => {
   return (
@@ -21,20 +23,21 @@ const NavBar = async () => {
             src="/manifest/favicon.svg"
             height={65}
             width={65}
-            alt="logo"
+            alt={`${BRAND.name} logo`}
             className="h-[50px] md:h-[55px] w-auto"
           />
           <span className="hidden sm:block bg-black w-[5px] mt-2 h-[28px]"></span>
           <h1
             className={cn([integralCF.className, "hidden sm:block text-3xl"])}
           >
-            MEGA SHOP
+            {BRAND.name}
           </h1>
         </Link>
       </div>
 
       {/* User Actions */}
       <div className="flex items-center gap-1 md:gap-2">
+        <LanguageSwitcher className="hidden sm:inline-flex" />
         <CartBtn />
         <UserMenu />
       </div>

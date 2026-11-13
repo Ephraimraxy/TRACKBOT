@@ -11,7 +11,7 @@ const PageHeader = ({ handleExport }: { handleExport: () => void }) => {
         <h1
           className={`text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.className}`}
         >
-          Signalements
+          Reports
         </h1>
       </div>
       <button
@@ -19,7 +19,7 @@ const PageHeader = ({ handleExport }: { handleExport: () => void }) => {
         className="bg-black text-white px-4 py-2 sm:px-6 sm:py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-all duration-300 shadow-md text-sm sm:text-base"
       >
         <Download className="h-4 w-4 sm:h-5 sm:w-5" />
-        Exporter
+        Export
       </button>
     </div>
   );

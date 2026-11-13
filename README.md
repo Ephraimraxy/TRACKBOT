@@ -1,279 +1,81 @@
-# MEGA SHOP 🛍️
+# TrackBot
 
-[![Academic Project](https://img.shields.io/badge/Academic%20Project-Master%201%20Software%20Engineering-blue?style=for-the-badge&logo=graduation-cap)](https://www.univ-bejaia.dz/)
+**Development of Tracker Based Chat Bot System for Small E-Commerce Business**
+BSc Computer Science final-year project, Nasarawa State University, Keffi (2026).
 
-A comprehensive e-commerce platform featuring a multi-vendor marketplace, chatbot support, order tracking, advanced analytics, and full customer, vendor, and admin management.
+A web shop where customers can ask a chat assistant about products, prices and their own orders,
+and follow each order from checkout to delivery, including the delivery person's live position.
+It serves three kinds of user: the **shop owner (admin)**, the **customer** and the **delivery person**.
 
-## ✨ Features
+## What it does
 
-### 🛒 Customer Features
+| Role | Can do |
+|---|---|
+| Customer | Browse and search products, order, see every status change of an order on a tracking page (with a live map while it is out for delivery), chat with the assistant |
+| Shop owner | Manage products and photos, orders and statuses, assign delivery people, manage the assistant's FAQ answers, see reports |
+| Delivery person | See assigned deliveries, start and confirm delivery, share their position for the current delivery only |
 
-- **Product Catalog**: Browse products with advanced filtering and search
-- **Shopping Cart**: Persistent cart with real-time updates
-- **Order Management**: Track orders with real-time status updates
-- **Product Reviews**: Rate and review products with photo uploads
-- **Wishlist**: Save favorite products for later
-- **Real-time Chat**: Get instant support from vendors
-- **Email Verification**: Secure account creation with email verification
-- **Password Reset**: Secure password recovery system
+The assistant (**TrackBot**) answers from the shop's real data through read-only server tools: product prices
+and stock, the logged-in customer's own orders and tracking, and the owner's FAQ answers. It cannot invent a price
+or an order status, and it never sees another customer's data. Without any AI key it still works in a built-in
+rule-based mode; with keys it tries DeepSeek, then OpenAI, then Claude.
 
-### 🏪 Vendor Features
+## Stack
 
-- **Store Management**: Create and manage your own store
-- **Product Management**: Add, edit, and manage product inventory
-- **Order Processing**: Handle customer orders with status updates
-- **Sales Analytics**: Track sales performance and revenue
-- **Payment Tracking**: Monitor payment status and history
-- **Customer Support**: Chat with customers in real-time
+Next.js 15 (App Router) and React 19, TypeScript, PostgreSQL with Prisma, NextAuth (credentials, role-based access),
+Leaflet and OpenStreetMap for the map, Cloudflare R2 for images, Resend for email, Vitest for tests, Railway for hosting.
 
-### 👨‍💼 Admin Features
+## Run it locally
 
-- **User Management**: Manage customers, vendors, and admins
-- **Store Oversight**: Monitor and manage all vendor stores
-- **Order Management**: Oversee all platform orders
-- **Analytics Dashboard**: Comprehensive platform analytics
-- **Report Management**: Handle user reports and disputes
-- **System Notifications**: Send platform-wide announcements
+You need Node.js 20+ and a PostgreSQL database.
 
-## 🛠️ Tech Stack
-
-### Frontend
-
-- **Next.js 15** - React framework with App Router
-- **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS** - Utility-first CSS framework
-- **Framer Motion** - Animation library
-- **Redux Toolkit** - State management
-- **React Hook Form** - Form handling
-- **Zod** - Schema validation
-
-### Backend
-
-- **Next.js API Routes** - Server-side API endpoints
-- **Prisma** - Database ORM
-- **PostgreSQL** - Primary database
-- **NextAuth.js** - Authentication system
-- **Nodemailer** - Email service
-
-### External Services
-
-- **Cloudinary** - Image and file storage
-- **OpenRouter AI** - AI-powered chat support
-- **Supabase** - Database hosting
-
-## 📋 Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- **Node.js** (v18 or higher)
-- **npm** or **yarn**
-- **PostgreSQL** database
-- **Git**
-
-## 🚀 Installation
-
-1. **Clone the Repository**
-
-   ```bash
-   git clone https://github.com/lyes-mersel/megashop.git
-   cd megashop
-   ```
-
-2. **Install Dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Set Up Environment Variables**
-
-   Create a `.env` file in the root directory:
-
-   ```env
-   # Local Development
-   NEXT_PUBLIC_BASE_URL="http://localhost:3000"
-   NEXT_PUBLIC_API_URL="http://localhost:3000/api"
-
-   # Production
-   PROD_API_URL="https://project-megashop.vercel.app"
-   PROD_BASE_URL="https://project-megashop.vercel.app/api"
-
-   # Database Connection
-   DATABASE_URL="postgresql://postgres.fallhpfxzcmhrvtticfn:[YOUR-PASSWORD]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=200&pool_timeout=10"
-   DATABASE_DIRECT_URL="postgresql://postgres.fallhpfxzcmhrvtticfn:[YOUR-PASSWORD]@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?connection_limit=200&pool_timeout=10"
-
-   # Cloudinary Configuration
-   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="dzmbj5d0b"
-   NEXT_PUBLIC_CLOUDINARY_API_KEY="****"
-   CLOUDINARY_API_SECRET="****"
-
-   # Authentication
-   AUTH_SECRET="****"
-
-   # Chatbot OpenRouter API Key
-   OPENROUTER_API_KEY="****"
-
-   # Email Configuration
-   EMAIL_USER="noreply.megashop@gmail.com"
-   EMAIL_APP_PASSWORD="****"
-
-   # Default User Password
-   DEFAULT_PASSWORD="****"
-   ```
-
-4. **Database Setup**
-
-   ```bash
-   # Generate Prisma client
-   npx prisma generate
-
-   # Run database migrations
-   npx prisma migrate dev
-
-   # Seed the database with initial data
-   npx prisma db seed
-   ```
-
-5. **Run the Development Server**
-
-   ```bash
-   npm run dev
-   ```
-
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## 📊 Database Schema
-
-The application uses PostgreSQL with the following main entities:
-
-- **Users**: Customers, vendors, and admins
-- **Products**: Product catalog with variants
-- **Orders**: Order management and tracking
-- **Carts**: Shopping cart functionality
-- **Reviews**: Product reviews and ratings
-- **Notifications**: System notifications
-- **Reports**: User reports and disputes
-
-## 🏗️ Project Structure
-
-```text
-megashop/
-├── app/                    # Next.js App Router
-│   ├── (portal)/           # Admin, vendor, and client portals
-│   ├── (store)/            # Public store pages
-│   ├── api/                # API routes
-│   └── auth/               # Authentication pages
-├── components/             # Reusable UI components
-│   ├── auth/               # Authentication components
-│   ├── common/             # Shared components
-│   ├── layout/             # Layout components
-│   ├── portal/             # Portal-specific components
-│   ├── store/              # Store-specific components
-│   └── ui/                 # Base UI components
-├── lib/                    # Utility libraries
-│   ├── auth/               # Authentication utilities
-│   ├── helpers/            # Helper functions
-│   ├── types/              # TypeScript type definitions
-│   └── validations/        # Form validations
-├── prisma/                 # Database schema and migrations
-├── redux/                  # State management
-└── styles/                 # Global styles
+```bash
+npm install
+cp .env.example .env          # then fill in DATABASE_URL, AUTH_SECRET and any optional services
+npx prisma migrate deploy     # create the tables
+npm run seed                  # reference data: categories, genders, colours, sizes
+npm run seed:admin            # first admin (set ADMIN_EMAIL and ADMIN_PASSWORD for this one command)
+npm run dev                   # http://localhost:3000
 ```
 
-## 🚀 Available Scripts
+For sample accounts and products while developing: `npm run seed:demo` (local only; refuses to run in production).
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npx prisma studio` - Open Prisma Studio
-- `npx prisma migrate dev` - Run database migrations
-- `npx prisma db seed` - Seed database with initial data
+Everything optional degrades gracefully: without AI keys the assistant uses rule-based answers, without R2 product
+photos show a placeholder, without Resend verification emails are not sent. The server prints which are missing at start-up.
 
-## 🔐 Authentication
+## Tests
 
-The application uses NextAuth.js with the following authentication methods:
+```bash
+npm test                      # unit and integration tests against a separate test database
+```
 
-- Email/Password authentication
-- Email verification
-- Password reset functionality
-- Role-based access control (Customer, Vendor, Admin)
+`tests/live/*.mjs` are end-to-end checks against a running server (see the header of each file).
 
-## 🚀 Deployment
+## Deployment (Railway)
 
-### Vercel (Recommended)
+`railway.toml` and `npm start` apply pending database migrations and then start the server; `/api/health` is the
+health check. Secrets are set as Railway variables, never committed. See `.env.example` for every variable.
 
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Set up environment variables in Vercel dashboard
-4. Deploy automatically on push
+## Project layout
 
-### Manual Deployment
+```
+app/            pages and API routes (App Router)
+components/     UI components
+lib/            business logic: services (orders, delivery, tracking, FAQ), chatbot, storage, config
+prisma/         schema, migrations, seeds
+tests/          automated tests (live/ = end-to-end scripts)
+docs/           design notes for each stage of the project
+```
 
-1. Build the application:
+## Credits and licence
 
-   ```bash
-   npm run build
-   ```
+This project extends **Megashop** by Lyes Mersel and contributors (MIT licence), which provided the storefront,
+authentication and admin foundation. The original licence text is in [LICENSE](LICENSE) and the full credits are in
+[NOTICE.md](NOTICE.md). New work in this repository (order workflow and status history, delivery and driver features,
+live tracking, the chatbot, FAQ management, R2 storage, email, deployment) is by the project team.
 
-2. Start the production server:
+## Known limits
 
-   ```bash
-   npm start
-   ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📚 About This Project
-
-**MEGA SHOP © 2025** – Academic project developed by Master 1 Software Engineering students from the University of Béjaïa. This project serves as a comprehensive e-commerce solution that demonstrates modern web development practices, full-stack architecture, and real-world application development skills.
-
-**🏫 Institution:** University of Béjaïa  
-**📖 Program:** Master 1 Software Engineering  
-**👥 Team:** 4 students  
-**📅 Year:** 2025  
-**👨‍🏫 Supervisor:** Mr Z.Farah
-
----
-
-> **Note:** The user experience (UI) and all project documentation are provided in **French**.
->
-> - 📂 [Diagrams & Models](docs/diagrams/)
-> - 📄 [Final Report (PDF)](docs/final-report.pdf)
-
----
-
-## 👨‍💻 Development Team
-
-- **MERSEL Lyes** - [@lyes-mersel](https://github.com/lyes-mersel)
-- **BRAHIMI Rayan** - [@BrahimiRayan](https://github.com/BrahimiRayan)
-- **MECHKOUR Billal** - [@Billalmechekour](https://github.com/Billalmechekour)
-- **MESSAOUDENE Saïd** - [@Messaoudene-Said](https://github.com/Messaoudene-Said)
-
-## 📸 Screenshots
-
-### Hero Section
-
-<img src="docs/screenshots/0-hero-section.png" alt="Hero Section" width="600" />
-
-### View All Screenshots
-
-Explore the complete visual showcase in the [📁 Screenshots Gallery](docs/screenshots/), featuring main store interface, admin portal, vendor portal, client portal, and mobile responsive design.
-
-## 📖 API Documentation
-
-For detailed API documentation, please refer to the [API Documentation README](docs/api.md).
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-**MEGA SHOP** - Your complete e-commerce solution! 🛍️✨
+- Payment is not yet processed by a payment provider.
+- GPS is reported by the delivery person's browser, so it only updates while that page is open.
+- Translations other than English are being added; screens not yet translated fall back to English.

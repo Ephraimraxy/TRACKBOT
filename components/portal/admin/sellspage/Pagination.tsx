@@ -54,7 +54,7 @@ export default function Pagination({ pagination, onPageChange }: PaginationProps
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
       <div className="text-sm text-gray-600">
-        Affichage de {startItem} à {endItem} sur {totalItems} ventes
+        Showing {startItem} to {endItem} of {totalItems} sales
       </div>
       
       <div className="flex items-center gap-2">

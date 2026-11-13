@@ -60,7 +60,7 @@ export default function ProfileCard({
               {name}
             </h3>
             <div className="flex items-center mt-1 text-xs text-gray-500 w-full pr-1">
-              {role === "Administrateur" ? (
+              {role === "Administrator" ? (
                 <Bell className="h-3 w-3 mr-1 flex-shrink-0" />
               ) : (
                 <Mail className="h-3 w-3 mr-1 flex-shrink-0" />

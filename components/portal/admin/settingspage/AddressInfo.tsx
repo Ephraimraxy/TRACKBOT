@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { fetchDataFromAPI } from "@/lib/utils/fetchData";
 import { UserFromAPI } from "@/lib/types/user.types";
 import { Home } from "lucide-react";
-import wilayas from "@/lib/data/wilayas";
+import states from "@/lib/data/states";
 
 interface AddressInfoProps {
   user: UserFromAPI;
@@ -46,7 +46,7 @@ export default function AddressInfo({ user, onUpdate }: AddressInfoProps) {
     setIsLoading(false);
   };
 
-  const filteredWilayas = wilayas.filter((wilaya) =>
+  const filteredWilayas = states.filter((wilaya) =>
     wilaya.toLowerCase().includes(wilayaFilter.toLowerCase())
   );
 
@@ -54,7 +54,7 @@ export default function AddressInfo({ user, onUpdate }: AddressInfoProps) {
     <div className="space-y-6 bg-gray-100 p-6 rounded-lg shadow-inner mt-6">
       <h2 className="text-xl font-semibold flex items-center gap-2">
         <Home className="h-6 w-6 text-gray-700" />
-        Adresse
+        Address
       </h2>
       <div className="space-y-4">
         <div>
@@ -62,7 +62,7 @@ export default function AddressInfo({ user, onUpdate }: AddressInfoProps) {
             htmlFor="rue"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Rue
+            Street
           </label>
           <input
             type="text"
@@ -71,7 +71,7 @@ export default function AddressInfo({ user, onUpdate }: AddressInfoProps) {
             value={formData.rue}
             onChange={handleChange}
             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-800 placeholder-gray-500 shadow-sm text-base"
-            placeholder="Nom de la rue"
+            placeholder="Street name"
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -80,7 +80,7 @@ export default function AddressInfo({ user, onUpdate }: AddressInfoProps) {
               htmlFor="ville"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Ville
+              City
             </label>
             <input
               type="text"
@@ -89,7 +89,7 @@ export default function AddressInfo({ user, onUpdate }: AddressInfoProps) {
               value={formData.ville}
               onChange={handleChange}
               className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-800 placeholder-gray-500 shadow-sm text-base"
-              placeholder="Ville"
+              placeholder="City"
             />
           </div>
           <div>
@@ -97,7 +97,7 @@ export default function AddressInfo({ user, onUpdate }: AddressInfoProps) {
               htmlFor="wilaya"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Wilaya
+              State
             </label>
             <input
               type="text"
@@ -105,11 +105,11 @@ export default function AddressInfo({ user, onUpdate }: AddressInfoProps) {
               name="wilaya"
               value={formData.wilaya}
               onChange={handleChange}
-              list="wilayas-list"
+              list="states-list"
               className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-800 placeholder-gray-500 shadow-sm text-base"
-              placeholder="Saisir ou sélectionner une wilaya"
+              placeholder="Type or select a state"
             />
-            <datalist id="wilayas-list" className="max-h-40 overflow-y-auto">
+            <datalist id="states-list" className="max-h-40 overflow-y-auto">
               {filteredWilayas.map((wilaya) => (
                 <option key={wilaya} value={wilaya} />
               ))}
@@ -121,7 +121,7 @@ export default function AddressInfo({ user, onUpdate }: AddressInfoProps) {
             htmlFor="codePostal"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Code Postal
+            Postcode
           </label>
           <input
             type="text"
@@ -130,7 +130,7 @@ export default function AddressInfo({ user, onUpdate }: AddressInfoProps) {
             value={formData.codePostal}
             onChange={handleChange}
             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 text-gray-800 placeholder-gray-500 shadow-sm text-base"
-            placeholder="Code postal"
+            placeholder="Postcode"
           />
         </div>
         <button
@@ -138,7 +138,7 @@ export default function AddressInfo({ user, onUpdate }: AddressInfoProps) {
           className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-md transform hover:-translate-y-1 font-semibold text-base"
           disabled={isLoading}
         >
-          {isLoading ? "Enregistrement..." : "Enregistrer l'adresse"}
+          {isLoading ? "Saving..." : "Save address"}
         </button>
       </div>
     </div>

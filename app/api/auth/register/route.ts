@@ -19,11 +19,15 @@ export async function POST(req: NextRequest) {
 
     const { email, password, nom, prenom } = parseResult.data;
 
+    // The administrator's email is reserved: nobody can register with it, and the answer is the
+    // same as for any other taken address, so it does not reveal who the administrator is.
+    const isAdminEmail = email === process.env.ADMIN_EMAIL?.trim().toLowerCase();
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
+    if (existingUser || isAdminEmail) {
       return NextResponse.json(
-        { error: "Cet adresse email est déjà utilisée" },
+        { error: "This email address is already in use" },
         { status: 409 }
       );
     }
@@ -47,7 +51,7 @@ export async function POST(req: NextRequest) {
     await signIn("credentials", { email, password, redirect: false });
 
     return NextResponse.json(
-      { message: " Inscription réussie" },
+      { message: "Registration successful" },
       { status: 201 }
     );
   } catch (error) {

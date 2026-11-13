@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { NotificationType } from "@prisma/client";
+import { T } from "@/components/i18n/T";
 
 interface Filters {
   type: NotificationType | "";
@@ -25,25 +26,25 @@ export default function NotificationFilters({
 
   const typeOptions = [
     { value: "", label: "Type" },
-    { value: NotificationType.DEFAULT, label: "Défaut" },
+    { value: NotificationType.DEFAULT, label: "Default" },
     { value: NotificationType.MESSAGE, label: "Message" },
-    { value: NotificationType.COMMANDE, label: "Commande" },
-    { value: NotificationType.LIVRAISON, label: "Livraison" },
-    { value: NotificationType.PAIEMENT, label: "Paiement" },
-    { value: NotificationType.SIGNALEMENT, label: "Signalement" },
-    { value: NotificationType.EVALUATION, label: "Évaluation" },
+    { value: NotificationType.COMMANDE, label: "Order" },
+    { value: NotificationType.LIVRAISON, label: "Delivery" },
+    { value: NotificationType.PAIEMENT, label: "Payment" },
+    { value: NotificationType.SIGNALEMENT, label: "Report" },
+    { value: NotificationType.EVALUATION, label: "Review" },
   ];
 
   const statusOptions = [
-    { value: "", label: "Statut" },
+    { value: "", label: "Status" },
     { value: "lu", label: "Lu" },
-    { value: "nonlu", label: "Non lu" },
+    { value: "nonlu", label: "Unread" },
   ];
 
   const sortOptions = [
     { value: "", label: "Date" },
-    { value: "desc", label: "Plus récent" },
-    { value: "asc", label: "Plus ancien" },
+    { value: "desc", label: "Newest" },
+    { value: "asc", label: "Oldest" },
   ];
 
   return (
@@ -75,7 +76,7 @@ export default function NotificationFilters({
                   }}
                   className="w-full px-4 py-2 text-gray-800 text-sm hover:bg-gray-100 transition-all duration-200"
                 >
-                  {option.label}
+                  <T>{option.label}</T>
                 </button>
               ))}
             </motion.div>
@@ -110,7 +111,7 @@ export default function NotificationFilters({
                   }}
                   className="w-full px-4 py-2 text-gray-800 text-sm hover:bg-gray-100 transition-all duration-200"
                 >
-                  {option.label}
+                  <T>{option.label}</T>
                 </button>
               ))}
             </motion.div>
@@ -145,7 +146,7 @@ export default function NotificationFilters({
                   }}
                   className="w-full px-4 py-2 text-gray-800 text-sm hover:bg-gray-100 transition-all duration-200"
                 >
-                  {option.label}
+                  <T>{option.label}</T>
                 </button>
               ))}
             </motion.div>

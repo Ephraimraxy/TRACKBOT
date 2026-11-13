@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 // UI Components
 import Rating from "@/components/ui/Rating";
 
@@ -15,15 +17,24 @@ import { ProductFromAPI } from "@/lib/types/product.types";
 
 // Styles
 import { integralCF } from "@/styles/fonts";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAppDispatch } from "@/redux/hooks";
+import { setColorSelection, setSizeSelection } from "@/redux/features/products/productsSlice";
 import { Flag, X, Store } from "lucide-react";
 import Link from "next/link";
 import { getImageUrlFromPublicId } from "@/lib/utils";
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import MDEditor from "@uiw/react-md-editor";
 
 const ProductHero = ({ product }: { product: ProductFromAPI }) => {
   const [showVendorInfo, setShowVendorInfo] = useState(false);
+  const dispatch = useAppDispatch();
+
+  // When a product has exactly one colour or one size there is nothing to choose, so pick it for the customer.
+  useEffect(() => {
+    if (product.couleurs.length === 1) dispatch(setColorSelection(product.couleurs[0]));
+    if (product.tailles.length === 1) dispatch(setSizeSelection(product.tailles[0]));
+  }, [product, dispatch]);
 
   return (
     <section className="mb-11">
@@ -55,12 +66,12 @@ const ProductHero = ({ product }: { product: ProductFromAPI }) => {
               <span className="text-black/60">/5</span>
             </span>
             <span className="text-black text-xs xl:text-sm ml-[11px] xl:ml-[13px] pb-0.5 xl:pb-0">
-              {`(${product.totalEvaluations} avis)`}
+              {`(${product.totalEvaluations} reviews)`}
             </span>
           </div>
 
           <span className="font-bold text-black text-2xl sm:text-[32px]">
-            {product.prix} DA
+            ₦{product.prix}
           </span>
 
           <p className="text-sm sm:text-base text-black/60 mb-5">
@@ -74,10 +85,10 @@ const ProductHero = ({ product }: { product: ProductFromAPI }) => {
               {product.type === "boutique" ? (
                 <>
                   <div className="text-xs xl:text-sm bg-[#F0EEED] text-black font-medium px-2.5 py-1 rounded-full">
-                    Produit officiel
+                    <T>Official product</T>
                   </div>
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black text-white text-xs rounded px-2 py-1 z-10 w-max max-w-[200px] text-center">
-                    Vendu et expédié directement par notre boutique.
+                    <T>Sold and shipped directly by our shop.</T>
                   </div>
                 </>
               ) : (
@@ -85,7 +96,7 @@ const ProductHero = ({ product }: { product: ProductFromAPI }) => {
                   onClick={() => setShowVendorInfo(!showVendorInfo)}
                   className="text-xs xl:text-sm bg-[#F0EEED] text-gray-700 font-medium px-2.5 py-1 rounded-full hover:bg-gray-200"
                 >
-                  Vendu par : {product.vendeur!.nomBoutique}
+                  <T>Sold by:</T> {product.vendeur!.nomBoutique}
                 </button>
               )}
             </div>
@@ -96,16 +107,20 @@ const ProductHero = ({ product }: { product: ProductFromAPI }) => {
               className="flex items-center text-sm text-red-500 hover:text-red-700"
             >
               <Flag className="w-4 h-4 mr-1" />
-              Signaler ce produit
+              <T>Report this product</T>
             </Link>
           </div>
 
           <hr className="h-[1px] border-t-black/10 mb-5" />
 
-          <ColorSelection colors={product.couleurs} />
-          <hr className="h-[1px] border-t-black/10 my-5" />
+          {product.couleurs.length > 0 && (
+            <>
+              <ColorSelection colors={product.couleurs} />
+              <hr className="h-[1px] border-t-black/10 my-5" />
+            </>
+          )}
 
-          <SizeSelection sizes={product.tailles} />
+          {product.tailles.length > 0 && <SizeSelection sizes={product.tailles} />}
           <hr className="hidden md:block h-[1px] border-t-black/10 my-5" />
           <AddToCardSection data={product} />
 

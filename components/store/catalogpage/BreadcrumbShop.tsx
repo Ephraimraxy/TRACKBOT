@@ -1,3 +1,4 @@
+import { T } from "@/components/i18n/T";
 import Link from "next/link";
 
 // UI Components
@@ -16,12 +17,12 @@ const BreadcrumbShop = () => {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href="/">Home</Link>
+            <Link href="/"><T>Home</T></Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>Catalog</BreadcrumbPage>
+          <BreadcrumbPage><T>Catalog</T></BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>

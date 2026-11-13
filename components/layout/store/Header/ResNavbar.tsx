@@ -16,6 +16,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { T } from "@/components/i18n/T";
 
 const ResNavbar = ({ data }: { data: NavMenu }) => {
   return (
@@ -53,7 +54,7 @@ const ResNavbar = ({ data }: { data: NavMenu }) => {
               {item.type === "MenuItem" && (
                 <SheetClose asChild>
                   <Link href={item.url ?? "/"} className="mb-4">
-                    {item.label}
+                    <T>{item.label}</T>
                   </Link>
                 </SheetClose>
               )}
@@ -62,7 +63,7 @@ const ResNavbar = ({ data }: { data: NavMenu }) => {
                   <Accordion type="single" collapsible>
                     <AccordionItem value={item.label} className="border-none">
                       <AccordionTrigger className="text-left p-0 py-0.5 font-normal text-base">
-                        {item.label}
+                        <T>{item.label}</T>
                       </AccordionTrigger>
                       <AccordionContent className="p-4 pb-0 border-l flex flex-col">
                         {item.children.map((itemChild) => (

@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import {
   Accordion,
   AccordionContent,
@@ -15,20 +17,20 @@ type Gender = {
 
 const gendersData: Gender[] = [
   {
-    nom: "Homme",
-    description: "Vêtements et accessoires conçus pour hommes.",
+    nom: "Men",
+    description: "Clothing and accessories designed for men.",
   },
   {
-    nom: "Femme",
-    description: "Vêtements et accessoires conçus pour femmes.",
+    nom: "Women",
+    description: "Clothing and accessories designed for women.",
   },
   {
-    nom: "Enfant",
-    description: "Vêtements et accessoires pour enfants et adolescents.",
+    nom: "Children",
+    description: "Clothing and accessories for children and teenagers.",
   },
   {
-    nom: "Unisexe",
-    description: "Vêtements et accessoires adaptés à tous les genres.",
+    nom: "Unisex",
+    description: "Clothing and accessories suitable for all genders.",
   },
 ];
 
@@ -49,7 +51,7 @@ export default function GendersSection({
     <Accordion type="single" collapsible defaultValue="filter-genders">
       <AccordionItem value="filter-genders" className="border-none">
         <AccordionTrigger className="text-black font-bold text-xl hover:no-underline p-0 py-0.5">
-          Genre
+          <T>Gender</T>
         </AccordionTrigger>
         <AccordionContent className="pt-4 pb-0 overflow-visible">
           <div className="flex flex-col space-y-1 text-black/80">
@@ -63,7 +65,7 @@ export default function GendersSection({
                       : "hover:bg-black/10"
                   }`}
                 >
-                  {gender.nom} <MdKeyboardArrowRight />
+                  <T>{gender.nom}</T> <MdKeyboardArrowRight />
                 </button>
                 <div className="absolute z-10 hidden group-hover:block w-64 bg-white border border-gray-200 shadow-md text-sm text-gray-700 p-2 rounded-md top-full mt-1 left-0">
                   {gender.description}

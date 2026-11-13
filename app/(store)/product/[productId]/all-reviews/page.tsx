@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -108,7 +110,7 @@ export default function AllReviewsPage({
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            Retour au produit
+            <T>Back to the product</T>
           </Link>
         </div>
         <div className="flex items-center justify-between flex-col sm:flex-row mb-5 sm:mb-6">
@@ -119,7 +121,7 @@ export default function AllReviewsPage({
                 "text-xl sm:text-2xl font-bold text-black mr-2"
               )}
             >
-              Tous les Avis
+              <T>All reviews</T>
             </h1>
             <span className="text-sm sm:text-base text-black/60">
               ({totalReviews})
@@ -131,9 +133,9 @@ export default function AllReviewsPage({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="best">Meilleurs avis</SelectItem>
-                <SelectItem value="latest">Plus récent</SelectItem>
-                <SelectItem value="oldest">Plus ancien</SelectItem>
+                <SelectItem value="best"><T>Top reviews</T></SelectItem>
+                <SelectItem value="latest"><T>Newest</T></SelectItem>
+                <SelectItem value="oldest"><T>Oldest</T></SelectItem>
               </SelectContent>
             </Select>
             <Link href={`/product/${productId}/write-review`}>
@@ -141,7 +143,7 @@ export default function AllReviewsPage({
                 type="button"
                 className="sm:min-w-[166px] px-4 py-3 sm:px-5 sm:py-4 rounded-full bg-black font-medium text-xs sm:text-base h-12"
               >
-                Écrire un Avis
+                <T>Write a review</T>
               </Button>
             </Link>
           </div>
@@ -159,17 +161,17 @@ export default function AllReviewsPage({
                 "text-lg font-medium text-gray-600 mb-4"
               )}
             >
-              Aucun avis disponible pour ce produit.
+              <T>No reviews available for this product.</T>
             </p>
             <p className="text-gray-500 mb-6">
-              Soyez le premier à partager votre expérience avec ce produit !
+              <T>Be the first to share your experience with this product!</T>
             </p>
             <Link href={`/product/${productId}/write-review`}>
               <Button
                 type="button"
                 className="px-6 py-3 rounded-full bg-black font-medium text-base"
               >
-                Écrire un avis
+                <T>Write a review</T>
               </Button>
             </Link>
           </div>
@@ -188,12 +190,12 @@ export default function AllReviewsPage({
                   onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
                   disabled={page === 1}
                 >
-                  Précédent
+                  <T>Previous</T>
                 </Button>
                 <span
                   className={cn(satoshi.className, "text-sm text-black/60")}
                 >
-                  Page {page} sur {totalPages}
+                  <T>Page</T> {page} <T>of</T> {totalPages}
                 </span>
                 <Button
                   variant="ghost"
@@ -203,7 +205,7 @@ export default function AllReviewsPage({
                   }
                   disabled={page === totalPages}
                 >
-                  Suivant
+                  <T>Next</T>
                 </Button>
               </div>
             )}

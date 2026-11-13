@@ -33,10 +33,10 @@ export default function DashboardChart({ data, period, onPeriodChange }: Dashboa
   const xAxisKey = period === "year" ? "month" : "day";
   const chartTitle =
     period === "week"
-      ? "Évolution des ventes et articles vendus (7 derniers jours)"
+      ? "Sales and items sold over time (last 7 days)"
       : period === "month"
-      ? "Évolution des ventes et articles vendus (30 derniers jours)"
-      : "Évolution des ventes et articles vendus (12 derniers mois)";
+      ? "Sales and items sold over time (last 30 days)"
+      : "Sales and items sold over time (last 12 months)";
 
   return (
     <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg border-2 border-black">
@@ -53,17 +53,17 @@ export default function DashboardChart({ data, period, onPeriodChange }: Dashboa
             onChange={(e) => onPeriodChange(e.target.value as "week" | "month" | "year")}
             className={`w-full sm:w-auto px-3 py-1 sm:px-4 sm:py-2 bg-white border-2 border-black rounded-lg text-gray-800 font-montserrat text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-300 hover:bg-gray-100 hover:border-gray-800 ${montserrat.className}`}
           >
-            <option value="week">Semaine</option>
-            <option value="month">Mois</option>
-            <option value="year">Année</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+            <option value="year">Year</option>
           </select>
           <select
             value={chartType}
             onChange={(e) => setChartType(e.target.value as "line" | "bar")}
             className={`w-full sm:w-auto px-3 py-1 sm:px-4 sm:py-2 bg-white border-2 border-black rounded-lg text-gray-800 font-montserrat text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-300 hover:bg-gray-100 hover:border-gray-800 ${montserrat.className}`}
           >
-            <option value="line">Courbes</option>
-            <option value="bar">Bâtons</option>
+            <option value="line">Curvy</option>
+            <option value="bar">Sticks</option>
           </select>
         </div>
       </div>
@@ -93,9 +93,9 @@ export default function DashboardChart({ data, period, onPeriodChange }: Dashboa
                   fontFamily: "Montserrat",
                   fill: "#1F2937",
                 }}
-                tickFormatter={(value) => `${value} DZD`}
+                tickFormatter={(value) => `₦${value}`}
                 label={{
-                  value: "Ventes (DZD)",
+                  value: "Sales (₦)",
                   angle: -90,
                   position: "insideLeft",
                   fontSize: 12,
@@ -116,7 +116,7 @@ export default function DashboardChart({ data, period, onPeriodChange }: Dashboa
                 }}
                 tickFormatter={(value) => `${value}`}
                 label={{
-                  value: "Articles vendus",
+                  value: "Items sold",
                   angle: 90,
                   position: "insideRight",
                   fontSize: 12,
@@ -136,7 +136,7 @@ export default function DashboardChart({ data, period, onPeriodChange }: Dashboa
                   padding: "8px",
                 }}
                 formatter={(value, name) =>
-                  name === "sales" ? `${value} DZD` : `${value}`
+                  name === "sales" ? `₦${value}` : `${value}`
                 }
               />
               <Legend
@@ -163,7 +163,7 @@ export default function DashboardChart({ data, period, onPeriodChange }: Dashboa
                   strokeWidth: 1,
                 }}
                 activeDot={{ r: 5 }}
-                name="Ventes (DZD)"
+                name="Sales (₦)"
                 animationDuration={1500}
               />
               <Line
@@ -208,9 +208,9 @@ export default function DashboardChart({ data, period, onPeriodChange }: Dashboa
                   fontFamily: "Montserrat",
                   fill: "#1F2937",
                 }}
-                tickFormatter={(value) => `${value} DZD`}
+                tickFormatter={(value) => `₦${value}`}
                 label={{
-                  value: "Ventes (DZD)",
+                  value: "Sales (₦)",
                   angle: -90,
                   position: "insideLeft",
                   fontSize: 12,
@@ -231,7 +231,7 @@ export default function DashboardChart({ data, period, onPeriodChange }: Dashboa
                 }}
                 tickFormatter={(value) => `${value}`}
                 label={{
-                  value: "Articles vendus",
+                  value: "Items sold",
                   angle: 90,
                   position: "insideRight",
                   fontSize: 12,
@@ -251,7 +251,7 @@ export default function DashboardChart({ data, period, onPeriodChange }: Dashboa
                   padding: "8px",
                 }}
                 formatter={(value, name) =>
-                  name === "sales" ? `${value} DZD` : `${value}`
+                  name === "sales" ? `₦${value}` : `${value}`
                 }
               />
               <Legend
@@ -268,7 +268,7 @@ export default function DashboardChart({ data, period, onPeriodChange }: Dashboa
                 yAxisId="left"
                 dataKey="sales"
                 fill="#10B981"
-                name="Ventes (DZD)"
+                name="Sales (₦)"
                 animationDuration={1500}
                 radius={[4, 4, 0, 0]}
               />

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { PasswordInput } from "@/components/ui/input";
 import { toast } from "sonner";
 import { fetchDataFromAPI } from "@/lib/utils/fetchData";
 import { UserFromAPI } from "@/lib/types/user.types";
@@ -24,7 +25,7 @@ export default function Security({ user }: SecurityProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas");
+      toast.error("The passwords do not match");
       return;
     }
     setIsLoading(true);
@@ -42,7 +43,7 @@ export default function Security({ user }: SecurityProps) {
     if (result.error) {
       toast.error(result.error);
     } else {
-      toast.success("Mot de passe mis à jour avec succès");
+      toast.success("Password updated successfully");
       setPasswordData({
         currentPassword: "",
         newPassword: "",
@@ -56,7 +57,7 @@ export default function Security({ user }: SecurityProps) {
     <div className="space-y-6 bg-gray-100 p-6 rounded-lg shadow-inner mt-6">
       <h2 className="text-xl font-semibold flex items-center gap-2">
         <Shield className="h-6 w-6 text-gray-700" />
-        Sécurité
+        Security
       </h2>
       <div className="space-y-4">
         <div>
@@ -64,10 +65,9 @@ export default function Security({ user }: SecurityProps) {
             htmlFor="currentPassword"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Mot de passe actuel
+            Current password
           </label>
-          <input
-            type="password"
+          <PasswordInput
             id="currentPassword"
             name="currentPassword"
             value={passwordData.currentPassword}
@@ -81,10 +81,9 @@ export default function Security({ user }: SecurityProps) {
             htmlFor="newPassword"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Nouveau mot de passe
+            New password
           </label>
-          <input
-            type="password"
+          <PasswordInput
             id="newPassword"
             name="newPassword"
             value={passwordData.newPassword}
@@ -98,10 +97,9 @@ export default function Security({ user }: SecurityProps) {
             htmlFor="confirmPassword"
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Confirmer le mot de passe
+            Confirm password
           </label>
-          <input
-            type="password"
+          <PasswordInput
             id="confirmPassword"
             name="confirmPassword"
             value={passwordData.confirmPassword}
@@ -115,7 +113,7 @@ export default function Security({ user }: SecurityProps) {
           className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-md transform hover:-translate-y-1 font-semibold text-base"
           disabled={isLoading}
         >
-          {isLoading ? "Enregistrement..." : "Changer le mot de passe"}
+          {isLoading ? "Saving..." : "Change password"}
         </button>
       </div>
     </div>

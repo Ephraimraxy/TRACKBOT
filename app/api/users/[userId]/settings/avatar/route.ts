@@ -1,10 +1,8 @@
 import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/utils/prisma";
 import { auth } from "@/lib/auth";
-import {
-  uploadToCloudinary,
-  deleteFromCloudinary,
-} from "@/lib/helpers/cloudinary";
+import { deleteStoredImage, requireStorage } from "@/lib/helpers/storage";
+import { storageErrorResponse } from "@/lib/utils/storageErrorResponse";
 import { ERROR_MESSAGES } from "@/lib/constants/settings";
 import {
   formatValidationErrors,
@@ -45,7 +43,7 @@ export async function GET(
 
     if (!user) {
       return NextResponse.json(
-        { error: "Utilisateur introuvable" },
+        { error: "User not found" },
         { status: 404 }
       );
     }
@@ -53,7 +51,7 @@ export async function GET(
     // RETURN the response
     return NextResponse.json(
       {
-        message: "L’avatar de l’utilisateur a été récupéré avec succès",
+        message: "The user's avatar was retrieved successfully",
         data: { imagePublicId: user.imagePublicId },
       },
       { status: 200 }
@@ -99,7 +97,7 @@ export async function PUT(
     // Parse and validate the file
     const parsed = updateUserAvatarSchema.safeParse({ file });
     if (!parsed.success) {
-      return formatValidationErrors(parsed, "Fichier invalide");
+      return formatValidationErrors(parsed, "Invalid file");
     }
 
     // Get current imagePublicId
@@ -110,29 +108,29 @@ export async function PUT(
 
     if (!user) {
       return NextResponse.json(
-        { error: "Utilisateur introuvable" },
+        { error: "User not found" },
         { status: 404 }
       );
     }
 
-    // Upload new avatar to Cloudinary
-    const uploaded = await uploadToCloudinary(file, "avatars");
+    // Upload new avatar to R2 storage
+    const uploaded = await requireStorage().uploadImage(file, "avatars");
 
     // Delete old avatar if exists
     if (user.imagePublicId) {
-      await deleteFromCloudinary(user.imagePublicId);
+      await deleteStoredImage(user.imagePublicId);
     }
 
     // Update user with new imagePublicId
     await prisma.user.update({
       where: { id: userId },
-      data: { imagePublicId: uploaded.public_id },
+      data: { imagePublicId: uploaded.key },
     });
 
     return NextResponse.json(
       {
-        message: "Avatar mis à jour avec succès",
-        data: { imagePublicId: uploaded.public_id },
+        message: "Avatar updated successfully",
+        data: { imagePublicId: uploaded.key },
       },
       { status: 200 }
     );
@@ -179,14 +177,14 @@ export async function DELETE(
 
     if (!user) {
       return NextResponse.json(
-        { error: "Utilisateur introuvable" },
+        { error: "User not found" },
         { status: 404 }
       );
     }
 
-    // Delete avatar from Cloudinary if it exists
+    // Delete avatar from R2 storage if it exists
     if (user.imagePublicId) {
-      await deleteFromCloudinary(user.imagePublicId);
+      await deleteStoredImage(user.imagePublicId);
     }
 
     // Remove imagePublicId from the database
@@ -196,7 +194,7 @@ export async function DELETE(
     });
 
     return NextResponse.json(
-      { message: "Avatar supprimé avec succès" },
+      { message: "Avatar deleted successfully" },
       { status: 200 }
     );
   } catch (error) {

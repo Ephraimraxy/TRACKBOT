@@ -54,7 +54,7 @@ export async function GET(
     whereClause.estLu = false;
   } else if (statut && statut !== "tous") {
     return NextResponse.json(
-      { error: 'Paramètre "statut" invalide' },
+      { error: "Invalid \"status\" parameter" },
       { status: 400 }
     );
   }
@@ -64,7 +64,7 @@ export async function GET(
       whereClause.type = type;
     } else {
       return NextResponse.json(
-        { error: 'Paramètre "type" invalide' },
+        { error: "Invalid \"type\" parameter" },
         { status: 400 }
       );
     }
@@ -96,7 +96,7 @@ export async function GET(
 
     return NextResponse.json(
       {
-        message: "Notifications récupérées avec succès",
+        message: "Notifications retrieved successfully",
         pagination,
         data,
       },
@@ -138,7 +138,7 @@ export async function PATCH(
 
   if (typeof estLu !== "boolean") {
     return NextResponse.json(
-      { error: "`estLu` doit être un booléen." },
+      { error: "`estLu` must be a boolean." },
       { status: 400 }
     );
   }
@@ -151,7 +151,7 @@ export async function PATCH(
 
     return NextResponse.json(
       {
-        message: `Notifications mises à jour avec succès`,
+        message: "Notifications updated successfully",
         count: result.count,
       },
       { status: 200 }
@@ -200,7 +200,7 @@ export async function DELETE(
 
     return NextResponse.json(
       {
-        message: "Tous vos produits ont été supprimés avec succès.",
+        message: "All your products were deleted successfully.",
         count: result.count,
       },
       { status: 200 }

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import { ProductFromAPI } from "@/lib/types/product.types";
 import { montserrat } from "@/styles/fonts";
 import {
@@ -45,7 +45,7 @@ export const DetailsModal = ({
           <h2
             className={`text-2xl sm:text-3xl font-extrabold text-gray-900 ${montserrat.className}`}
           >
-            Détails du produit
+            Product details
           </h2>
         </div>
 
@@ -60,7 +60,7 @@ export const DetailsModal = ({
               <div className="flex flex-col sm:flex-row gap-4">
                 <Image
                   src={getImageUrlFromPublicId(product.images[0].imagePublicId)}
-                  alt={`Image principale de ${product.nom}`}
+                  alt={`Main image of ${product.nom}`}
                   width={200}
                   height={200}
                   className="w-full sm:w-48 h-48 object-cover rounded-md shadow-md transition-transform duration-300 hover:scale-105"
@@ -71,7 +71,7 @@ export const DetailsModal = ({
                       <Image
                         key={img.id}
                         src={getImageUrlFromPublicId(img.imagePublicId)}
-                        alt={`Image supplémentaire ${index + 1} de ${
+                        alt={`Additional image ${index + 1} of ${
                           product.nom
                         }`}
                         width={60}
@@ -88,13 +88,12 @@ export const DetailsModal = ({
           {/* General Information Section */}
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <Package className="h-5 w-5 text-gray-600" /> Informations
-              générales
+              <Package className="h-5 w-5 text-gray-600" /> General information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <FileText className="h-4 w-4" /> Nom
+                  <FileText className="h-4 w-4" /> Last name
                 </label>
                 <p className="mt-1 text-base font-medium text-gray-900">
                   {product.nom}
@@ -105,13 +104,13 @@ export const DetailsModal = ({
                   <Tag className="h-4 w-4" /> Type
                 </label>
                 <p className="mt-1 text-base text-gray-600 capitalize">
-                  {product.type || "Non spécifié"}
+                  {product.type || "Not specified"}
                 </p>
               </div>
               {product.objet && (
                 <div>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <FileText className="h-4 w-4" /> Objet
+                    <FileText className="h-4 w-4" /> Subject
                   </label>
                   <p className="mt-1 text-base text-gray-600">
                     {product.objet}
@@ -137,20 +136,20 @@ export const DetailsModal = ({
           {/* Pricing and Stock Section */}
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-gray-600" /> Prix et stock
+              <DollarSign className="h-5 w-5 text-gray-600" /> Price and stock
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <DollarSign className="h-4 w-4" /> Prix
+                  <DollarSign className="h-4 w-4" /> Price
                 </label>
                 <p className="mt-1 text-base font-medium text-gray-900">
-                  DA {product.prix.toFixed(2)}
+                  ₦{product.prix.toFixed(2)}
                 </p>
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <Box className="h-4 w-4" /> Quantité en stock
+                  <Box className="h-4 w-4" /> Quantity in stock
                 </label>
                 <p className="mt-1 text-base font-medium text-gray-900">
                   {product.qteStock}
@@ -158,11 +157,11 @@ export const DetailsModal = ({
               </div>
               <div className="sm:col-span-2">
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <Star className="h-4 w-4" /> Note moyenne
+                  <Star className="h-4 w-4" /> Average rating
                 </label>
                 <p className="mt-1 text-base text-gray-600">
                   {product.noteMoyenne.toFixed(1)} / 5 (
-                  {product.totalEvaluations} évaluations)
+                  {product.totalEvaluations} reviews)
                 </p>
               </div>
             </div>
@@ -176,10 +175,10 @@ export const DetailsModal = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <Calendar className="h-4 w-4" /> Date de création
+                  <Calendar className="h-4 w-4" /> Creation date
                 </label>
                 <p className="mt-1 text-base text-gray-600">
-                  {new Date(product.dateCreation).toLocaleDateString("fr-FR", {
+                  {new Date(product.dateCreation).toLocaleDateString("en-NG", {
                     day: "2-digit",
                     month: "long",
                     year: "numeric",
@@ -188,11 +187,11 @@ export const DetailsModal = ({
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <Calendar className="h-4 w-4" /> Dernière modification
+                  <Calendar className="h-4 w-4" /> Last modified
                 </label>
                 <p className="mt-1 text-base text-gray-600">
                   {new Date(product.dateModification).toLocaleDateString(
-                    "fr-FR",
+                    "en-NG",
                     {
                       day: "2-digit",
                       month: "long",
@@ -207,13 +206,13 @@ export const DetailsModal = ({
           {/* Attributes Section */}
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <Folder className="h-5 w-5 text-gray-600" /> Attributs
+              <Folder className="h-5 w-5 text-gray-600" /> Attributes
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {product.categorie && (
                 <div>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <Folder className="h-4 w-4" /> Catégorie
+                    <Folder className="h-4 w-4" /> Category
                   </label>
                   <p className="mt-1 text-base text-gray-600">
                     {product.categorie.nom}
@@ -223,7 +222,7 @@ export const DetailsModal = ({
               {product.genre && (
                 <div>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <User className="h-4 w-4" /> Genre
+                    <User className="h-4 w-4" /> Gender
                   </label>
                   <p className="mt-1 text-base text-gray-600">
                     {product.genre.nom}
@@ -233,7 +232,7 @@ export const DetailsModal = ({
               {product.couleurs.length > 0 && (
                 <div className="sm:col-span-2">
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <Palette className="h-4 w-4" /> Couleurs disponibles
+                    <Palette className="h-4 w-4" /> Available colours
                   </label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {product.couleurs.map((color) => (
@@ -257,7 +256,7 @@ export const DetailsModal = ({
               {product.tailles.length > 0 && (
                 <div className="sm:col-span-2">
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <Ruler className="h-4 w-4" /> Tailles disponibles
+                    <Ruler className="h-4 w-4" /> Available sizes
                   </label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {product.tailles.map((size) => (
@@ -278,14 +277,13 @@ export const DetailsModal = ({
           {(product.vendeur || product.fournisseur) && (
             <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
               <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <Truck className="h-5 w-5 text-gray-600" /> Fournisseur et
-                vendeur
+                <Truck className="h-5 w-5 text-gray-600" /> Supplier and vendor
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {product.vendeur && (
                   <div>
                     <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                      <User className="h-4 w-4" /> Vendeur
+                      <User className="h-4 w-4" /> Vendor
                     </label>
                     <div className="mt-1 text-base text-gray-600">
                       <p className="font-medium">
@@ -302,10 +300,10 @@ export const DetailsModal = ({
                 {product.fournisseur && (
                   <div>
                     <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                      <Truck className="h-4 w-4" /> Fournisseur
+                      <Truck className="h-4 w-4" /> Supplier
                     </label>
                     <p className="mt-1 text-base text-gray-600">
-                      {product.fournisseur.nom || "Non spécifié"}
+                      {product.fournisseur.nom || "Not specified"}
                     </p>
                   </div>
                 )}
@@ -320,7 +318,7 @@ export const DetailsModal = ({
             onClick={onClose}
             className="bg-gradient-to-r from-gray-800 to-black text-white px-8 py-3 rounded-lg font-semibold hover:from-gray-900 hover:to-black transition-all duration-300 shadow-lg hover:shadow-xl"
           >
-            Fermer
+            Close
           </button>
         </div>
       </div>

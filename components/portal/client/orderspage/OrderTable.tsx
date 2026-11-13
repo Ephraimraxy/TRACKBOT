@@ -1,6 +1,11 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import PaymentStatus from "@/components/common/PaymentStatus";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import Image from "next/image";
+import Link from "next/link";
 
 import { extractDateString } from "@/lib/utils";
 import { OrderFromAPI } from "@/lib/types/order.types";
@@ -15,6 +20,7 @@ export default function OrderTable({
   orders,
   setSelectedOrder,
 }: OrderTableProps) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-col lg:flex-row-reverse gap-6 sm:gap-8">
       {/* Image (100% sur mobile, 40% sur desktop) */}
@@ -23,7 +29,7 @@ export default function OrderTable({
           height={300}
           width={300}
           src="/images/list-orders.png"
-          alt="Historique des commandes"
+          alt={t("Order history")}
           className="w-auto h-auto max-w-full max-h-64 object-contain"
           priority
         />
@@ -39,19 +45,19 @@ export default function OrderTable({
               <thead>
                 <tr>
                   <th className="w-1/5 px-4 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                    N°
+                    <T>No.</T>
                   </th>
                   <th className="w-1/5 px-4 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                    Date
+                    <T>Date</T>
                   </th>
                   <th className="w-1/5 px-4 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                    Statut
+                    <T>Status</T>
                   </th>
                   <th className="w-1/5 px-4 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                    Articles
+                    <T>Items</T>
                   </th>
                   <th className="w-1/5 px-4 sm:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                    Total
+                    <T>Total</T>
                   </th>
                 </tr>
               </thead>
@@ -80,14 +86,26 @@ export default function OrderTable({
                           order.statut!
                         )}`}
                       >
-                        {getStatusLabel(order.statut)}
+                        <T>{getStatusLabel(order.statut)}</T>
                       </span>
+                      <Link
+                        href={`/client/orders/${order.id}/track`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-1 block text-xs text-blue-600 underline"
+                      >
+                        <T>Track</T>
+                      </Link>
+                      <PaymentStatus
+                        orderId={order.id}
+                        payment={order.paiement}
+                        canPay={order.statut !== "ANNULEE"}
+                      />
                     </td>
                     <td className="w-1/5 px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-gray-900">
                       {order.produits.length}
                     </td>
                     <td className="w-1/5 px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold text-gray-900">
-                      {order.montant.toFixed(2)} DA
+                      ₦{order.montant.toFixed(2)}
                     </td>
                   </tr>
                 ))}

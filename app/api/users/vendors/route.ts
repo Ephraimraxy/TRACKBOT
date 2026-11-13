@@ -142,7 +142,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Les vendeurs ont été récupérés avec succès",
+        message: "Vendors were retrieved successfully",
         pagination,
         data,
       },

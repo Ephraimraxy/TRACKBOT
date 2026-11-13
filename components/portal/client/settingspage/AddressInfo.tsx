@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { fetchDataFromAPI } from "@/lib/utils/fetchData";
-import wilayas from "@/lib/data/wilayas";
+import states from "@/lib/data/states";
 import { MapPin } from "lucide-react";
 import { Adresse as Address } from "@prisma/client";
+import { T } from "@/components/i18n/T";
 
 interface AddressInfoProps {
   address: Address | null;
@@ -24,7 +25,7 @@ export default function AddressInfo({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [wilayaInput, setWilayaInput] = useState(formData.wilaya);
-  const [filteredWilayas, setFilteredWilayas] = useState<string[]>(wilayas);
+  const [filteredWilayas, setFilteredWilayas] = useState<string[]>(states);
   const [isWilayaDropdownOpen, setIsWilayaDropdownOpen] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,7 +36,7 @@ export default function AddressInfo({
     const value = e.target.value;
     setWilayaInput(value);
     setFormData({ ...formData, wilaya: value });
-    const filtered = wilayas.filter((wilaya) =>
+    const filtered = states.filter((wilaya) =>
       wilaya.toLowerCase().startsWith(value.toLowerCase())
     );
     setFilteredWilayas(filtered);
@@ -64,7 +65,7 @@ export default function AddressInfo({
     } else {
       onUpdate(result.data!);
       toast.success(
-        result.message || "Informations d'adresse mises à jour avec succès"
+        result.message || "Address information updated successfully"
       );
     }
     setIsLoading(false);
@@ -75,17 +76,16 @@ export default function AddressInfo({
       <div className="p-6 border-b">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <MapPin className="h-5 w-5 text-black" />
-          Informations d&apos;adresse
+          <T>Address information</T>
         </h2>
         <p className="text-sm text-gray-500">
-          Mettez à jour vos informations d&apos;adresse de livraison et de
-          facturation.
+          <T>Update your delivery and billing address information.</T>
         </p>
       </div>
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         <div className="space-y-2">
           <label htmlFor="rue" className="block text-sm font-medium">
-            Adresse
+            <T>Address</T>
           </label>
           <input
             id="rue"
@@ -98,7 +98,7 @@ export default function AddressInfo({
         <div className="grid gap-6 sm:grid-cols-2">
           <div className="space-y-2">
             <label htmlFor="ville" className="block text-sm font-medium">
-              Ville
+              <T>City</T>
             </label>
             <input
               id="ville"
@@ -110,7 +110,7 @@ export default function AddressInfo({
           </div>
           <div className="space-y-2">
             <label htmlFor="wilaya" className="block text-sm font-medium">
-              Wilaya
+              <T>State</T>
             </label>
             <div className="relative">
               <input
@@ -140,7 +140,7 @@ export default function AddressInfo({
                     ))
                   ) : (
                     <li className="px-3 py-2 text-gray-500">
-                      Aucune wilaya trouvée
+                      <T>No state found</T>
                     </li>
                   )}
                 </ul>
@@ -150,7 +150,7 @@ export default function AddressInfo({
         </div>
         <div className="space-y-2">
           <label htmlFor="codePostal" className="block text-sm font-medium">
-            Code postal
+            <T>Postcode</T>
           </label>
           <input
             id="codePostal"
@@ -165,7 +165,7 @@ export default function AddressInfo({
           className="bg-black text-white px-4 py-2 rounded-md hover:bg-black/90 disabled:opacity-50"
           disabled={isLoading}
         >
-          {isLoading ? "Enregistrement..." : "Enregistrer les modifications"}
+          {isLoading ? "Saving..." : "Save changes"}
         </button>
       </form>
     </div>

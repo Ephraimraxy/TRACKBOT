@@ -23,22 +23,22 @@ export default function AdminLayout({
     photoUrl: user?.imagePublicId
       ? getImageUrlFromPublicId(user?.imagePublicId)
       : null,
-    role: "Vendeur" as const,
+    role: "Vendor" as const,
     badgeColor: "bg-green-100 text-green-800",
   };
 
   // Navigation items
   const navItems: NavItem[] = [
     {
-      name: "Tableau de bord",
+      name: "Dashboard",
       href: "/vendor/dashboard",
       iconName: "BarChart2",
     },
-    { name: "Boutique", href: "/vendor/store", iconName: "ShoppingBag" },
-    { name: "Ventes", href: "/vendor/sells", iconName: "DollarSign" },
-    { name: "Commandes", href: "/vendor/orders", iconName: "Package" },
+    { name: "Shop", href: "/vendor/store", iconName: "ShoppingBag" },
+    { name: "Sales", href: "/vendor/sells", iconName: "DollarSign" },
+    { name: "Orders", href: "/vendor/orders", iconName: "Package" },
     { name: "Notifications", href: "/vendor/notifications", iconName: "Bell" },
-    { name: "Paramètres", href: "/vendor/settings", iconName: "Settings" },
+    { name: "Settings", href: "/vendor/settings", iconName: "Settings" },
   ];
 
   return (

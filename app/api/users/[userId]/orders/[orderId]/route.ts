@@ -48,7 +48,7 @@ export async function GET(
 
     return NextResponse.json(
       {
-        message: "Commande récupérée avec succès",
+        message: "Order retrieved successfully",
         data: formattedData,
       },
       { status: 200 }

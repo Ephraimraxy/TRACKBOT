@@ -1,8 +1,13 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useAppDispatch } from "@/redux/hooks";
+import { clearCart } from "@/redux/features/carts/cartsSlice";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 interface LogoutButtonProps {
@@ -14,7 +19,10 @@ export default function LogoutButton({
   isCollapsed,
   isMobile,
 }: LogoutButtonProps) {
+  const { t } = useI18n();
   const router = useRouter();
+  const pathname = usePathname();
+  const dispatch = useAppDispatch();
 
   return (
     <div className="p-4 border-t border-gray-200">
@@ -29,17 +37,19 @@ export default function LogoutButton({
           // Logout logic
           try {
             await signOut({ redirect: false });
-            toast("Déconnexion réussie");
-            router.push("/");
+            dispatch(clearCart());
+            toast(t("Logged out successfully"));
+            // The administrator signs back in at /admin, everyone else starts from the shop.
+            router.push(pathname.startsWith("/admin") ? "/admin" : "/");
             router.refresh();
           } catch (error) {
             console.error("Logout failed:", error);
-            toast("Erreur lors de la déconnexion");
+            toast(t("Error while logging out"));
           }
         }}
       >
         <LogOut className={`${isMobile ? "h-6 w-6" : "h-5 w-5"}`} />
-        {(!isCollapsed || isMobile) && <span>Déconnexion</span>}
+        {(!isCollapsed || isMobile) && <span><T>Log out</T></span>}
       </button>
     </div>
   );

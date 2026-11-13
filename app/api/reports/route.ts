@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Les signalements ont été récupérés avec succès",
+        message: "Reports were retrieved successfully",
         pagination,
         data: formattedData,
       },
@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
 
     const data = formatReportData(newReport);
     return NextResponse.json(
-      { message: "Le signalement a été bien enregistré", data },
+      { message: "The report was saved", data },
       { status: 201 }
     );
   } catch (error) {

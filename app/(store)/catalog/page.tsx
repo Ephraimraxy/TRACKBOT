@@ -1,6 +1,9 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import { useState, useEffect } from "react";
+import { PRICE_MAX } from "@/lib/constants/catalog";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiSliders } from "react-icons/fi";
 
@@ -31,7 +34,7 @@ export default function CatalogPage() {
   );
   const [localPriceRange, setLocalPriceRange] = useState<[number, number]>([
     parseInt(searchParams.get("minPrice") || "0"),
-    parseInt(searchParams.get("maxPrice") || "20000"),
+    parseInt(searchParams.get("maxPrice") || String(PRICE_MAX)),
   ]);
   const [localColor, setLocalColor] = useState<string | null>(
     searchParams.get("color")
@@ -46,7 +49,7 @@ export default function CatalogPage() {
     setLocalCategory(searchParams.get("category"));
     setLocalPriceRange([
       parseInt(searchParams.get("minPrice") || "0"),
-      parseInt(searchParams.get("maxPrice") || "20000"),
+      parseInt(searchParams.get("maxPrice") || String(PRICE_MAX)),
     ]);
     setLocalColor(searchParams.get("color"));
     setLocalSize(searchParams.get("size"));
@@ -60,14 +63,14 @@ export default function CatalogPage() {
         const url = `/api/products/search?${searchParams.toString()}`;
         const response = await fetch(url);
         if (!response.ok) {
-          throw new Error("Erreur lors de la récupération des produits");
+          throw new Error("Error while retrieving products");
         }
         const jsonData: PaginatedApiResponse<ProductFromAPI[]> =
           await response.json();
         setAllProducts(jsonData.data);
         setPagination(jsonData.pagination);
       } catch (error) {
-        console.error("Erreur:", error);
+        console.error("Error:", error);
       } finally {
         setIsLoading(false);
       }
@@ -123,8 +126,14 @@ export default function CatalogPage() {
     else newSearchParams.delete("gender");
     if (category) newSearchParams.set("category", category);
     else newSearchParams.delete("category");
-    newSearchParams.set("minPrice", priceRange[0].toString());
-    newSearchParams.set("maxPrice", priceRange[1].toString());
+    // The full range means "no price filter", so leave it out of the address.
+    if (priceRange[0] === 0 && priceRange[1] >= PRICE_MAX) {
+      newSearchParams.delete("minPrice");
+      newSearchParams.delete("maxPrice");
+    } else {
+      newSearchParams.set("minPrice", priceRange[0].toString());
+      newSearchParams.set("maxPrice", priceRange[1].toString());
+    }
     if (color) newSearchParams.set("color", color);
     else newSearchParams.delete("color");
     if (size) newSearchParams.set("size", size);
@@ -146,7 +155,7 @@ export default function CatalogPage() {
         <div className="flex md:space-x-5 items-stretch">
           <div className="hidden md:block min-w-[270px] max-w-[270px] border border-black/10 rounded-[20px] px-5 md:px-6 py-5 space-y-5 md:space-y-6">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-black text-xl">Filtres</span>
+              <span className="font-bold text-black text-xl"><T>Filters</T></span>
               <FiSliders className="text-2xl text-black/40" />
             </div>
             <Filters
@@ -175,7 +184,7 @@ export default function CatalogPage() {
             selectedCategory={searchParams.get("category")}
             priceRange={[
               parseInt(searchParams.get("minPrice") || "0"),
-              parseInt(searchParams.get("maxPrice") || "20000"),
+              parseInt(searchParams.get("maxPrice") || String(PRICE_MAX)),
             ]}
             selectedColor={searchParams.get("color")}
             selectedSize={searchParams.get("size")}

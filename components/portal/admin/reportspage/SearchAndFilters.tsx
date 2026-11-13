@@ -32,7 +32,7 @@ const SearchAndFilters = ({
         type="text"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Rechercher par client, produit ou contenu signalement"
+        placeholder="Search by customer, product or report content"
         className="w-full px-4 py-2 sm:py-3 bg-white/80 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 text-gray-800 placeholder-gray-500 text-sm sm:text-base"
       />
       <svg
@@ -55,9 +55,9 @@ const SearchAndFilters = ({
         className="w-full px-4 py-2 sm:py-3 bg-white border border-gray-300 rounded-xl shadow-sm text-gray-800 text-xs sm:text-sm hover:bg-gray-50 transition-all duration-300"
       >
         {dateSort === "asc"
-          ? "Plus ancien"
+          ? "Oldest"
           : dateSort === "desc"
-          ? "Plus récent"
+          ? "Newest"
           : "Date"}
       </button>
       {isDateOpen && (
@@ -82,7 +82,7 @@ const SearchAndFilters = ({
             }}
             className="w-full px-4 py-2 text-gray-800 text-xs sm:text-sm hover:bg-gray-100"
           >
-            Plus ancien
+            Oldest
           </button>
           <button
             onClick={() => {
@@ -91,7 +91,7 @@ const SearchAndFilters = ({
             }}
             className="w-full px-4 py-2 text-gray-800 text-xs sm:text-sm hover:bg-gray-100"
           >
-            Plus récent
+            Newest
           </button>
         </motion.div>
       )}
@@ -101,7 +101,7 @@ const SearchAndFilters = ({
         onClick={() => setIsStatusOpen(!isStatusOpen)}
         className="w-full px-4 py-2 sm:py-3 bg-white border border-gray-300 rounded-xl shadow-sm text-gray-800 text-xs sm:text-sm hover:bg-gray-50 transition-all duration-300"
       >
-        {statusFilter || "Statut"}
+        {statusFilter || "Status"}
       </button>
       {isStatusOpen && (
         <motion.div
@@ -116,7 +116,7 @@ const SearchAndFilters = ({
             }}
             className="w-full px-4 py-2 text-gray-800 text-xs sm:text-sm hover:bg-gray-100"
           >
-            Statut
+            Status
           </button>
           {Object.values(SignalementStatut).map((status) => (
             <button

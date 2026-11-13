@@ -49,7 +49,7 @@ export default function NotificationsPage() {
 
     if (!userId) {
       setIsLoading(false);
-      toast.error("Vous devez être connecté pour accéder à cette page.");
+      toast.error("You must be logged in to access this page.");
       console.log("No user ID found in session");
       return;
     }
@@ -72,7 +72,7 @@ export default function NotificationsPage() {
       setTotalPages(result.data.pagination.totalPages);
     } else {
       toast.error(
-        result.error || "Erreur lors du chargement des notifications"
+        result.error || "Error while loading notifications"
       );
     }
     setIsLoading(false);
@@ -91,7 +91,7 @@ export default function NotificationsPage() {
   const markAllAsRead = async () => {
     const userId = session?.user.id;
     if (!userId) {
-      toast.error("Vous devez être connecté pour effectuer cette action.");
+      toast.error("You must be logged in to perform this action.");
       return;
     }
 
@@ -106,13 +106,13 @@ export default function NotificationsPage() {
         setNotifications((prev) =>
           prev.map((notif) => ({ ...notif, estLu: true }))
         );
-        toast.success("Toutes les notifications ont été marquées comme lues !");
+        toast.success("All notifications were marked as read!");
         refetchNotifications();
       } else {
-        toast.error("Erreur lors de la mise à jour des notifications");
+        toast.error("Error while updating the notifications");
       }
     } catch {
-      toast.error("Erreur réseau lors de la mise à jour");
+      toast.error("Network error during update");
     }
   };
 
@@ -120,7 +120,7 @@ export default function NotificationsPage() {
   const deleteAllNotifications = async () => {
     const userId = session?.user.id;
     if (!userId) {
-      toast.error("Vous devez être connecté pour effectuer cette action.");
+      toast.error("You must be logged in to perform this action.");
       return;
     }
 
@@ -134,13 +134,13 @@ export default function NotificationsPage() {
         setTotalItems(0);
         setTotalPages(1);
         setShowDeleteAllModal(false);
-        toast.success("Toutes les notifications ont été supprimées !");
+        toast.success("All notifications were deleted!");
         refetchNotifications();
       } else {
-        toast.error("Erreur lors de la suppression des notifications");
+        toast.error("Error while deleting the notifications");
       }
     } catch {
-      toast.error("Erreur réseau lors de la suppression");
+      toast.error("Network error during deletion");
     }
   };
 
@@ -173,7 +173,7 @@ export default function NotificationsPage() {
           </h1>
         </div>
         <p className="mb-6 text-base sm:text-lg text-gray-700">
-          Suivez les dernières activités et mises à jour ici.
+          Follow the latest activity and updates here.
         </p>
 
         {/* Filters and Actions */}

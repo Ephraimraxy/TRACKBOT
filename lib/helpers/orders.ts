@@ -57,6 +57,7 @@ export function getOrderSelect() {
         id: true,
         statut: true,
         date: true,
+        canal: true,
       },
     },
   };

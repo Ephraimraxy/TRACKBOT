@@ -19,7 +19,7 @@ export default function WelcomeCard({ firstName, lastName }: WelcomeCardProps) {
           <h1
             className={`welcome-text text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight ${montserrat.className} relative z-10`}
           >
-            Bienvenue,
+            Welcome,
           </h1>
           <p
             className={`name-text text-lg sm:text-xl mt-2 sm:mt-4 ${montserrat.className}`}
@@ -27,7 +27,7 @@ export default function WelcomeCard({ firstName, lastName }: WelcomeCardProps) {
             {firstName} {lastName}
           </p>
           <p className="greeting-text text-base sm:text-lg mt-2 sm:mt-4 text-gray-300">
-            Journée pleine de bonheur
+            A day full of happiness
           </p>
         </div>
         <div className="flex-shrink-0">

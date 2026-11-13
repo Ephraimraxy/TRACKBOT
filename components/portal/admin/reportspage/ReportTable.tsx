@@ -14,16 +14,16 @@ const ReportTable = ({
       <thead className="bg-black text-white">
         <tr>
           <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-            Client
+            Customer
           </th>
           <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden md:table-cell">
-            Produit
+            Product
           </th>
           <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden md:table-cell">
             Date
           </th>
           <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-            Statut
+            Status
           </th>
         </tr>
       </thead>
@@ -43,7 +43,7 @@ const ReportTable = ({
               </div>
             </td>
             <td className="px-4 py-2 sm:px-6 sm:py-4 text-xs sm:text-sm text-gray-900 hidden md:table-cell">
-              {report.produit?.nom || "Aucun produit"}
+              {report.produit?.nom || "No products"}
             </td>
             <td className="px-4 py-2 sm:px-6 sm:py-4 text-xs sm:text-sm text-gray-900 hidden md:table-cell">
               {extractDateString(report.date)}

@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
@@ -20,6 +22,7 @@ import { fetchPaginatedDataFromAPI } from "@/lib/utils/fetchData";
 import { extractDateString } from "@/lib/utils";
 
 export default function OrderHistoryPage(): JSX.Element {
+  const { t } = useI18n();
   const [orders, setOrders] = useState<OrderFromAPI[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchDebounced, setSearchDebounced] = useState<string>("");
@@ -109,13 +112,13 @@ export default function OrderHistoryPage(): JSX.Element {
 
         if (ordersResult.error) {
           console.error(ordersResult.error);
-          toast.error("Erreur lors de la récupération des commandes.");
+          toast.error(t("Error while retrieving orders."));
           return;
         }
 
         const ordersData = ordersResult.data;
         if (!ordersData) {
-          toast.error("Aucune commande trouvée.");
+          toast.error(t("No orders found."));
           return;
         }
 
@@ -126,7 +129,7 @@ export default function OrderHistoryPage(): JSX.Element {
       } catch (error) {
         console.error("Failed to fetch orders:", error);
         toast.error(
-          "Une erreur est survenue lors de la récupération des commandes."
+          t("An error occurred while retrieving orders.")
         );
       } finally {
         setIsLoading(false);
@@ -140,11 +143,11 @@ export default function OrderHistoryPage(): JSX.Element {
     const data = orders.map((order) => ({
       ID: order.id,
       Date: extractDateString(order.date),
-      "Total (DA)": order.montant.toFixed(2),
+      "Total (₦)": order.montant.toFixed(2),
       Articles: order.produits
         .map(
           (produit) =>
-            `${produit.nomProduit} (${produit.couleur?.nom}, ${produit.taille?.nom}): ${produit.quantite} x ${produit.prixUnit} DA`
+            `${produit.nomProduit} (${produit.couleur?.nom}, ${produit.taille?.nom}): ${produit.quantite} x ₦${produit.prixUnit}`
         )
         .join(" | "),
       Adresse: `${order.adresse?.rue ? order.adresse.rue + ", " : ""}${
@@ -169,9 +172,9 @@ export default function OrderHistoryPage(): JSX.Element {
     }
     worksheet["!cols"] = [5, 20, 25, 15, 15, 40].map((w) => ({ wch: w }));
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Historique Commandes");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Order history");
     XLSX.writeFile(workbook, "historique_commandes.xlsx");
-    toast.success("Historique des commandes exporté avec succès !");
+    toast.success(t("Order history exported successfully!"));
   };
 
   const handleSort = (
@@ -235,8 +238,8 @@ export default function OrderHistoryPage(): JSX.Element {
           </>
         ) : (
           <EmptyState
-            title="Aucune commande trouvée"
-            description="Vous n'avez pas encore effectué de commande."
+            title={t("No orders found")}
+            description="You have not placed an order yet."
           />
         )}
 

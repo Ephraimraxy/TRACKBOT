@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import Link from "next/link";
 import Image from "next/image";
 
@@ -11,6 +13,7 @@ import { RootState } from "@/redux/store";
 import { useAppSelector } from "@/redux/hooks";
 
 const CartBtn = () => {
+  const { t } = useI18n();
   const { cart } = useAppSelector((state: RootState) => state.carts);
 
   return (
@@ -21,7 +24,7 @@ const CartBtn = () => {
           src="/icons/cart.svg"
           height={30}
           width={30}
-          alt="cart"
+          alt={t("cart")}
           className="cursor-pointer max-h-[22px] sm:max-h-[24px] md:max-h-[26px] lg:max-h-[28px]"
         />
         {cart && cart.totalQuantities > 0 && (

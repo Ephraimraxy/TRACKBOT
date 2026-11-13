@@ -41,14 +41,14 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
     } else {
       onUpdate(result.data!);
       await update({ ...session });
-      toast.success("Informations personnelles mises à jour avec succès");
+      toast.success("Personal information updated successfully");
     }
     setIsLoading(false);
   };
 
   const handleVerifyEmail = async () => {
     if (verificationCode.length !== 6) {
-      toast.error("Le code doit contenir 6 caractères");
+      toast.error("The code must contain 6 characters");
       return;
     }
     setIsVerifying(true);
@@ -70,7 +70,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
       setVerificationCode("");
       onUpdate({ ...user, email: user.emailEnAttente!, emailEnAttente: null });
       await update({ ...session });
-      toast.success("Email vérifié avec succès");
+      toast.success("Email verified successfully");
     }
     setIsVerifying(false);
   };
@@ -81,17 +81,17 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <User className="h-5 w-5 text-black" />
-            Informations personnelles
+            Personal information
           </h2>
           <p className="text-sm text-gray-500">
-            Mettez à jour vos informations personnelles et de contact.
+            Update your personal and contact information.
           </p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="prenom" className="block text-sm font-medium">
-                Prénom
+                First name
               </label>
               <input
                 id="prenom"
@@ -103,7 +103,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
             </div>
             <div className="space-y-2">
               <label htmlFor="nom" className="block text-sm font-medium">
-                Nom
+                Last name
               </label>
               <input
                 id="nom"
@@ -132,7 +132,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
             className="bg-black text-white px-4 py-2 rounded-md hover:bg-black/90 disabled:opacity-50"
             disabled={isLoading}
           >
-            {isLoading ? "Enregistrement..." : "Enregistrer les modifications"}
+            {isLoading ? "Saving..." : "Save changes"}
           </button>
         </form>
       </div>
@@ -142,18 +142,17 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
         <div className="mt-6 p-6 bg-white rounded-xl border shadow-sm">
           <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
             <Mail className="h-5 w-5 text-black" />
-            Vérification de l&apos;adresse email
+            Email address verification
           </h3>
           <p className="text-sm text-gray-700">
-            Un code de vérification à 6 chiffres a été envoyé à :{" "}
+            A 6-digit verification code was sent to:{" "}
             <span className="font-medium">{user.emailEnAttente}</span>
           </p>
           <p className="text-sm text-gray-600">
-            Veuillez saisir ce code ci-dessous pour confirmer votre nouvelle
-            adresse email.
+            Please enter this code below to confirm your new email address.
             <br />
             <span className="text-red-500 font-medium">
-              ⚠️ Le code est valable pendant 5 minutes.
+              ⚠️ The code is valid for 5 minutes.
             </span>
           </p>
 
@@ -162,7 +161,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
               type="text"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
-              placeholder="Entrez le code"
+              placeholder="Enter the code"
               className="w-full px-3 py-2 border rounded-md"
               maxLength={6}
             />
@@ -171,7 +170,7 @@ export default function PersonalInfo({ user, onUpdate }: PersonalInfoProps) {
               className="bg-black text-white px-4 py-2 rounded-md hover:bg-black/90 disabled:opacity-50"
               disabled={isVerifying || verificationCode.length !== 6}
             >
-              {isVerifying ? "Vérification..." : "Vérifier"}
+              {isVerifying ? "Verifying..." : "Verify"}
             </button>
           </div>
         </div>

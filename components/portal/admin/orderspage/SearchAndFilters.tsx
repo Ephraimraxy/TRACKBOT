@@ -89,7 +89,7 @@ export default function SearchAndFilters({
           onChange={(e) => setLocalSearch(e.target.value)}
           onFocus={() => setIsSearchFocused(true)}
           onBlur={() => setIsSearchFocused(false)}
-          placeholder="Rechercher par ID, nom, prénom ou produit..."
+          placeholder="Search by ID, last name, first name or product..."
           className={`w-full px-4 py-2 sm:py-3 bg-white/80 backdrop-blur-md border ${
             isSearchFocused ? "border-blue-400" : "border-gray-300"
           } rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] focus:ring-2 focus:ring-gradient-to-r focus:from-blue-400 focus:to-blue-600 focus:border-transparent transition-all duration-300 text-gray-800 placeholder-gray-500 hover:shadow-[0_6px_25px_rgba(0,0,0,0.1)] text-sm sm:text-base`}
@@ -153,8 +153,8 @@ export default function SearchAndFilters({
           <span>
             {sortConfig?.key === "date"
               ? sortConfig.direction === "asc"
-                ? "Ancien"
-                : "Récent"
+                ? "Old"
+                : "Recent"
               : "Date"}
           </span>
           <svg
@@ -208,7 +208,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Ancien
+                Old
               </button>
               <button
                 onClick={(e) => {
@@ -222,7 +222,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Récent
+                Recent
               </button>
             </motion.div>
           )}
@@ -248,9 +248,9 @@ export default function SearchAndFilters({
           <span>
             {sortConfig?.key === "statut"
               ? sortConfig.direction === "asc"
-                ? "Croissant"
-                : "Décroissant"
-              : "Statut"}
+                ? "Ascending"
+                : "Descending"
+              : "Status"}
           </span>
           <svg
             className={`w-4 h-4 transition-transform duration-300 ${
@@ -289,7 +289,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Statut
+                Status
               </button>
               <button
                 onClick={(e) => {
@@ -303,7 +303,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Croissant
+                Ascending
               </button>
               <button
                 onClick={(e) => {
@@ -318,7 +318,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Décroissant
+                Descending
               </button>
             </motion.div>
           )}
@@ -344,8 +344,8 @@ export default function SearchAndFilters({
           <span>
             {sortConfig?.key === "montant"
               ? sortConfig.direction === "asc"
-                ? "Croissant"
-                : "Décroissant"
+                ? "Ascending"
+                : "Descending"
               : "Total"}
           </span>
           <svg
@@ -400,7 +400,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Croissant
+                Ascending
               </button>
               <button
                 onClick={(e) => {
@@ -415,7 +415,7 @@ export default function SearchAndFilters({
                     : ""
                 }`}
               >
-                Décroissant
+                Descending
               </button>
             </motion.div>
           )}

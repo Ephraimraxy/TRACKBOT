@@ -3,40 +3,40 @@ import { CategoryFromAPI } from "@/lib/types/category.types";
 const categories: CategoryFromAPI[] = [
   {
     id: "1",
-    nom: "Hauts",
+    nom: "Tops",
     description:
-      "T-shirts, chemises, pulls et autres vêtements pour le haut du corps.",
+      "T-shirts, shirts, sweaters and other upper-body clothing.",
   },
   {
     id: "2",
-    nom: "Bas",
+    nom: "Bottoms",
     description:
-      "Pantalons, jeans, shorts et autres vêtements pour le bas du corps.",
+      "Trousers, jeans, shorts and other lower-body clothing.",
   },
   {
     id: "3",
-    nom: "Robes & Ensembles",
-    description: "Robes et ensembles assortis pour toutes occasions.",
+    nom: "Dresses & Sets",
+    description: "Dresses and matching sets for all occasions.",
   },
   {
     id: "4",
-    nom: "Vestes & Manteaux",
-    description: "Vestes légères, manteaux d'hiver et blousons.",
+    nom: "Jackets & Coats",
+    description: "Light jackets, winter coats and bomber jackets.",
   },
   {
     id: "5",
-    nom: "Chaussures",
-    description: "Baskets, bottes, sandales et autres types de chaussures.",
+    nom: "Footwear",
+    description: "Sneakers, boots, sandals and other types of footwear.",
   },
   {
     id: "6",
-    nom: "Accessoires",
-    description: "Sacs, écharpes, ceintures et autres compléments de tenue.",
+    nom: "Accessories",
+    description: "Bags, scarves, belts and other accessories.",
   },
   {
     id: "7",
-    nom: "Autres",
-    description: "Articles divers ne rentrant pas dans les autres catégories.",
+    nom: "Other",
+    description: "Miscellaneous items that do not fit in other categories.",
   },
 ];
 

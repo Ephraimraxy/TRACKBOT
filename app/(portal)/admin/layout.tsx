@@ -23,24 +23,26 @@ export default function AdminLayout({
     photoUrl: user?.imagePublicId
       ? getImageUrlFromPublicId(user?.imagePublicId)
       : null,
-    role: "Administrateur" as const,
+    role: "Administrator" as const,
     badgeColor: "bg-blue-100 text-blue-800",
   };
 
   // Navigation items
   const navItems: NavItem[] = [
     {
-      name: "Tableau de bord",
+      name: "Dashboard",
       href: "/admin/dashboard",
       iconName: "BarChart2",
     },
-    { name: "Gestion", href: "/admin/management", iconName: "Briefcase" },
-    { name: "Boutique", href: "/admin/store", iconName: "ShoppingBag" },
-    { name: "Ventes", href: "/admin/sells", iconName: "DollarSign" },
-    { name: "Commandes", href: "/admin/orders", iconName: "Package" },
-    { name: "Signalements", href: "/admin/reports", iconName: "ShieldAlert" },
+    { name: "Management", href: "/admin/management", iconName: "Briefcase" },
+    { name: "Shop", href: "/admin/store", iconName: "ShoppingBag" },
+    { name: "Sales", href: "/admin/sells", iconName: "DollarSign" },
+    { name: "Orders", href: "/admin/orders", iconName: "Package" },
+    { name: "Deliveries", href: "/admin/deliveries", iconName: "Truck" },
+    { name: "Chatbot FAQ", href: "/admin/faq", iconName: "HelpCircle" },
+    { name: "Reports", href: "/admin/reports", iconName: "ShieldAlert" },
     { name: "Notifications", href: "/admin/notifications", iconName: "Bell" },
-    { name: "Paramètres", href: "/admin/settings", iconName: "Settings" },
+    { name: "Settings", href: "/admin/settings", iconName: "Settings" },
   ];
 
   return (

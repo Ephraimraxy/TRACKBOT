@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     // Verification logic
     if (!user) {
       return NextResponse.json(
-        { error: "Utilisateur non trouvé" },
+        { error: "User not found" },
         { status: 404 }
       );
     }
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     if (!user.emailEnAttente) {
       return NextResponse.json(
         {
-          error: "Aucune adresse e-mail en attente de vérification.",
+          error: "No email address is pending verification.",
         },
         { status: 400 }
       );
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
     if (newEmail !== user.emailEnAttente) {
       return NextResponse.json(
-        { error: "L'adresse e-mail ne correspond pas à celle en attente." },
+        { error: "The email address does not match the pending one." },
         { status: 400 }
       );
     }
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "La vérification n'a pas été initiée pour cette adresse e-mail.",
+            "Verification was not initiated for this email address.",
         },
         { status: 400 }
       );
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Le code de vérification a expiré. Veuillez en générer un nouveau.",
+            "The verification code has expired. Please generate a new one.",
         },
         { status: 400 }
       );
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     const isValid = verifyTOTPCode(code, user.TOTPSecret.secret);
     if (!isValid) {
       return NextResponse.json(
-        { error: "Code de vérification invalide" },
+        { error: "Invalid verification code" },
         { status: 400 }
       );
     }
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     ]);
 
     return NextResponse.json(
-      { message: "Adresse e-mail vérifiée avec succès" },
+      { message: "Email address verified successfully" },
       { status: 200 }
     );
   } catch (error) {

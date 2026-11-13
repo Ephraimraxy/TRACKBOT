@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ICON_MAP } from "./IconMapping";
 import { NavItem } from "@/lib/types/ui/portalSideBar.types";
+import { T } from "@/components/i18n/T";
 
 interface NavigationMenuProps {
   navItems: NavItem[];
@@ -45,7 +46,7 @@ export default function NavigationMenu({
                 isActive ? "text-black" : "text-gray-500"
               }`}
             />
-            {(!isCollapsed || isMobile) && <span>{item.name}</span>}
+            {(!isCollapsed || isMobile) && <span><T>{item.name}</T></span>}
           </Link>
         );
       })}

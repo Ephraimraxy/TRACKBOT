@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 // Utils
 import { cn } from "@/lib/utils";
 
@@ -23,7 +25,7 @@ const SizeSelection = ({ sizes }: { sizes: Size[] }) => {
   return (
     <div className="flex flex-col">
       <span className="text-sm sm:text-base text-black/60 mb-4">
-        Choisissez la taille
+        <T>Choose the size</T>
       </span>
       <div className="flex items-center flex-wrap lg:space-x-3">
         {sizes.map((size, index) => (

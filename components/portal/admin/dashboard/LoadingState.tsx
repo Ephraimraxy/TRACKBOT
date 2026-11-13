@@ -9,7 +9,7 @@ export default function LoadingState() {
         <h2
           className={`text-xl font-bold text-gray-900 ${montserrat.className}`}
         >
-          Chargement du tableau de bord...
+          Loading dashboard...
         </h2>
       </div>
     </div>

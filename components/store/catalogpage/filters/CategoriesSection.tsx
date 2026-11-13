@@ -1,5 +1,8 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useEffect, useState } from "react";
+
 import {
   Accordion,
   AccordionContent,
@@ -10,39 +13,40 @@ import { MdKeyboardArrowRight } from "react-icons/md";
 
 type Category = {
   nom: string;
-  description: string;
+  description: string | null;
 };
 
-const categoriesData: Category[] = [
+// Shown until the real list arrives from the shop (or if it cannot be loaded).
+const fallbackCategories: Category[] = [
   {
-    nom: "Hauts",
+    nom: "Tops",
     description:
-      "T-shirts, chemises, pulls et autres vêtements pour le haut du corps.",
+      "T-shirts, shirts, sweaters and other upper-body clothing.",
   },
   {
-    nom: "Bas",
+    nom: "Bottoms",
     description:
-      "Pantalons, jeans, shorts et autres vêtements pour le bas du corps.",
+      "Trousers, jeans, shorts and other lower-body clothing.",
   },
   {
-    nom: "Robes & Ensembles",
-    description: "Robes et ensembles assortis pour toutes occasions.",
+    nom: "Dresses & Sets",
+    description: "Dresses and matching sets for all occasions.",
   },
   {
-    nom: "Vestes & Manteaux",
-    description: "Vestes légères, manteaux d'hiver et blousons.",
+    nom: "Jackets & Coats",
+    description: "Light jackets, winter coats and bomber jackets.",
   },
   {
-    nom: "Chaussures",
-    description: "Baskets, bottes, sandales et autres types de chaussures.",
+    nom: "Footwear",
+    description: "Sneakers, boots, sandals and other types of footwear.",
   },
   {
-    nom: "Accessoires",
-    description: "Sacs, écharpes, ceintures et autres compléments de tenue.",
+    nom: "Accessories",
+    description: "Bags, scarves, belts and other accessories.",
   },
   {
-    nom: "Autres",
-    description: "Articles divers ne rentrant pas dans les autres catégories.",
+    nom: "Other",
+    description: "Miscellaneous items that do not fit in other categories.",
   },
 ];
 
@@ -55,6 +59,26 @@ export default function CategoriesSection({
   selectedNom,
   onSelect,
 }: CategoriesSectionProps) {
+  const [categoriesData, setCategories] = useState<Category[]>(fallbackCategories);
+
+  // The categories come from the shop itself, so a category the owner adds appears here too.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/metadata/categories");
+        if (!res.ok) return;
+        const { data } = await res.json();
+        if (!cancelled && Array.isArray(data) && data.length > 0) setCategories(data);
+      } catch {
+        // Keep the fallback list.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleSelect = (nom: string) => {
     onSelect(selectedNom === nom ? null : nom); // Toggle selection
   };
@@ -63,7 +87,7 @@ export default function CategoriesSection({
     <Accordion type="single" collapsible defaultValue="filter-categories">
       <AccordionItem value="filter-categories" className="border-none">
         <AccordionTrigger className="text-black font-bold text-xl hover:no-underline p-0 py-0.5">
-          Catégories
+          <T>Categories</T>
         </AccordionTrigger>
         <AccordionContent className="pt-4 pb-0">
           <div className="flex flex-col space-y-1 text-black/80">
@@ -77,11 +101,13 @@ export default function CategoriesSection({
                       : "hover:bg-black/10"
                   }`}
                 >
-                  {category.nom} <MdKeyboardArrowRight />
+                  <T>{category.nom}</T> <MdKeyboardArrowRight />
                 </button>
-                <div className="absolute z-10 hidden group-hover:block w-64 bg-white border border-gray-200 shadow-md text-sm text-gray-700 p-2 rounded-md top-full mt-1 left-0">
-                  {category.description}
-                </div>
+                {category.description && (
+                  <div className="absolute z-10 hidden group-hover:block w-64 bg-white border border-gray-200 shadow-md text-sm text-gray-700 p-2 rounded-md top-full mt-1 left-0">
+                    <T>{category.description}</T>
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -1,9 +1,11 @@
+import { T } from "@/components/i18n/T";
 import { useState } from "react";
 import { toast } from "sonner";
 import { fetchDataFromAPI } from "@/lib/utils/fetchData";
 import { Shield } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { PASSWORD_MIN } from "@/lib/constants/password";
 
 interface SecurityProps {
   userId: string;
@@ -26,11 +28,11 @@ export default function Security({ userId }: SecurityProps) {
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Les nouveaux mots de passe ne correspondent pas");
+      toast.error("The new passwords do not match");
       return;
     }
-    if (passwordData.newPassword.length < 8) {
-      toast.error("Le mot de passe doit contenir au moins 8 caractères");
+    if (passwordData.newPassword.length < PASSWORD_MIN) {
+      toast.error(`The password must contain at least ${PASSWORD_MIN} characters`);
       return;
     }
     setIsLoading(true);
@@ -45,7 +47,7 @@ export default function Security({ userId }: SecurityProps) {
     if (result.error) {
       toast.error(result.error);
     } else {
-      toast.success("Mot de passe mis à jour avec succès");
+      toast.success("Password updated successfully");
       setPasswordData({
         currentPassword: "",
         newPassword: "",
@@ -58,7 +60,7 @@ export default function Security({ userId }: SecurityProps) {
   const handleDeleteAccount = async () => {
     if (
       confirm(
-        "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible."
+        "Are you sure you want to delete your account? This action cannot be undone."
       )
     ) {
       setIsLoading(true);
@@ -69,7 +71,7 @@ export default function Security({ userId }: SecurityProps) {
         toast.error(result.error);
       } else {
         await signOut({ redirect: false });
-        toast.success("Compte supprimé avec succès");
+        toast.success("Account deleted successfully");
         router.push("/");
         router.refresh();
       }
@@ -82,10 +84,10 @@ export default function Security({ userId }: SecurityProps) {
       <div className="p-6 border-b">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Shield className="h-5 w-5 text-black" />
-          Sécurité
+          <T>Security</T>
         </h2>
         <p className="text-sm text-gray-500">
-          Mettez à jour votre mot de passe ou supprimez votre compte.
+          <T>Update your password or delete your account.</T>
         </p>
       </div>
       <form onSubmit={handlePasswordSubmit} className="p-6 space-y-6">
@@ -94,7 +96,7 @@ export default function Security({ userId }: SecurityProps) {
             htmlFor="currentPassword"
             className="block text-sm font-medium"
           >
-            Mot de passe actuel
+            <T>Current password</T>
           </label>
           <input
             id="currentPassword"
@@ -108,7 +110,7 @@ export default function Security({ userId }: SecurityProps) {
         </div>
         <div className="space-y-2">
           <label htmlFor="newPassword" className="block text-sm font-medium">
-            Nouveau mot de passe
+            <T>New password</T>
           </label>
           <input
             id="newPassword"
@@ -125,7 +127,7 @@ export default function Security({ userId }: SecurityProps) {
             htmlFor="confirmPassword"
             className="block text-sm font-medium"
           >
-            Confirmer le nouveau mot de passe
+            <T>Confirm new password</T>
           </label>
           <input
             id="confirmPassword"
@@ -142,7 +144,7 @@ export default function Security({ userId }: SecurityProps) {
           className="bg-black text-white px-4 py-2 rounded-md hover:bg-black/90 disabled:opacity-50"
           disabled={isLoading}
         >
-          {isLoading ? "Mise à jour..." : "Mettre à jour le mot de passe"}
+          {isLoading ? "Updating..." : "Update password"}
         </button>
       </form>
       <div className="p-6 border-t">
@@ -151,7 +153,7 @@ export default function Security({ userId }: SecurityProps) {
           className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50"
           disabled={isLoading}
         >
-          Supprimer le compte
+          <T>Delete account</T>
         </button>
       </div>
     </div>

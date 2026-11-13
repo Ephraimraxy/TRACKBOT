@@ -1,5 +1,9 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import DeliveryUpdates from "@/components/portal/client/settingspage/DeliveryUpdates";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -7,14 +11,14 @@ import { montserrat } from "@/styles/fonts";
 import { fetchDataFromAPI } from "@/lib/utils/fetchData";
 import { UserFromAPI } from "@/lib/types/user.types";
 import { getImageUrlFromPublicId } from "@/lib/utils";
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import {
+  Bell,
   Camera,
   User,
   MapPin,
   Phone,
   Shield,
-  CreditCard,
   Settings,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -22,9 +26,9 @@ import PersonalInfo from "@/components/portal/client/settingspage/PersonalInfo";
 import AddressInfo from "@/components/portal/client/settingspage/AddressInfo";
 import ContactInfo from "@/components/portal/client/settingspage/ContactInfo";
 import Security from "@/components/portal/client/settingspage/Security";
-import VendorSettings from "@/components/portal/client/settingspage/VendorSettings";
 
 export default function SettingsPage() {
+  const { t } = useI18n();
   const { data: session, status } = useSession();
   const [user, setUser] = useState<UserFromAPI | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -38,7 +42,7 @@ export default function SettingsPage() {
     const userId = session?.user.id;
     if (!userId) {
       setIsLoading(false);
-      toast.error("Vous devez être connecté pour accéder à cette page.");
+      toast.error(t("You must be logged in to access this page."));
       console.log("No user ID found in session");
       return;
     }
@@ -94,14 +98,14 @@ export default function SettingsPage() {
     return (
       <div className="min-h-[calc(100dvh-125px)] bg-[#edeef1] flex items-center justify-center text-center py-12">
         <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-gray-800 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-        <span className="sr-only">Chargement...</span>
+        <span className="sr-only"><T>Loading...</T></span>
       </div>
     );
   }
   if (!user)
     return (
       <div className="min-h-[calc(100dvh-125px)] bg-[#edeef1] flex items-center justify-center text-center py-12">
-        <div>Erreur: utilisateur non trouvé</div>
+        <div><T>Error: user not found</T></div>
       </div>
     );
 
@@ -120,13 +124,12 @@ export default function SettingsPage() {
             <h1
               className={`text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.className}`}
             >
-              Paramètres du compte
+              <T>Account settings</T>
             </h1>
           </div>
         </div>
         <p className="mb-6 text-lg text-gray-700">
-          Gérez vos informations personnelles, vos paramètres de sécurité et vos
-          options de vendeur ici.
+          <T>Manage your personal information, security settings and vendor options here.</T>
         </p>
         <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] lg:grid-cols-[250px_1fr] gap-8">
           <aside className="shrink-0">
@@ -137,7 +140,7 @@ export default function SettingsPage() {
                     {profileImage ? (
                       <Image
                         src={profileImage}
-                        alt="Profil"
+                        alt={t("Profile")}
                         width={96}
                         height={96}
                         className="object-cover w-full h-full"
@@ -167,15 +170,11 @@ export default function SettingsPage() {
               </div>
               <div className="flex flex-col w-full gap-1">
                 {[
-                  { value: "personal", icon: User, label: "Informations" },
-                  { value: "address", icon: MapPin, label: "Adresse" },
+                  { value: "personal", icon: User, label: "Information" },
+                  { value: "address", icon: MapPin, label: "Address" },
                   { value: "contact", icon: Phone, label: "Contact" },
-                  { value: "security", icon: Shield, label: "Sécurité" },
-                  {
-                    value: "vendor",
-                    icon: CreditCard,
-                    label: "Paramètres vendeur",
-                  },
+                  { value: "security", icon: Shield, label: "Security" },
+                  { value: "notifications", icon: Bell, label: "Delivery updates" },
                 ].map((tab) => (
                   <button
                     key={tab.value}
@@ -187,7 +186,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <tab.icon className="h-4 w-4" />
-                    {tab.label}
+                    <T>{tab.label}</T>
                   </button>
                 ))}
               </div>
@@ -210,14 +209,7 @@ export default function SettingsPage() {
               <ContactInfo user={user} onUpdate={setUser} />
             )}
             {activeTab === "security" && <Security userId={user.id} />}
-            {activeTab === "vendor" && (
-              <VendorSettings
-                user={user}
-                onUpdate={(updatedVendorStatus) =>
-                  setUser({ ...user, vendeur: updatedVendorStatus })
-                }
-              />
-            )}
+            {activeTab === "notifications" && <DeliveryUpdates userId={user.id} />}
           </div>
         </div>
       </div>

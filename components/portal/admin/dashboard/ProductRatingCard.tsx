@@ -24,7 +24,7 @@ export default function ProductRatingCard({ title, productName, rating, totalEva
             {productName}
           </p>
           <p className="text-xs sm:text-sm text-gray-600">
-            {rating}/5 • {totalEvaluations} avis
+            {rating}/5 • {totalEvaluations} reviews
           </p>
         </div>
       </div>

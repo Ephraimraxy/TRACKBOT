@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import { useState, useEffect } from "react";
 import {
   Drawer,
@@ -75,12 +77,12 @@ const MobileFilters = ({
         <DrawerContent className="max-h-[90%]">
           <DrawerHeader>
             <div className="flex items-center justify-between">
-              <span className="font-bold text-black text-xl">Filtres</span>
+              <span className="font-bold text-black text-xl"><T>Filters</T></span>
               <FiSliders className="text-2xl text-black/40" />
             </div>
-            <DrawerTitle className="hidden">Filtres</DrawerTitle>
+            <DrawerTitle className="hidden"><T>Filters</T></DrawerTitle>
             <DrawerDescription className="hidden">
-              Sélectionnez vos filtres
+              <T>Select your filters</T>
             </DrawerDescription>
           </DrawerHeader>
           <div className="max-h-[90%] overflow-y-auto w-full px-5 md:px-6 py-5 space-y-5 md:space-y-6">

@@ -1,5 +1,8 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { useState } from "react";
 import {
   Card,
@@ -19,6 +22,7 @@ function RequestResetForm({
 }: {
   onSuccess: (email: string) => void;
 }) {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -37,9 +41,9 @@ function RequestResetForm({
 
       const data = await res.json();
       if (!res.ok)
-        throw new Error(data.error || "Erreur lors de l'envoi du code.");
+        throw new Error(data.error || "Error while sending the code.");
 
-      toast("Un code a été envoyé à votre e-mail.");
+      toast(t("A code was sent to your email."));
       onSuccess(email);
     } catch (error) {
       setErrorMessage((error as Error).message);
@@ -51,19 +55,19 @@ function RequestResetForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Réinitialiser le mot de passe</CardTitle>
+        <CardTitle><T>Reset password</T></CardTitle>
         <CardDescription>
-          Entrez votre e-mail pour recevoir un code de réinitialisation.
+          <T>Enter your email to receive a reset code.</T>
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div className="grid gap-3">
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="email"><T>Email</T></Label>
             <Input
               id="email"
               type="email"
-              placeholder="exemple@email.com"
+              placeholder={t("example@email.com")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -72,7 +76,7 @@ function RequestResetForm({
           </div>
           <FormErrorMessage message={errorMessage} />
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Envoi en cours..." : "Envoyer le code"}
+            {isLoading ? "Sending..." : "Send code"}
           </Button>
         </form>
       </CardContent>

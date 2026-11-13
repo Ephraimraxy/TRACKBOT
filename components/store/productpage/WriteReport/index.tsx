@@ -1,9 +1,13 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function ReportCard({ productId }: { productId: string }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [reportType, setReportType] = useState("");
   const [reportDetails, setReportDetails] = useState("");
@@ -12,11 +16,11 @@ export default function ReportCard({ productId }: { productId: string }) {
   const [success, setSuccess] = useState(false);
 
   const reportTypes = [
-    { id: "counterfeit", label: "Produit contrefait" },
-    { id: "defective", label: "Produit défectueux" },
-    { id: "incorrect", label: "Description incorrecte" },
-    { id: "inappropriate", label: "Contenu inapproprié" },
-    { id: "other", label: "Autre problème" },
+    { id: "counterfeit", label: "Counterfeit product" },
+    { id: "defective", label: "Defective product" },
+    { id: "incorrect", label: "Incorrect description" },
+    { id: "inappropriate", label: "Inappropriate content" },
+    { id: "other", label: "Other problem" },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,12 +28,12 @@ export default function ReportCard({ productId }: { productId: string }) {
     setError(null);
 
     if (!reportType) {
-      setError("Veuillez sélectionner un type de signalement");
+      setError("Please select a report type");
       return;
     }
 
     if (!productId) {
-      setError("Identifiant du produit manquant");
+      setError("Product ID missing");
       return;
     }
 
@@ -54,7 +58,7 @@ export default function ReportCard({ productId }: { productId: string }) {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.error || "Erreur lors de l'envoi du signalement"
+          errorData.error || "Error while sending the report"
         );
       }
 
@@ -65,7 +69,7 @@ export default function ReportCard({ productId }: { productId: string }) {
     } catch (error) {
       console.error("Report submission error:", error);
       setError(
-        `${error || "Échec de l'envoi du signalement. Veuillez réessayer."}`
+        `${error || "Failed to submit the report. Please try again."}`
       );
     } finally {
       setIsSubmitting(false);
@@ -92,12 +96,12 @@ export default function ReportCard({ productId }: { productId: string }) {
               />
             </svg>
           </div>
-          <h2 className="text-3xl font-bold text-gray-800 mb-3">Merci</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-3"><T>Thank you</T></h2>
           <p className="text-gray-600 mb-6">
-            Votre signalement a été soumis avec succès.
+            <T>Your report was submitted successfully.</T>
           </p>
           <div className="text-sm text-blue-500">
-            Redirection vers le produit en cours...
+            <T>Redirecting to the product...</T>
           </div>
         </div>
       </div>
@@ -108,9 +112,9 @@ export default function ReportCard({ productId }: { productId: string }) {
     <div className="w-full max-w-md">
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
         <div className="bg-black p-6 text-center">
-          <h2 className="text-2xl font-bold text-white">Signaler ce produit</h2>
+          <h2 className="text-2xl font-bold text-white"><T>Report this product</T></h2>
           <p className="text-gray-100 mt-1">
-            Aidez-nous à maintenir la qualité de notre plateforme
+            <T>Help us maintain the quality of our platform</T>
           </p>
         </div>
 
@@ -136,7 +140,7 @@ export default function ReportCard({ productId }: { productId: string }) {
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Quel est le problème avec ce produit ?
+                <T>What is wrong with this product?</T>
               </label>
 
               <div className="space-y-2">
@@ -167,7 +171,7 @@ export default function ReportCard({ productId }: { productId: string }) {
                 htmlFor="reportDetails"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Détails du signalement
+                <T>Report details</T>
               </label>
               <textarea
                 id="reportDetails"
@@ -176,7 +180,7 @@ export default function ReportCard({ productId }: { productId: string }) {
                 onChange={(e) => setReportDetails(e.target.value)}
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
-                placeholder="Fournissez plus de détails sur le problème..."
+                placeholder={t("Provide more details about the problem...")}
               />
             </div>
 
@@ -213,10 +217,10 @@ export default function ReportCard({ productId }: { productId: string }) {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Envoi en cours...
+                  <T>Sending...</T>
                 </span>
               ) : (
-                "Soumettre le signalement"
+                "Submit the report"
               )}
             </button>
           </form>
@@ -228,7 +232,7 @@ export default function ReportCard({ productId }: { productId: string }) {
           onClick={() => router.back()}
           className="text-sm text-gray-600 hover:text-black font-medium"
         >
-          ← Revenir à la page produit
+          <T>← Back to the product page</T>
         </button>
       </div>
     </div>

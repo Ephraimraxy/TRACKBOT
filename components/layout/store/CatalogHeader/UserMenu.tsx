@@ -1,9 +1,14 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { useAppDispatch } from "@/redux/hooks";
+import { clearCart } from "@/redux/features/carts/cartsSlice";
 
 // UI components
 import { toast } from "sonner";
@@ -16,18 +21,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const UserMenu = () => {
+  const { t } = useI18n();
   const router = useRouter();
   const { data: session } = useSession();
+
+  const dispatch = useAppDispatch();
 
   const handleLogout = async () => {
     try {
       await signOut({ redirect: false });
-      toast("Déconnexion réussie");
+      dispatch(clearCart());
+      toast(t("Logged out successfully"));
       router.push("/");
       router.refresh();
     } catch (error) {
       console.error("Logout failed:", error);
-      toast("Erreur lors de la déconnexion");
+      toast(t("Error while logging out"));
     }
   };
 
@@ -40,7 +49,7 @@ const UserMenu = () => {
             src="/icons/user.svg"
             height={30}
             width={30}
-            alt="user"
+            alt={t("user")}
             className="cursor-pointer w-auto h-[24px] sm:h-[26px] md:h-[28px] lg:h-[30px]"
           />
         </Button>
@@ -51,44 +60,44 @@ const UserMenu = () => {
           session.user.role === "ADMIN" ? (
             <>
               <DropdownMenuItem asChild>
-                <Link href="/admin/dashboard">Portail Admin</Link>
+                <Link href="/admin/dashboard"><T>Admin portal</T></Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
-                Se déconnecter
+                <T>Log out</T>
               </DropdownMenuItem>
             </>
           ) : session.user.role === "VENDEUR" ? (
             <>
               <DropdownMenuItem asChild>
-                <Link href="/vendor/dashboard">Portail Vendeur</Link>
+                <Link href="/vendor/dashboard"><T>Vendor portal</T></Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
-                Se déconnecter
+                <T>Log out</T>
               </DropdownMenuItem>
             </>
           ) : (
             <>
               <DropdownMenuItem asChild>
-                <Link href="/client/settings">Paramètres</Link>
+                <Link href="/client/settings"><T>Settings</T></Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/client/notifications">Notifications</Link>
+                <Link href="/client/notifications"><T>Notifications</T></Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/client/orders">Commandes</Link>
+                <Link href="/client/orders"><T>Orders</T></Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogout}>
-                Se déconnecter
+                <T>Log out</T>
               </DropdownMenuItem>
             </>
           )
         ) : (
           <>
             <DropdownMenuItem asChild>
-              <Link href="/auth/register">S&apos;inscrire</Link>
+              <Link href="/auth/register"><T>Sign up</T></Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/auth/login">Se connecter</Link>
+              <Link href="/auth/login"><T>Log in</T></Link>
             </DropdownMenuItem>
           </>
         )}

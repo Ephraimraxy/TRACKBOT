@@ -31,7 +31,7 @@ export default function AdminSettings() {
     const userId = session?.user.id;
     if (!userId) {
       setIsLoading(false);
-      toast.error("Vous devez être connecté pour accéder à cette page.");
+      toast.error("You must be logged in to access this page.");
       console.log("No user ID found in session");
       return;
     }
@@ -54,7 +54,7 @@ export default function AdminSettings() {
 
   const handleUpdateUser = (updatedUser: UserFromAPI) => {
     setUser(updatedUser);
-    toast.success("Informations mises à jour avec succès");
+    toast.success("Information updated successfully");
   };
 
   if (isLoading) return <IsLoading />;
@@ -69,11 +69,11 @@ export default function AdminSettings() {
             <h1
               className={`text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.className}`}
             >
-              Paramètres Administrateur
+              Administrator settings
             </h1>
           </div>
           <p className="text-gray-600 mt-2 text-base sm:text-lg">
-            Gérez vos informations personnelles avec style et simplicité.
+            Manage your personal information with style and simplicity.
           </p>
         </header>
 

@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import OrderHeader from "@/components/store/orderpage/OrderHeader";
 import DeliveryAddressForm from "@/components/store/orderpage/DeliveryAddressForm";
-import PaymentInfoForm from "@/components/store/orderpage/PaymentInfoForm";
+import DeliveryPinPicker, { type Pin } from "@/components/store/orderpage/DeliveryPinPicker";
+import PaystackNotice from "@/components/store/orderpage/PaystackNotice";
 import OrderSummary from "@/components/store/orderpage/OrderSummary";
 import { useSession } from "next-auth/react";
-import { useAppSelector } from "@/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { clearCart } from "@/redux/features/carts/cartsSlice";
 import { RootState } from "@/redux/store";
 import { PrepareOrderFromAPI } from "@/lib/types/order.types";
 import { ApiResponse } from "@/lib/types/apiResponse.types";
@@ -16,6 +18,7 @@ import IsOrderSuccessful from "@/components/store/orderpage/IsOrderSuccessful";
 export default function OrderPageMain() {
   const { data: session } = useSession();
   const cart = useAppSelector((state: RootState) => state.carts.cart);
+  const dispatch = useAppDispatch();
 
   const [orderSummary, setOrderSummary] = useState<PrepareOrderFromAPI | null>(
     null
@@ -26,26 +29,22 @@ export default function OrderPageMain() {
   }>({});
   const [isFetchingSummary, setIsFetchingSummary] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isOrderSuccessful, setIsOrderSuccessful] = useState(false);
+  // Set only when the order was saved but Paystack's payment page could not be opened.
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
+  const [pin, setPin] = useState<Pin | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState({
     street: "",
     city: "",
     wilaya: "",
     postalCode: "",
   });
-  const [paymentInfo, setPaymentInfo] = useState({
-    cardNumber: "",
-    cvc: "",
-    cardholderName: "",
-    expirationDate: "",
-  });
 
   useEffect(() => {
     const fetchOrderSummary = async () => {
       if (!cart || cart.items.length === 0) {
         setErrorMessage(
-          "Votre panier est vide. Vous devez ajouter des produits avant de passer une commande."
+          "Your cart is empty. You must add products before placing an order."
         );
         return;
       }
@@ -57,8 +56,8 @@ export default function OrderPageMain() {
         produits: cart.items.map((item) => ({
           produitId: item.id,
           quantite: item.quantity,
-          couleurId: item.color.id,
-          tailleId: item.size.id,
+          couleurId: item.color.id || undefined,
+          tailleId: item.size.id || undefined,
         })),
       };
 
@@ -77,24 +76,24 @@ export default function OrderPageMain() {
             await response.json();
           if (
             errorData.error ===
-            "Échec de la création du produit : Un ou plusieurs IDs fournis sont invalides."
+            "Failed to create the product: one or more IDs provided are invalid."
           ) {
             setErrorMessage(
-              "Une erreur s'est produite lors de la préparation de la commande. Veuillez mettre à jour votre panier avec du contenu récent. Les produits fournis n'existent pas ou leurs identifiants ont changé."
+              "An error occurred while preparing the order. Please refresh your cart with recent content. The products provided no longer exist or their identifiers have changed."
             );
           } else {
             setErrorMessage(
-              "Une erreur s'est produite lors de la préparation de la commande."
+              "An error occurred while preparing the order."
             );
           }
         } else {
           setErrorMessage(
-            "Une erreur s'est produite lors de la préparation de la commande."
+            "An error occurred while preparing the order."
           );
         }
       } catch {
         setErrorMessage(
-          "Une erreur s'est produite lors de la préparation de la commande."
+          "An error occurred while preparing the order."
         );
       } finally {
         setIsFetchingSummary(false);
@@ -110,8 +109,22 @@ export default function OrderPageMain() {
     setDeliveryAddress({ ...deliveryAddress, [e.target.name]: e.target.value });
   };
 
-  const handlePaymentInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPaymentInfo({ ...paymentInfo, [e.target.name]: e.target.value });
+  /** Open Paystack's payment page for a saved order. If that fails the order stays in the history, unpaid. */
+  const startPayment = async (orderId: string) => {
+    try {
+      const res = await fetch("/api/payments/paystack/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.authorizationUrl) {
+        throw new Error(json.error ?? "The payment page could not be opened.");
+      }
+      window.location.href = json.authorizationUrl;
+    } catch (e) {
+      setPaymentError((e as Error).message);
+    }
   };
 
   const handleSubmit = async () => {
@@ -135,12 +148,7 @@ export default function OrderPageMain() {
         ville: deliveryAddress.city,
         wilaya: deliveryAddress.wilaya,
         codePostal: deliveryAddress.postalCode,
-      },
-      payment: {
-        cardNumber: paymentInfo.cardNumber,
-        cvc: paymentInfo.cvc,
-        expirationDate: paymentInfo.expirationDate,
-        legalName: paymentInfo.cardholderName,
+        ...(pin ? { latitude: pin.latitude, longitude: pin.longitude } : {}),
       },
       produits: productsForOrder,
     };
@@ -153,7 +161,10 @@ export default function OrderPageMain() {
       });
 
       if (response.ok) {
-        setIsOrderSuccessful(true);
+        const { data: order } = await response.json();
+        // The order is saved, so the cart is done with. Then to Paystack to pay for it.
+        dispatch(clearCart());
+        await startPayment(order.id);
       } else if (response.status === 400) {
         const errorData = await response.json();
         if (errorData.data) {
@@ -168,24 +179,24 @@ export default function OrderPageMain() {
             {}
           );
           setValidationErrors(errors);
-          setErrorMessage("Veuillez corriger les erreurs ci-dessous.");
+          setErrorMessage("Please correct the errors below.");
         } else {
           setErrorMessage(
-            errorData.error || "Une erreur s'est produite lors de la commande."
+            errorData.error || "An error occurred while placing the order."
           );
         }
       } else {
-        setErrorMessage("Une erreur s'est produite lors de la commande.");
+        setErrorMessage("An error occurred while placing the order.");
       }
     } catch {
-      setErrorMessage("Une erreur s'est produite lors de la commande.");
+      setErrorMessage("An error occurred while placing the order.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isOrderSuccessful) {
-    return <IsOrderSuccessful />;
+  if (paymentError) {
+    return <IsOrderSuccessful paymentError={paymentError} />;
   }
 
   return (
@@ -207,11 +218,8 @@ export default function OrderPageMain() {
                 onChange={handleDeliveryAddressChange}
                 errors={validationErrors}
               />
-              <PaymentInfoForm
-                paymentInfo={paymentInfo}
-                onChange={handlePaymentInfoChange}
-                errors={validationErrors}
-              />
+              <DeliveryPinPicker pin={pin} onChange={setPin} />
+              <PaystackNotice />
             </div>
             {orderSummary && (
               <OrderSummary

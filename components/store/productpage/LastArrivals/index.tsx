@@ -1,5 +1,8 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { useEffect, useRef, useState } from "react";
 
 // Types
@@ -11,6 +14,7 @@ import ProductListSec from "@/components/common/ProductListSec";
 import Image from "next/image";
 
 export default function LastArrivals() {
+  const { t } = useI18n();
   const hasFetched = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -50,7 +54,7 @@ export default function LastArrivals() {
     return (
       <div className="min-h-[400px] flex flex-col items-center justify-center py-20 gap-4 text-gray-700">
         <div className="w-8 h-8 border-4 border-t-transparent border-blue-500 rounded-full animate-spin"></div>
-        <p className="text-lg font-medium">Chargement des produits...</p>
+        <p className="text-lg font-medium"><T>Loading products...</T></p>
       </div>
     );
   }
@@ -61,22 +65,22 @@ export default function LastArrivals() {
         {/* Error icon: Circle with an X mark */}
         <Image
           src="/icons/error.png"
-          alt="Error Icon"
+          alt={t("Error Icon")}
           width={50}
           height={50}
           className="h-15 w-15"
         />
         <p className="text-lg font-semibold text-center my-5">
-          Une erreur est survenue lors du chargement des produits.
+          <T>An error occurred while loading products.</T>
           <br />
-          Veuillez réessayer plus tard.
+          <T>Please try again later.</T>
         </p>
 
         <button
           onClick={() => window.location.reload()}
           className="mt-2 px-4 py-2 text-sm font-medium bg-red-500 text-white rounded hover:bg-red-600 transition"
         >
-          Réessayer
+          <T>Try again</T>
         </button>
       </div>
     );
@@ -84,7 +88,7 @@ export default function LastArrivals() {
 
   return (
     <div className="mb-[50px] sm:mb-20">
-      <ProductListSec title="Nos derniers arrivages" data={newProducts ?? []} />
+      <ProductListSec title={t("Our latest arrivals")} data={newProducts ?? []} />
     </div>
   );
 }

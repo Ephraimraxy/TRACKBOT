@@ -66,8 +66,8 @@ export default function Pagination({
   return (
     <div className="mt-6 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
       <p className="text-sm text-gray-600">
-        Affichage de <span className="font-medium">{startItem}</span> à{" "}
-        <span className="font-medium">{endItem}</span> sur{" "}
+        Showing <span className="font-medium">{startItem}</span> à{" "}
+        <span className="font-medium">{endItem}</span> of{" "}
         <span className="font-medium">{totalItems}</span> notifications
       </p>
 
@@ -80,7 +80,7 @@ export default function Pagination({
               ? "text-gray-400 cursor-not-allowed"
               : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
           }`}
-          aria-label="Page précédente"
+          aria-label="Previous page"
         >
           <svg
             className="w-5 h-5"
@@ -130,7 +130,7 @@ export default function Pagination({
               ? "text-gray-400 cursor-not-allowed"
               : "text-gray-700 hover:bg-gray-200 hover:text-gray-900"
           }`}
-          aria-label="Page suivante"
+          aria-label="Next page"
         >
           <svg
             className="w-5 h-5"

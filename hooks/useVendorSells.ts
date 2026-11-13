@@ -71,7 +71,7 @@ export function useVendorSells(): UseVendorSellsReturn {
       setSells(data.data);
       setPagination(data.pagination);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+      setError(err instanceof Error ? err.message : "An error occurred");
       console.error("Error fetching sells:", err);
     } finally {
       setLoading(false);

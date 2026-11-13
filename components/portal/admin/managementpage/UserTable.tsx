@@ -1,5 +1,5 @@
 import { MessageSquare, Trash2, Store } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 
 // Types
 import {
@@ -43,9 +43,9 @@ export function UserTable({
   onSelectUser,
   loading,
 }: UserTableProps) {
-  if (loading) return <div className="text-center py-4">Chargement...</div>;
+  if (loading) return <div className="text-center py-4">Loading...</div>;
   if (!users.length)
-    return <div className="text-center py-4">Aucun utilisateur trouvé</div>;
+    return <div className="text-center py-4">No users found</div>;
 
   return (
     <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
@@ -55,30 +55,30 @@ export function UserTable({
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Utilisateur
+                User
               </th>
               <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                Date d&apos;inscription
+                Registration date
               </th>
               {userType === "CLIENT" ? (
                 <>
                   <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                    Commandes
+                    Orders
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
-                    Total dépensé (DZ)
+                    Total spent (₦)
                   </th>
                 </>
               ) : (
                 <>
                   <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                    Boutique
+                    Shop
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
-                    Produits Vendus
+                    Products sold
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
-                    Total Ventes (DZ)
+                    Total sales (₦)
                   </th>
                 </>
               )}
@@ -139,7 +139,7 @@ export function UserTable({
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap hidden xl:table-cell">
                       <div className="text-xs sm:text-sm font-medium text-gray-900">
-                        {(user as ClientWithStats).stats.totalDepenses?.toFixed(
+                        ₦{(user as ClientWithStats).stats.totalDepenses?.toFixed(
                           2
                         ) || "0.00"}
                       </div>
@@ -227,18 +227,17 @@ export function UserTable({
               </div>
             </div>
             <div className="text-xs text-gray-600 mb-1">
-              Date d&apos;inscription: {extractDateString(user.dateCreation)}
+              Registration date: {extractDateString(user.dateCreation)}
             </div>
             {userType === "CLIENT" ? (
               <>
                 <div className="text-xs text-gray-600 mb-1">
-                  Commandes: {(user as ClientWithStats).stats.totalCommandes}
+                  Orders: {(user as ClientWithStats).stats.totalCommandes}
                 </div>
                 <div className="text-xs text-gray-600 mb-2">
-                  Total dépensé:{" "}
+                  Total spent:{" "}
                   {(user as ClientWithStats).stats.totalDepenses?.toFixed(2) ||
-                    "0.00"}{" "}
-                  DZ
+                    "0.00"}
                 </div>
               </>
             ) : (
@@ -248,14 +247,13 @@ export function UserTable({
                   <span>{user.vendeur?.nomBoutique || "N/A"}</span>
                 </div>
                 <div className="text-xs text-gray-600 mb-1">
-                  Produits Vendus:{" "}
+                  Products sold:{" "}
                   {(user as VendorWithStats).stats.produitsVendus}
                 </div>
                 <div className="text-xs text-gray-600 mb-2">
-                  Total Ventes:{" "}
-                  {(user as VendorWithStats).stats.totalVentes?.toFixed(2) ||
-                    "0.00"}{" "}
-                  DZ
+                  Total sales:{" "}
+                  ₦{(user as VendorWithStats).stats.totalVentes?.toFixed(2) ||
+                    "0.00"}
                 </div>
               </>
             )}

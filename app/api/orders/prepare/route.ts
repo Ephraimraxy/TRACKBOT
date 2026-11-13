@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
         if (!produit) {
           throw new BadRequestIdError(
-            `Produit avec l'ID ${line.produitId} non trouvé dans la base de données.`
+            `Product with ID ${line.produitId} not found in the database.`
           );
         }
 
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
     };
 
     return NextResponse.json(
-      { message: "La commande a été préparée avec succès.", data: order },
+      { message: "The order was prepared successfully.", data: order },
       { status: 201 }
     );
   } catch (error) {

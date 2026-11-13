@@ -19,11 +19,11 @@ export default function ErrorState({ error, onRetry }: ErrorStateProps) {
               className={`text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.className}`}
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
-              Erreur
+              Error
             </h1>
           </div>
           <p className="mt-1 sm:mt-2 text-base sm:text-lg text-gray-600">
-            Une erreur s&apos;est produite lors du chargement des données
+            An error occurred while loading the data
           </p>
         </div>
 
@@ -31,7 +31,7 @@ export default function ErrorState({ error, onRetry }: ErrorStateProps) {
           <div className="text-center">
             <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-              Impossible de charger les données
+              Unable to load data
             </h2>
             <p className="text-gray-600 mb-6 max-w-md mx-auto">
               {error}
@@ -41,7 +41,7 @@ export default function ErrorState({ error, onRetry }: ErrorStateProps) {
               className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
             >
               <RefreshCw className="h-4 w-4" />
-              Réessayer
+              Try again
             </button>
           </div>
         </div>

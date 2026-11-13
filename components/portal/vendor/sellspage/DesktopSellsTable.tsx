@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import { SellFromAPI } from "@/lib/types/sell.types";
 import { extractDateString, getImageUrlFromPublicId } from "@/lib/utils";
 
@@ -17,14 +17,14 @@ export default function DesktopSellsTable({ sells, onSellClick }: DesktopSellsTa
           width={100}
           height={100}
           src="/images/not-found.png"
-          alt="Aucune vente"
+          alt="No sales"
           className="mx-auto w-24 h-24 sm:w-32 sm:h-32 mb-4"
         />
         <p className="text-lg sm:text-xl font-semibold text-gray-800">
-          Aucune vente trouvée
+          No sales found
         </p>
         <p className="text-gray-600 mt-2 text-sm sm:text-base">
-          Aucun résultat ne correspond à votre recherche.
+          No results match your search.
         </p>
       </div>
     );
@@ -40,19 +40,19 @@ export default function DesktopSellsTable({ sells, onSellClick }: DesktopSellsTa
                 Image
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                Produit
+                Product
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold">
-                Quantité
+                Quantity
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden md:table-cell">
-                Couleur
+                Colour
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden lg:table-cell">
-                Taille
+                Size
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden md:table-cell">
-                Client
+                Customer
               </th>
               <th className="px-4 py-2 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold hidden lg:table-cell">
                 Date
@@ -105,7 +105,7 @@ export default function DesktopSellsTable({ sells, onSellClick }: DesktopSellsTa
                 <td className="px-4 py-2 sm:px-6 sm:py-4 text-xs sm:text-sm text-gray-900 hidden md:table-cell">
                   <div>
                     <span className="font-semibold">
-                      {sell.commande.client ? `${sell.commande.client.nom} ${sell.commande.client.prenom}` : "Client inconnu"}
+                      {sell.commande.client ? `${sell.commande.client.nom} ${sell.commande.client.prenom}` : "Unknown customer"}
                     </span>
                     <p className="text-xs text-gray-600">
                       {sell.commande.client?.email || "Email non disponible"}
@@ -116,7 +116,7 @@ export default function DesktopSellsTable({ sells, onSellClick }: DesktopSellsTa
                   {extractDateString(sell.commande.date)}
                 </td>
                 <td className="px-4 py-2 sm:px-6 sm:py-4 text-xs sm:text-sm font-semibold text-green-600">
-                  {sell.total.toFixed(2)} DA
+                  ₦{sell.total.toFixed(2)}
                 </td>
               </tr>
             ))}

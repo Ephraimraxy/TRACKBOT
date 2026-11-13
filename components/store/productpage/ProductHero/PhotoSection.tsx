@@ -2,7 +2,7 @@
 
 import { ProductFromAPI } from "@/lib/types/product.types";
 import { getImageUrlFromPublicId } from "@/lib/utils";
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import React, { useState } from "react";
 
 const PhotoSection = ({ data }: { data: ProductFromAPI }) => {

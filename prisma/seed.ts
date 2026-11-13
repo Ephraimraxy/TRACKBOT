@@ -1,27 +1,20 @@
-import { PrismaClient } from "@prisma/client";
-
+/**
+ * Default seed: REFERENCE DATA ONLY (categories, genders, colours, sizes). Safe to run on any
+ * database, including production, and idempotent. It creates no accounts, no products and
+ * no orders. Create the first administrator with `npm run seed:admin`.
+ * For local development sample data see `prisma/seed-demo.ts` (`npm run seed:demo`).
+ */
 import insertCategories from "@/lib/seed/insertCategories";
 import insertColors from "@/lib/seed/insertColors";
 import insertGenders from "@/lib/seed/insertGenders";
-import insertNotifications from "@/lib/seed/insertNotifications";
-import insertOrders from "@/lib/seed/insertOrders";
-import insertProducts from "@/lib/seed/insertProducts";
 import insertSizes from "@/lib/seed/insertSizes";
-import insertUsers from "@/lib/seed/insertUsers";
-import insertReports from "@/lib/seed/insertReports";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/utils/prisma";
 
 async function main() {
-  await insertUsers();
   await insertCategories();
   await insertGenders();
   await insertColors();
   await insertSizes();
-  await insertProducts();
-  await insertOrders();
-  await insertNotifications();
-  await insertReports();
 }
 
 main()
@@ -29,6 +22,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => prisma.$disconnect());

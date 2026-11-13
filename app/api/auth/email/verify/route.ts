@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     if (email !== session.user.email) {
       return NextResponse.json(
         {
-          error: "L'adresse e-mail ne correspond pas à l'utilisateur connecté",
+          error: "The email address does not match the logged-in user",
         },
         { status: 403 }
       );
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     // Check if email is already verified
     if (session.user.emailVerifie) {
       return NextResponse.json(
-        { message: "Adresse e-mail déjà vérifiée" },
+        { message: "Email address already verified" },
         { status: 200 }
       );
     }
@@ -51,14 +51,14 @@ export async function POST(req: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "Utilisateur non trouvé" },
+        { error: "User not found" },
         { status: 404 }
       );
     }
 
     if (user.emailVerifie) {
       return NextResponse.json(
-        { message: "Adresse e-mail déjà vérifiée" },
+        { message: "Email address already verified" },
         { status: 200 }
       );
     }
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     if (!user.TOTPSecret) {
       return NextResponse.json(
         {
-          error: "La vérification n'a pas été initiée",
+          error: "Verification was not initiated",
         },
         { status: 400 }
       );
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Le code de vérification a expiré. Veuillez en générer un nouveau.",
+            "The verification code has expired. Please generate a new one.",
         },
         { status: 400 }
       );
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     const isValid = verifyTOTPCode(code, user.TOTPSecret.secret);
     if (!isValid) {
       return NextResponse.json(
-        { error: "Code de vérification invalide" },
+        { error: "Invalid verification code" },
         { status: 400 }
       );
     }
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     ]);
 
     return NextResponse.json(
-      { message: "Adresse e-mail vérifiée avec succès" },
+      { message: "Email address verified successfully" },
       { status: 200 }
     );
   } catch (error) {

@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Bell, Menu, X } from "lucide-react";
@@ -13,13 +15,14 @@ export default function MobileHeader({
   isMobileMenuOpen,
   toggleMobileMenu,
 }: MobileHeaderProps) {
+  const { t } = useI18n();
   return (
     <div className="fixed top-0 left-0 right-0 h-16 bg-white z-50 border-b border-gray-200 flex items-center justify-between px-4 shadow-sm">
       <div className="flex items-center">
         <Link href="/">
           <Image
             src="/manifest/favicon.svg"
-            alt="Logo de l'application"
+            alt={t("Application logo")}
             width={50}
             height={50}
             className="object-contain"

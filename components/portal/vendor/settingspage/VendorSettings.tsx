@@ -36,7 +36,7 @@ export default function VendorSettings({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!vendorInfo.nomBoutique || !vendorInfo.nomBanque || !vendorInfo.rib) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
+      toast.error("Please fill in all required fields");
       return;
     }
     setIsLoading(true);
@@ -58,7 +58,7 @@ export default function VendorSettings({
     } else {
       onUpdate(result.data!);
       toast.success(
-        result.message || "Informations du vendeur mises à jour avec succès"
+        result.message || "Vendor information updated successfully"
       );
     }
     setIsLoading(false);
@@ -70,16 +70,16 @@ export default function VendorSettings({
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <Building className="h-5 w-5 text-black" />
-            Informations sur l&apos;entreprise
+            Business information
           </h2>
           <p className="text-sm text-gray-500">
-            Mettez à jour les détails de votre entreprise
+            Update your business details
           </p>
         </div>
         <div className="p-6 space-y-4">
           <div className="space-y-2">
             <label htmlFor="nomBoutique" className="block text-sm font-medium">
-              Nom de votre boutique en ligne
+              Name of your online shop
             </label>
             <input
               id="nomBoutique"
@@ -92,7 +92,7 @@ export default function VendorSettings({
           </div>
           <div className="space-y-2" data-color-mode="light">
             <label htmlFor="description" className="block text-sm font-medium">
-              Bio (description, markdown accepté)
+              Bio (description, markdown accepted)
             </label>
             <MDEditor
               value={vendorInfo.description}
@@ -106,17 +106,17 @@ export default function VendorSettings({
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-black" />
-            Coordonnées bancaires
+            Bank details
           </h2>
           <p className="text-sm text-gray-500">
-            Mettez à jour vos informations bancaires pour les paiements
+            Update your bank details for payouts
           </p>
         </div>
         <div className="p-6 space-y-4">
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="nomBanque" className="block text-sm font-medium">
-                Nom de la banque
+                Bank name
               </label>
               <input
                 id="nomBanque"
@@ -129,7 +129,7 @@ export default function VendorSettings({
             </div>
             <div className="space-y-2">
               <label htmlFor="rib" className="block text-sm font-medium">
-                Numéro de compte (RIB)
+                Account number
               </label>
               <input
                 id="rib"
@@ -148,7 +148,7 @@ export default function VendorSettings({
             className="bg-black text-white px-4 py-2 rounded-md hover:bg-black/90 disabled:opacity-50"
             disabled={isLoading}
           >
-            {isLoading ? "Enregistrement..." : "Enregistrer les modifications"}
+            {isLoading ? "Saving..." : "Save changes"}
           </button>
         </div>
       </div>

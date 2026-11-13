@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import {
   Camera,
   User,
@@ -46,7 +46,7 @@ export default function SettingsPage() {
     const userId = session?.user.id;
     if (!userId) {
       setIsLoading(false);
-      toast.error("Vous devez être connecté pour accéder à cette page.");
+      toast.error("You must be logged in to access this page.");
       console.log("No user ID found in session");
       return;
     }
@@ -117,13 +117,12 @@ export default function SettingsPage() {
             <h1
               className={`text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.className}`}
             >
-              Paramètres du compte
+              Account settings
             </h1>
           </div>
         </div>
         <p className="mb-6 text-lg text-gray-700">
-          Gérez vos informations personnelles, vos paramètres de sécurité et vos
-          options de vendeur ici.
+          Manage your personal information, security settings and vendor options here.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] lg:grid-cols-[250px_1fr] gap-8">
           <aside className="shrink-0">
@@ -134,7 +133,7 @@ export default function SettingsPage() {
                     {profileImage ? (
                       <Image
                         src={profileImage}
-                        alt="Profil"
+                        alt="Profile"
                         width={96}
                         height={96}
                         className="object-cover w-full h-full"
@@ -164,14 +163,14 @@ export default function SettingsPage() {
               </div>
               <div className="flex flex-col w-full gap-1">
                 {[
-                  { value: "personal", icon: User, label: "Informations" },
-                  { value: "address", icon: MapPin, label: "Adresse" },
+                  { value: "personal", icon: User, label: "Information" },
+                  { value: "address", icon: MapPin, label: "Address" },
                   { value: "contact", icon: Phone, label: "Contact" },
-                  { value: "security", icon: Shield, label: "Sécurité" },
+                  { value: "security", icon: Shield, label: "Security" },
                   {
                     value: "vendor",
                     icon: CreditCard,
-                    label: "Paramètres vendeur",
+                    label: "Vendor settings",
                   },
                 ].map((tab) => (
                   <button

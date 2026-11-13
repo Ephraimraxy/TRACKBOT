@@ -55,13 +55,13 @@ export default function ProductRatings({ stats }: ProductRatingsProps) {
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-xs sm:text-sm font-medium text-gray-600">
-                Meilleure note produit
+                Best-rated product
               </h3>
-              <p className="text-lg sm:text-xl font-bold text-gray-900 truncate" title={stats.meilleurProduit?.nom || "Aucun produit"}>
-                {stats.meilleurProduit?.nom || "Aucun produit"}
+              <p className="text-lg sm:text-xl font-bold text-gray-900 truncate" title={stats.meilleurProduit?.nom || "No products"}>
+                {stats.meilleurProduit?.nom || "No products"}
               </p>
               <p className="text-xs sm:text-sm text-gray-500 truncate">
-                {stats.meilleurProduit ? `${stats.meilleurProduit.noteMoyenne}/5 (${stats.meilleurProduit.totalEvaluations} avis)` : "Aucune évaluation"}
+                {stats.meilleurProduit ? `${stats.meilleurProduit.noteMoyenne}/5 (${stats.meilleurProduit.totalEvaluations} reviews)` : "No reviews"}
               </p>
             </div>
           </div>
@@ -82,13 +82,13 @@ export default function ProductRatings({ stats }: ProductRatingsProps) {
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-xs sm:text-sm font-medium text-gray-600">
-                Pire note produit
+                Worst-rated product
               </h3>
-              <p className="text-lg sm:text-xl font-bold text-gray-900 truncate" title={stats.pireProduit?.nom || "Aucun produit"}>
-                {stats.pireProduit?.nom || "Aucun produit"}
+              <p className="text-lg sm:text-xl font-bold text-gray-900 truncate" title={stats.pireProduit?.nom || "No products"}>
+                {stats.pireProduit?.nom || "No products"}
               </p>
               <p className="text-xs sm:text-sm text-gray-500 truncate">
-                {stats.pireProduit ? `${stats.pireProduit.noteMoyenne}/5 (${stats.pireProduit.totalEvaluations} avis)` : "Aucune évaluation"}
+                {stats.pireProduit ? `${stats.pireProduit.noteMoyenne}/5 (${stats.pireProduit.totalEvaluations} reviews)` : "No reviews"}
               </p>
             </div>
           </div>

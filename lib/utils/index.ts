@@ -22,13 +22,16 @@ export function containsFilter(value: string) {
 
 export function extractDateString(dateInput: Date | string): string {
   const date = new Date(dateInput);
-  return date.toLocaleDateString("fr-FR").replace(/\//g, "-");
+  return date.toLocaleDateString("en-NG").replace(/\//g, "-");
 }
 
+/**
+ * Public URL of a stored image. `imagePublicId` is the object key in the R2 bucket.
+ * Falls back to the placeholder when the bucket URL is not configured.
+ */
 export const getImageUrlFromPublicId = (imagePublicId: string) => {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-
-  const defaultTransformations = "f_auto,q_auto";
-
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${defaultTransformations}/${imagePublicId}`;
+  if (/^https?:\/\//.test(imagePublicId)) return imagePublicId;
+  const base = process.env.NEXT_PUBLIC_R2_PUBLIC_URL?.replace(/\/$/, "");
+  if (!base) return "/images/no-image.png";
+  return `${base}/${imagePublicId}`;
 };

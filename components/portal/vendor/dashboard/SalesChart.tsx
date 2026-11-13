@@ -47,8 +47,8 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
               <p className="text-xs sm:text-sm text-gray-700">
                 {entry.name}:{" "}
                 <span className="font-bold text-gray-900">
-                  {entry.name === "Ventes (DZD)"
-                    ? `${entry.value} DZD`
+                  {entry.name === "Sales (₦)"
+                    ? `₦${entry.value}`
                     : entry.value}
                 </span>
               </p>
@@ -109,10 +109,10 @@ export default function SalesChart({ stats }: SalesChartProps) {
 
   const chartTitle =
     selectedPeriod === "week"
-      ? "Évolution des ventes et articles vendus (7 derniers jours)"
+      ? "Sales and items sold over time (last 7 days)"
       : selectedPeriod === "month"
-      ? "Évolution des ventes et articles vendus (30 derniers jours)"
-      : "Évolution des ventes et articles vendus (12 derniers mois)";
+      ? "Sales and items sold over time (last 30 days)"
+      : "Sales and items sold over time (last 12 months)";
 
   return (
     <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg border-2 border-black">
@@ -131,17 +131,17 @@ export default function SalesChart({ stats }: SalesChartProps) {
             }
             className={`w-full sm:w-auto px-3 py-1 sm:px-4 sm:py-2 bg-white border-2 border-black rounded-lg text-gray-800 font-montserrat text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-300 hover:bg-gray-100 hover:border-gray-800 ${montserrat.className}`}
           >
-            <option value="week">Semaine</option>
-            <option value="month">Mois</option>
-            <option value="year">Année</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+            <option value="year">Year</option>
           </select>
           <select
             value={chartType}
             onChange={(e) => setChartType(e.target.value as "line" | "bar")}
             className={`w-full sm:w-auto px-3 py-1 sm:px-4 sm:py-2 bg-white border-2 border-black rounded-lg text-gray-800 font-montserrat text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-all duration-300 hover:bg-gray-100 hover:border-gray-800 ${montserrat.className}`}
           >
-            <option value="line">Courbes</option>
-            <option value="bar">Bâtons</option>
+            <option value="line">Curvy</option>
+            <option value="bar">Sticks</option>
           </select>
         </div>
       </div>
@@ -174,9 +174,9 @@ export default function SalesChart({ stats }: SalesChartProps) {
                   fontFamily: "Montserrat",
                   fill: "#1F2937",
                 }}
-                tickFormatter={(value) => `${value} DZD`}
+                tickFormatter={(value) => `₦${value}`}
                 label={{
-                  value: "Ventes (DZD)",
+                  value: "Sales (₦)",
                   angle: -90,
                   position: "insideLeft",
                   fontSize: 12,
@@ -197,7 +197,7 @@ export default function SalesChart({ stats }: SalesChartProps) {
                 }}
                 tickFormatter={(value) => `${value}`}
                 label={{
-                  value: "Articles vendus",
+                  value: "Items sold",
                   angle: 90,
                   position: "insideRight",
                   fontSize: 12,
@@ -223,7 +223,7 @@ export default function SalesChart({ stats }: SalesChartProps) {
                   strokeWidth: 2,
                 }}
                 activeDot={{ r: 6 }}
-                name="Ventes (DZD)"
+                name="Sales (₦)"
                 animationDuration={1500}
               />
               <Line
@@ -271,9 +271,9 @@ export default function SalesChart({ stats }: SalesChartProps) {
                   fontFamily: "Montserrat",
                   fill: "#1F2937",
                 }}
-                tickFormatter={(value) => `${value} DZD`}
+                tickFormatter={(value) => `₦${value}`}
                 label={{
-                  value: "Ventes (DZD)",
+                  value: "Sales (₦)",
                   angle: -90,
                   position: "insideLeft",
                   fontSize: 12,
@@ -294,7 +294,7 @@ export default function SalesChart({ stats }: SalesChartProps) {
                 }}
                 tickFormatter={(value) => `${value}`}
                 label={{
-                  value: "Articles vendus",
+                  value: "Items sold",
                   angle: 90,
                   position: "insideRight",
                   fontSize: 12,
@@ -310,7 +310,7 @@ export default function SalesChart({ stats }: SalesChartProps) {
                 yAxisId="left"
                 dataKey="sales"
                 fill="#2563EB"
-                name="Ventes (DZD)"
+                name="Sales (₦)"
                 animationDuration={1500}
                 radius={[4, 4, 0, 0]}
               />

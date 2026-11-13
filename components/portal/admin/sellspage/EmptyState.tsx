@@ -9,14 +9,14 @@ export default function EmptyState() {
         width={100}
         height={100}
         src="/images/not-found.png"
-        alt="Aucune vente"
+        alt="No sales"
         className="mx-auto w-24 h-24 sm:w-32 sm:h-32 mb-4"
       />
       <p className="text-lg sm:text-xl font-semibold text-gray-800">
-        Aucune vente trouvée
+        No sales found
       </p>
       <p className="text-gray-600 mt-2 text-sm sm:text-base">
-        Aucun résultat ne correspond à votre recherche.
+        No results match your search.
       </p>
     </div>
   );

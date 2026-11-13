@@ -24,6 +24,16 @@ import { AdminDashboardStats } from "@/lib/types/dashboard.types";
 // Fonts
 import { montserrat } from "@/styles/fonts";
 
+/** Shown until a product has been rated, instead of a card with made-up numbers. */
+function EmptyRatingCard({ title }: { title: string }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <p className="text-sm font-medium text-gray-500">{title}</p>
+      <p className="mt-2 text-gray-400">No rated products yet</p>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<AdminDashboardStats>({
     totalVentes: "0",
@@ -33,18 +43,8 @@ export default function DashboardPage() {
       vendeurs: 0,
     },
     produitsVendus: 0,
-    meilleurProduit: {
-      id: "",
-      nom: "",
-      noteMoyenne: "0",
-      totalEvaluations: 0,
-    },
-    pireProduit: {
-      id: "",
-      nom: "",
-      noteMoyenne: "0",
-      totalEvaluations: 0,
-    },
+    meilleurProduit: null,
+    pireProduit: null,
     produitPlusRevenu: null,
     produitPlusVendu: null,
     weekData: [],
@@ -69,7 +69,7 @@ export default function DashboardPage() {
         setDashboardData(data);
         setLoading(false);
       } catch {
-        setError("Erreur de chargement des données du tableau de bord");
+        setError("Error loading dashboard data");
         setLoading(false);
       }
     };
@@ -103,7 +103,7 @@ export default function DashboardPage() {
             className={`text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.className}`}
             style={{ fontFamily: "'Montserrat', sans-serif" }}
           >
-            Tableau de bord
+            Dashboard
           </h1>
         </div>
 
@@ -112,80 +112,88 @@ export default function DashboardPage() {
             className={`welcome-message text-base sm:text-lg text-gray-700 ${montserrat.className}`}
             style={{ fontFamily: "'Montserrat', sans-serif" }}
           >
-            Bienvenue, Admin ! Voici les statistiques de votre boutique.
+            Welcome, Admin! Here are your shop&apos;s statistics.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10">
           <StatsCard
             icon={Wallet}
-            title="Total des ventes"
-            value={`${parseInt(
+            title="Total sales"
+            value={`₦${parseInt(
               dashboardData.totalVentes
-            ).toLocaleString()} DZD`}
+            ).toLocaleString()}`}
             color="emerald"
           />
           <StatsCard
             icon={Boxes}
-            title="Total des produits"
-            value={`${dashboardData.totalProduits} produits`}
+            title="Total products"
+            value={`${dashboardData.totalProduits} products`}
             color="indigo"
           />
           <StatsCard
             icon={Users}
-            title="Utilisateurs"
+            title="Users"
             value={`${
               dashboardData.utilisateurs.clients +
               dashboardData.utilisateurs.vendeurs
-            } utilisateurs`}
-            subtitle={`${dashboardData.utilisateurs.clients} clients, ${dashboardData.utilisateurs.vendeurs} vendeurs`}
+            } users`}
+            subtitle={`${dashboardData.utilisateurs.clients} customers, ${dashboardData.utilisateurs.vendeurs} vendors`}
             color="violet"
           />
           <StatsCard
             icon={Package}
-            title="Produits vendus"
-            value={`${dashboardData.produitsVendus} articles vendus`}
+            title="Products sold"
+            value={`${dashboardData.produitsVendus} items sold`}
             color="cyan"
           />
           <StatsCard
             icon={Trophy}
-            title="Produit le plus vendu"
-            value={dashboardData.produitPlusVendu?.nom || "Aucun produit vendu"}
+            title="Best-selling product"
+            value={dashboardData.produitPlusVendu?.nom || "No products sold"}
             subtitle={
               dashboardData.produitPlusVendu
-                ? `${dashboardData.produitPlusVendu.quantiteVendue} unités vendues`
-                : "Pas encore de ventes enregistrées"
+                ? `${dashboardData.produitPlusVendu.quantiteVendue} units sold`
+                : "No sales recorded yet"
             }
             color="amber"
           />
           <StatsCard
             icon={TrendingUp}
-            title="Produit avec plus de revenus"
-            value={dashboardData.produitPlusRevenu?.nom || "Aucun revenu"}
+            title="Highest-revenue product"
+            value={dashboardData.produitPlusRevenu?.nom || "No revenue"}
             subtitle={
               dashboardData.produitPlusRevenu
-                ? `${dashboardData.produitPlusRevenu.totalRevenu.toLocaleString()} DZD de revenus`
-                : "Pas encore de revenus enregistrés"
+                ? `₦${dashboardData.produitPlusRevenu.totalRevenu.toLocaleString()} in revenue`
+                : "No revenue recorded yet"
             }
             color="teal"
           />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
-          <ProductRatingCard
-            title="Meilleur note produit"
-            productName={dashboardData.meilleurProduit.nom}
-            rating={dashboardData.meilleurProduit.noteMoyenne}
-            totalEvaluations={dashboardData.meilleurProduit.totalEvaluations}
-            color="violet"
-          />
-          <ProductRatingCard
-            title="Pire note produit"
-            productName={dashboardData.pireProduit.nom}
-            rating={dashboardData.pireProduit.noteMoyenne}
-            totalEvaluations={dashboardData.pireProduit.totalEvaluations}
-            color="rose"
-          />
+          {dashboardData.meilleurProduit ? (
+            <ProductRatingCard
+              title="Best-rated product"
+              productName={dashboardData.meilleurProduit.nom}
+              rating={dashboardData.meilleurProduit.noteMoyenne}
+              totalEvaluations={dashboardData.meilleurProduit.totalEvaluations}
+              color="violet"
+            />
+          ) : (
+            <EmptyRatingCard title="Best-rated product" />
+          )}
+          {dashboardData.pireProduit ? (
+            <ProductRatingCard
+              title="Worst-rated product"
+              productName={dashboardData.pireProduit.nom}
+              rating={dashboardData.pireProduit.noteMoyenne}
+              totalEvaluations={dashboardData.pireProduit.totalEvaluations}
+              color="rose"
+            />
+          ) : (
+            <EmptyRatingCard title="Worst-rated product" />
+          )}
         </div>
 
         <DashboardChart

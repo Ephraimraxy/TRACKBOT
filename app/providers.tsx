@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { Provider as ReduxProvider } from "react-redux";
@@ -10,6 +11,7 @@ import { makeStore } from "@/redux/store";
 
 // UI components
 import SpinnerbLoader from "@/components/ui/SpinnerLoader";
+import LiveNotifications from "@/components/notifications/LiveNotifications";
 
 type Props = {
   children: React.ReactNode;
@@ -17,7 +19,9 @@ type Props = {
 };
 
 const Providers = ({ children, session }: Props) => {
-  const { store, persistor } = makeStore();
+  // Create the store ONCE. Calling makeStore() on every render built a new store and persistence gate
+  // each time the page changed, which restarted the whole app (cart reload, sidebar reset) on every click.
+  const [{ store, persistor }] = useState(makeStore);
 
   return (
     <SessionProvider session={session}>
@@ -31,6 +35,7 @@ const Providers = ({ children, session }: Props) => {
           persistor={persistor}
         >
           {children}
+          <LiveNotifications />
         </PersistGate>
       </ReduxProvider>
     </SessionProvider>

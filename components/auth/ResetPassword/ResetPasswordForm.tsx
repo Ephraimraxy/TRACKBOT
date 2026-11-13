@@ -1,5 +1,8 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -17,6 +20,7 @@ import FormErrorMessage from "@/components/auth/FormErrorMessage";
 import FieldErrorMessage from "@/components/auth/FieldErrorMessage";
 
 const ResetPasswordForm = ({ email }: { email: string }) => {
+  const { t } = useI18n();
   const router = useRouter();
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
@@ -39,7 +43,7 @@ const ResetPasswordForm = ({ email }: { email: string }) => {
 
       const responseJson = await res.json();
       if (!res.ok) {
-        setErrorMessage(responseJson.error || "Erreur de réinitialisation.");
+        setErrorMessage(responseJson.error || "Reset error.");
 
         if (responseJson?.data) {
           const errors: Record<string, string> = {};
@@ -53,10 +57,12 @@ const ResetPasswordForm = ({ email }: { email: string }) => {
         return;
       }
 
-      toast("Mot de passe réinitialisé avec succès.");
-      router.push("/auth/login");
+      toast(t("Password reset successfully."));
+      // The administrator reached this page from /admin, so they go back there to sign in.
+      const fromAdmin = new URLSearchParams(window.location.search).get("from") === "admin";
+      router.push(fromAdmin ? "/admin" : "/auth/login");
     } catch {
-      setErrorMessage("Erreur réseau. Veuillez réessayer.");
+      setErrorMessage("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -65,20 +71,19 @@ const ResetPasswordForm = ({ email }: { email: string }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Entrez le code de vérification</CardTitle>
+        <CardTitle><T>Enter the verification code</T></CardTitle>
         <CardDescription>
-          Vérifiez votre e-mail ({email}) et entrez le code reçu ainsi
-          qu&apos;un nouveau mot de passe.
+          <T>Check your email (</T>{email}<T>) and enter the code you received along with a new password.</T>
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div className="grid gap-3">
-            <Label htmlFor="code">Code de vérification</Label>
+            <Label htmlFor="code"><T>Verification code</T></Label>
             <Input
               id="code"
               type="text"
-              placeholder="Code à 6 chiffres"
+              placeholder={t("6-digit code")}
               value={code}
               onChange={(e) => setCode(e.target.value)}
               required
@@ -89,7 +94,7 @@ const ResetPasswordForm = ({ email }: { email: string }) => {
             )}
           </div>
           <div className="grid gap-3">
-            <Label htmlFor="password">Nouveau mot de passe</Label>
+            <Label htmlFor="password"><T>New password</T></Label>
             <Input
               id="password"
               type="password"
@@ -105,7 +110,7 @@ const ResetPasswordForm = ({ email }: { email: string }) => {
           </div>
           <FormErrorMessage message={errorMessage} />
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Réinitialisation..." : "Confirmer"}
+            {isLoading ? "Resetting..." : "Confirm"}
           </Button>
         </form>
       </CardContent>

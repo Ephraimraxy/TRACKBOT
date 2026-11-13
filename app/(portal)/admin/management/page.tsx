@@ -78,7 +78,7 @@ export default function ManagementPage() {
         });
       } catch (error) {
         console.error("Error fetching users:", error);
-        toast.error("Erreur lors de la récupération des utilisateurs");
+        toast.error("Error while retrieving users");
       } finally {
         setLoading(false);
       }
@@ -107,10 +107,10 @@ export default function ManagementPage() {
       setUsers(
         users.filter((user) => user.id !== userToDelete.id) as typeof users
       );
-      toast.success("Utilisateur supprimé avec succès");
+      toast.success("User deleted successfully");
     } catch (error) {
       console.error("Error deleting user:", error);
-      toast.error("Erreur lors de la suppression de l'utilisateur");
+      toast.error("Error while deleting the user");
     } finally {
       setShowDeleteModal(false);
       setUserToDelete(null);
@@ -125,10 +125,10 @@ export default function ManagementPage() {
         body: JSON.stringify({ userId, text: message }),
       });
       if (!response.ok) throw new Error("Failed to send message");
-      toast.success("Message envoyé avec succès");
+      toast.success("Message sent successfully");
     } catch (error) {
       console.error("Error sending message:", error);
-      toast.error("Erreur lors de l'envoi du message");
+      toast.error("Error while sending the message");
     }
   };
 

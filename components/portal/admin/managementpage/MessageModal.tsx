@@ -37,7 +37,7 @@ export function MessageModal({ user, onClose, onSend }: MessageModalProps) {
           <div className="flex items-center gap-3 mb-4">
             <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
             <h3 className="text-lg sm:text-xl font-bold text-gray-900">
-              Message à {user.prenom} {user.nom}
+              Message to {user.prenom} {user.nom}
             </h3>
           </div>
           <div className="bg-blue-50 p-3 rounded-lg mb-4">
@@ -48,7 +48,7 @@ export function MessageModal({ user, onClose, onSend }: MessageModalProps) {
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Écrivez votre message ici..."
+            placeholder="Write your message here..."
             className="w-full h-32 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none shadow-inner"
           />
           <div className="flex justify-end gap-3 mt-4">
@@ -56,14 +56,14 @@ export function MessageModal({ user, onClose, onSend }: MessageModalProps) {
               onClick={onClose}
               className="bg-gray-200 text-gray-800 px-3 py-1 sm:px-4 sm:py-2 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-300 text-sm sm:text-base"
             >
-              Annuler
+              Cancel
             </button>
             <button
               onClick={handleSend}
               disabled={!message.trim()}
               className="bg-blue-500 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg font-semibold hover:bg-blue-600 transition-all duration-300 flex items-center gap-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Mail className="h-4 w-4" /> Envoyer
+              <Mail className="h-4 w-4" /> Send
             </button>
           </div>
         </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import { Package, Download } from "lucide-react";
 import { montserrat } from "@/styles/fonts";
 
@@ -17,7 +19,7 @@ export default function PageHeader({
           <h1
             className={`text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.variable}`}
           >
-            Historique des Commandes
+            <T>Order history</T>
           </h1>
         </div>
         <button
@@ -25,13 +27,13 @@ export default function PageHeader({
           className="w-full sm:w-auto bg-black text-white px-4 sm:px-6 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition-all duration-300 shadow-md text-sm sm:text-base"
         >
           <Download className="h-4 w-4 sm:h-5 sm:w-5" />
-          Exporter
+          <T>Export</T>
         </button>
       </div>
 
       {/* Texte descriptif */}
       <p className="mb-6 text-base sm:text-lg text-gray-700">
-        Consultez l&apos;historique de vos commandes et suivez vos achats.
+        <T>View your order history and track your purchases.</T>
       </p>
     </>
   );

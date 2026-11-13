@@ -8,8 +8,8 @@ export const exportSalesToExcel = (sales: SellFromAPI[]) => {
     ID: sale.id,
     Produit: sale.nomProduit,
     Quantité: sale.quantite,
-    "Prix Unitaire (DA)": sale.prixUnit.toFixed(2),
-    "Total (DA)": sale.total.toFixed(2),
+    "Prix Unitaire (₦)": sale.prixUnit.toFixed(2),
+    "Total (₦)": sale.total.toFixed(2),
     Couleur: sale.couleur?.nom || "N/A",
     Taille: sale.taille?.nom || "N/A",
     Client: sale.commande.client ? `${sale.commande.client.nom} ${sale.commande.client.prenom}` : "N/A",
@@ -35,7 +35,7 @@ export const exportSalesToExcel = (sales: SellFromAPI[]) => {
     wch: w,
   }));
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Ventes");
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Sales");
   XLSX.writeFile(workbook, "ventes_chic_et_tendance.xlsx");
-  toast.success("Ventes exportées avec succès !");
+  toast.success("Sales exported successfully!");
 }; 

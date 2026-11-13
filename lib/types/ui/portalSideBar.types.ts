@@ -10,6 +10,6 @@ export type UserInfo = {
   name: string;
   email: string;
   photoUrl: string | null;
-  role: "Administrateur" | "Vendeur";
+  role: "Administrator" | "Vendor" | "Delivery person";
   badgeColor: string;
 };

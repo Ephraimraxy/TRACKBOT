@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import { Button } from "@/components/ui/button";
 import React, { useEffect, useState } from "react";
 import {
@@ -69,7 +71,7 @@ const ProductReviews = ({ productId }: { productId: string }) => {
       <div className="flex items-center justify-between flex-col sm:flex-row mb-5 sm:mb-6">
         <div className="flex items-center mb-4 sm:mb-0">
           <h3 className="text-xl sm:text-2xl font-bold text-black mr-2">
-            Tous les Avis
+            <T>All reviews</T>
           </h3>
           <span className="text-sm sm:text-base text-black/60">
             ({reviewsCount})
@@ -81,9 +83,9 @@ const ProductReviews = ({ productId }: { productId: string }) => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="best">Meilleurs avis</SelectItem>
-              <SelectItem value="latest">Plus récent</SelectItem>
-              <SelectItem value="oldest">Plus ancien</SelectItem>
+              <SelectItem value="best"><T>Top reviews</T></SelectItem>
+              <SelectItem value="latest"><T>Newest</T></SelectItem>
+              <SelectItem value="oldest"><T>Oldest</T></SelectItem>
             </SelectContent>
           </Select>
           <Link href={`/product/${productId}/write-review`}>
@@ -91,7 +93,7 @@ const ProductReviews = ({ productId }: { productId: string }) => {
               type="button"
               className="sm:min-w-[166px] px-4 py-3 sm:px-5 sm:py-4 rounded-full bg-black font-medium text-xs sm:text-base h-12"
             >
-              Ecrire un Avis
+              <T>Write a review</T>
             </Button>
           </Link>
         </div>
@@ -104,17 +106,17 @@ const ProductReviews = ({ productId }: { productId: string }) => {
       ) : reviewsCount === 0 ? (
         <div className="text-center py-10 px-4">
           <p className="text-lg font-medium text-gray-600 mb-4">
-            Aucun avis disponible pour ce produit.
+            <T>No reviews available for this product.</T>
           </p>
           <p className="text-gray-500 mb-6">
-            Soyez le premier à partager votre expérience avec ce produit !
+            <T>Be the first to share your experience with this product!</T>
           </p>
           <Link href={`/product/${productId}/write-review`}>
             <Button
               type="button"
               className="px-6 py-3 rounded-full bg-black font-medium text-base"
             >
-              Écrire un avis
+              <T>Write a review</T>
             </Button>
           </Link>
         </div>
@@ -130,7 +132,7 @@ const ProductReviews = ({ productId }: { productId: string }) => {
               href={`/product/${productId}/all-reviews`}
               className="inline-block w-[230px] px-11 py-4 border rounded-full hover:bg-black hover:text-white text-black transition-all font-medium text-sm sm:text-base border-black/10"
             >
-              Charger plus d&apos;Avis
+              <T>Load more reviews</T>
             </Link>
           </div>
         </>

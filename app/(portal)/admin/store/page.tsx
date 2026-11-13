@@ -78,10 +78,10 @@ export default function ShopPage() {
 
       if (result.error) {
         toast.error(
-          result.error || "Erreur lors de la suppression du produit !"
+          result.error || "Error while deleting the product!"
         );
       } else {
-        toast.success(result.message || "Produit supprimé avec succès !");
+        toast.success(result.message || "Product deleted successfully!");
       }
       setShowDeleteModal(false);
       setDeletingProduct(null);
@@ -122,14 +122,14 @@ export default function ShopPage() {
               width={100}
               height={100}
               src="/images/not-found.png"
-              alt="Produit non trouvé"
+              alt="Product not found"
               className="mx-auto w-32 h-32 mb-4"
             />
             <p className="text-xl font-semibold text-gray-800">
-              Pas de produits trouvés
+              No products found
             </p>
             <p className="text-base text-gray-600 mt-2">
-              Aucun produit ne correspond à votre recherche.
+              No products match your search.
             </p>
           </div>
         )}

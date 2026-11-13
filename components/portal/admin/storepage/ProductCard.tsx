@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ProductFromAPI } from "@/lib/types/product.types";
 import { Edit, Trash2, ArrowRight } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import { montserrat } from "@/styles/fonts";
 import { getImageUrlFromPublicId } from "@/lib/utils";
 import { toast } from "sonner";
@@ -64,12 +64,12 @@ export const ProductCard = ({
                 onEdit(product);
               } else
                 toast.error(
-                  "Vous ne pouvez pas modifier les modifier les produits de la marketplace"
+                  "You cannot edit marketplace products"
                 );
             }}
             className="bg-black text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-all duration-200 shadow-md font-bold"
           >
-            <Edit className="h-4 w-4" /> Modifier
+            <Edit className="h-4 w-4" /> Edit
           </button>
           <button
             onClick={(e) => {
@@ -78,7 +78,7 @@ export const ProductCard = ({
             }}
             className="bg-red-500 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-red-600 transition-all duration-200 shadow-md font-bold"
           >
-            <Trash2 className="h-4 w-4" /> Supprimer
+            <Trash2 className="h-4 w-4" /> Delete
           </button>
         </div>
       </div>
@@ -92,17 +92,17 @@ export const ProductCard = ({
             {product.type ? product.type.toString().toUpperCase() : ""}
           </p>
           <p className="text-sm text-gray-600">
-            <span className="font-bold">Note :</span> {product.noteMoyenne} / 5
+            <span className="font-bold">Rating:</span> {product.noteMoyenne} / 5
           </p>
           <p className="text-sm text-gray-600">
-            <span className="font-bold">Quantité :</span> {product.qteStock}
+            <span className="font-bold">Quantity:</span> {product.qteStock}
           </p>
         </div>
         <div className="mt-3 flex items-center justify-between">
           <span
             className={`text-lg font-semibold text-gray-900 ${montserrat.className}`}
           >
-            DA {product.prix.toFixed(2)}
+            ₦{product.prix.toFixed(2)}
           </span>
           <button
             onClick={(e) => {
@@ -111,7 +111,7 @@ export const ProductCard = ({
             }}
             className="group/detail bg-black text-white px-3 py-1 rounded-lg hover:bg-gray-800 transition-all duration-200 flex items-center gap-1 font-semibold"
           >
-            Détails
+            Details
             <ArrowRight className="h-4 w-4 opacity-0 group-hover/detail:opacity-100 transition-opacity duration-200" />
           </button>
         </div>

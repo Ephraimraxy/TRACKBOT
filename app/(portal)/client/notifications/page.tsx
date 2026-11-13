@@ -1,5 +1,8 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { useState, useEffect, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { motion } from "framer-motion";
@@ -14,6 +17,7 @@ import NotificationActions from "@/components/portal/client/notificationpage/Not
 import DeleteAllModal from "@/components/portal/client/notificationpage/DeleteAllModal";
 import Pagination from "@/components/portal/client/notificationpage/Pagination";
 import { useSession } from "next-auth/react";
+import AlertSettingsPanel from "@/components/notifications/AlertSettingsPanel";
 
 interface Filters {
   type: NotificationType | "";
@@ -24,6 +28,7 @@ interface Filters {
 }
 
 export default function NotificationsPage() {
+  const { t } = useI18n();
   const [notifications, setNotifications] = useState<NotificationFromAPI[]>([]);
   const [filters, setFilters] = useState<Filters>({
     type: "",
@@ -49,7 +54,7 @@ export default function NotificationsPage() {
 
     if (!userId) {
       setIsLoading(false);
-      toast.error("Vous devez être connecté pour accéder à cette page.");
+      toast.error(t("You must be logged in to access this page."));
       console.log("No user ID found in session");
       return;
     }
@@ -72,7 +77,7 @@ export default function NotificationsPage() {
       setTotalPages(result.data.pagination.totalPages);
     } else {
       toast.error(
-        result.error || "Erreur lors du chargement des notifications"
+        result.error || "Error while loading notifications"
       );
     }
     setIsLoading(false);
@@ -91,7 +96,7 @@ export default function NotificationsPage() {
   const markAllAsRead = async () => {
     const userId = session?.user.id;
     if (!userId) {
-      toast.error("Vous devez être connecté pour effectuer cette action.");
+      toast.error(t("You must be logged in to perform this action."));
       return;
     }
 
@@ -106,13 +111,13 @@ export default function NotificationsPage() {
         setNotifications((prev) =>
           prev.map((notif) => ({ ...notif, estLu: true }))
         );
-        toast.success("Toutes les notifications ont été marquées comme lues !");
+        toast.success(t("All notifications were marked as read!"));
         refetchNotifications();
       } else {
-        toast.error("Erreur lors de la mise à jour des notifications");
+        toast.error(t("Error while updating the notifications"));
       }
     } catch {
-      toast.error("Erreur réseau lors de la mise à jour");
+      toast.error(t("Network error during update"));
     }
   };
 
@@ -120,7 +125,7 @@ export default function NotificationsPage() {
   const deleteAllNotifications = async () => {
     const userId = session?.user.id;
     if (!userId) {
-      toast.error("Vous devez être connecté pour effectuer cette action.");
+      toast.error(t("You must be logged in to perform this action."));
       return;
     }
 
@@ -134,13 +139,13 @@ export default function NotificationsPage() {
         setTotalItems(0);
         setTotalPages(1);
         setShowDeleteAllModal(false);
-        toast.success("Toutes les notifications ont été supprimées !");
+        toast.success(t("All notifications were deleted!"));
         refetchNotifications();
       } else {
-        toast.error("Erreur lors de la suppression des notifications");
+        toast.error(t("Error while deleting the notifications"));
       }
     } catch {
-      toast.error("Erreur réseau lors de la suppression");
+      toast.error(t("Network error during deletion"));
     }
   };
 
@@ -169,12 +174,14 @@ export default function NotificationsPage() {
           <h1
             className={`text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.className}`}
           >
-            Notifications
+            <T>Notifications</T>
           </h1>
         </div>
         <p className="mb-6 text-base sm:text-lg text-gray-700">
-          Suivez les dernières activités et mises à jour ici.
+          <T>Follow the latest activity and updates here.</T>
         </p>
+
+        {session?.user?.id && <AlertSettingsPanel userId={session.user.id} />}
 
         {/* Filters and Actions */}
         <div className="mb-6 sm:mb-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

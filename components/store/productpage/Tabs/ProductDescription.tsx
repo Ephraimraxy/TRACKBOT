@@ -7,7 +7,7 @@ const ProductDescription = ({
   description?: string | null;
 }) => {
   const safeDescription =
-    description ?? "Aucune description disponible pour ce produit.";
+    description ?? "No description available for this product.";
 
   return (
     <section className="prose-lg" data-color-mode="light">

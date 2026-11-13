@@ -4,7 +4,6 @@ import { UserRole } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { ERROR_MESSAGES } from "@/lib/constants/settings";
 import { formatUserData, getUserSelect } from "@/lib/helpers/users";
-import { deleteFromCloudinary } from "@/lib/helpers/cloudinary";
 
 // Get all users (Admin only)
 export async function GET(_req: NextRequest) {
@@ -34,7 +33,7 @@ export async function GET(_req: NextRequest) {
     const data = users.map(formatUserData);
 
     return NextResponse.json(
-      { message: "Les utilisateurs ont été récupérés avec succès", data },
+      { message: "Users were retrieved successfully", data },
       { status: 200 }
     );
   } catch (error) {
@@ -99,9 +98,9 @@ export async function DELETE(_req: NextRequest) {
       },
     });
 
-    // Delete Cloudinary images (profile + product images)
+    // Delete stored images (profile + product images)
 
-    // Uncomment the following lines if you want to delete images from Cloudinary
+    // Uncomment the following lines if you want to delete images from R2 storage
     // Keep it commented for now to avoid accidental deletions
     // const allImagePublicIds = users.flatMap((user) => {
     //   const profileImage = user.imagePublicId ? [user.imagePublicId] : [];
@@ -112,7 +111,7 @@ export async function DELETE(_req: NextRequest) {
     //   return [...profileImage, ...productImages];
     // });
 
-    // await Promise.all(allImagePublicIds.map(deleteFromCloudinary));
+    // await Promise.all(allImagePublicIds.map(deleteStoredImage));
 
     // Collect all product IDs
     const allProductIds = users.flatMap(
@@ -139,7 +138,7 @@ export async function DELETE(_req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Tous les utilisateurs ont été supprimés avec succès.",
+        message: "All users were deleted successfully.",
         count: deleted.count,
       },
       { status: 200 }

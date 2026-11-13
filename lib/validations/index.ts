@@ -15,7 +15,6 @@ import {
 import {
   createOrderSchema,
   prepareOrderSchema,
-  fullOrderWithPaymentSchema,
 } from "./order";
 import { reportSchema } from "@/lib/validations/report";
 
@@ -46,7 +45,6 @@ export {
   // Order
   createOrderSchema,
   prepareOrderSchema,
-  fullOrderWithPaymentSchema,
 
   // Report
   reportSchema,

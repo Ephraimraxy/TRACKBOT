@@ -1,3 +1,4 @@
+import { T } from "@/components/i18n/T";
 import React from "react";
 import Link from "next/link";
 import * as motion from "framer-motion/client";
@@ -46,7 +47,7 @@ const ProductListSec = ({
           }`,
         ])}
       >
-        {title}
+        <T>{title}</T>
       </motion.h2>
 
       {description && (
@@ -57,7 +58,7 @@ const ProductListSec = ({
           transition={{ delay: 0.3, duration: 0.6 }}
           className="text-sm md:text-base text-gray-600 mb-8 md:mb-14"
         >
-          {description}
+          <T>{description}</T>
         </motion.p>
       )}
       <motion.div
@@ -89,7 +90,7 @@ const ProductListSec = ({
               href={viewAllLink}
               className="w-full inline-block sm:w-[218px] px-[54px] py-4 border rounded-full hover:bg-black hover:text-white text-black transition-all font-medium text-sm sm:text-base border-black/10"
             >
-              Voir tout
+              <T>View all</T>
             </Link>
           </div>
         )}

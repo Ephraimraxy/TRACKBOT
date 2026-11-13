@@ -1,6 +1,7 @@
+import { T } from "@/components/i18n/T";
 const OrderPage = () => {
   return (
-    <div>OrderPage</div>
+    <div><T>OrderPage</T></div>
   )
 }
 

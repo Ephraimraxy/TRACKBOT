@@ -37,7 +37,7 @@ export default function OrderDetailModal({
           {/* En-tête de la commande */}
           <div className="flex justify-between items-center border-b border-gray-200 pb-3 sm:pb-4 mt-1">
             <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
-              Commande #{order.id}
+              Order #{order.id}
             </h3>
             <span
               className={`px-3 py-1 rounded-full font-bold ${getStatusColor(
@@ -52,7 +52,7 @@ export default function OrderDetailModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 bg-gray-50 p-3 sm:p-4 rounded-xl">
             <div>
               <span className="text-gray-700 font-semibold text-sm sm:text-base">
-                Client :
+                Customer:
               </span>
               <span className="text-gray-900 block text-sm sm:text-base font-semibold">
                 {order.client?.prenom} {order.client?.nom}
@@ -61,7 +61,7 @@ export default function OrderDetailModal({
 
             <div>
               <span className="text-gray-700 font-semibold text-sm sm:text-base">
-                Date :
+                Date:
               </span>
               <span className="text-gray-900 block text-sm sm:text-base font-semibold">
                 {extractDateString(order.date)}
@@ -70,7 +70,7 @@ export default function OrderDetailModal({
 
             <div>
               <span className="text-gray-700 font-medium text-sm sm:text-base">
-                Adresse :
+                Address:
               </span>
               <span className="text-gray-900 font-semibold block text-sm sm:text-base">
                 {`${order.adresse?.rue}, ${order.adresse?.ville}, ${order.adresse?.wilaya} - ${order.adresse?.codePostal}`}
@@ -79,7 +79,7 @@ export default function OrderDetailModal({
 
             <div>
               <span className="text-gray-700 font-medium text-sm sm:text-base">
-                Articles :
+                Items:
               </span>
               <span className="text-gray-900 font-semibold block text-sm sm:text-base">
                 {order.produits.length}
@@ -90,7 +90,7 @@ export default function OrderDetailModal({
           {/* Liste des produits */}
           <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4">
             <h4 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">
-              Détails des articles
+              Item details
             </h4>
             <div className="space-y-3">
               {order.produits.map((produit, index) => (
@@ -103,15 +103,15 @@ export default function OrderDetailModal({
                       {produit.nomProduit}
                     </span>
                     <p className="text-xs sm:text-sm text-gray-600">
-                      Couleur: {produit.couleur?.nom}, Taille:{" "}
+                      Colour: {produit.couleur?.nom}, Size:{" "}
                       {produit.taille?.nom}
                     </p>
                     <p className="text-xs sm:text-sm text-gray-600">
-                      Quantité: {produit.quantite}
+                      Quantity: {produit.quantite}
                     </p>
                   </div>
                   <span className="text-gray-900 font-semibold text-sm sm:text-base mt-1 sm:mt-0">
-                    {(produit.prixUnit * produit.quantite).toFixed(2)} DA
+                    ₦{(produit.prixUnit * produit.quantite).toFixed(2)}
                   </span>
                 </div>
               ))}
@@ -121,10 +121,10 @@ export default function OrderDetailModal({
           {/* Total */}
           <div className="bg-green-50 p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <span className="text-green-700 font-medium text-base sm:text-lg">
-              Total de la commande :
+              Order total:
             </span>
             <span className="text-green-900 font-bold text-lg sm:text-2xl">
-              {order.montant.toFixed(2)} DA
+              ₦{order.montant.toFixed(2)}
             </span>
           </div>
         </div>

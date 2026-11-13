@@ -1,3 +1,4 @@
+import { T } from "@/components/i18n/T";
 import { Button } from "@/components/ui/button";
 import { FaArrowRight } from "react-icons/fa6";
 import { satoshi } from "@/styles/fonts";
@@ -27,7 +28,7 @@ export default function OrderSummary({
         <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gray-100">
           <ShoppingBag className="h-5 w-5 text-gray-700" />
         </div>
-        Résumé de la commande
+        <T>Order summary</T>
       </h3>
 
       <div className="flex flex-col space-y-4">
@@ -41,7 +42,9 @@ export default function OrderSummary({
                 {item.quantite} × {item.nomProduit}
               </span>
               <span className={cn(satoshi.className, "ml-[25px]")}>
-                Couleur: {item.couleur?.nom}, Taille: {item.taille?.nom}
+                {item.couleur?.nom && <><T>Colour:</T> {item.couleur.nom}</>}
+                {item.couleur?.nom && item.taille?.nom && ", "}
+                {item.taille?.nom && <><T>Size:</T> {item.taille.nom}</>}
               </span>
             </span>
 
@@ -51,7 +54,7 @@ export default function OrderSummary({
                 "text-sm md:text-base font-medium"
               )}
             >
-              {item.quantite * item.prixUnit} DA
+              ₦{item.quantite * item.prixUnit}
             </span>
           </div>
         ))}
@@ -65,7 +68,7 @@ export default function OrderSummary({
               "md:text-xl text-gray-800 font-medium"
             )}
           >
-            Total
+            <T>Total</T>
           </span>
           <span
             className={cn(
@@ -73,7 +76,7 @@ export default function OrderSummary({
               "text-xl md:text-2xl font-bold text-black"
             )}
           >
-            {orderSummary.montant} DA
+            ₦{orderSummary.montant}
           </span>
         </div>
       </div>
@@ -87,7 +90,7 @@ export default function OrderSummary({
         onClick={onSubmit}
         disabled={isSubmitting}
       >
-        {isSubmitting ? "Traitement en cours..." : "Passer la commande"}
+        {isSubmitting ? "Processing..." : "Place order"}
         <FaArrowRight className="text-xl ml-2 group-hover:translate-x-1 transition-all" />
       </Button>
     </div>

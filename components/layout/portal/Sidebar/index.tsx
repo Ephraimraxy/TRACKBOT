@@ -1,7 +1,10 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { montserrat } from "@/styles/fonts";
@@ -10,6 +13,7 @@ import ProfileCard from "./ProfileCard";
 import NavigationMenu from "./NavigationMenu";
 import LogoutButton from "@/components/layout/portal/Sidebar/LogoutButton";
 import { NavItem, UserInfo } from "@/lib/types/ui/portalSideBar.types";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -22,9 +26,30 @@ export default function SidebarLayout({
   navItems,
   userInfo,
 }: SidebarLayoutProps) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const { t } = useI18n();
+  // Open by default on desktop; the choice is remembered on this device.
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem("trackbot-sidebar") === "collapsed") setIsCollapsed(true);
+    } catch {
+      // Storage blocked: the default (open) is fine.
+    }
+  }, []);
+
+  const toggleCollapsed = () => {
+    setIsCollapsed((current) => {
+      try {
+        window.localStorage.setItem("trackbot-sidebar", current ? "open" : "collapsed");
+      } catch {
+        // Not remembering the choice is harmless.
+      }
+      return !current;
+    });
+  };
 
   // Detect if screen is mobile
   useEffect(() => {
@@ -50,7 +75,7 @@ export default function SidebarLayout({
   const handleSidebarClick = (e: SidebarClickEvent) => {
     // On mobile, don't change collapsed state when clicking on sidebar
     if (!isMobile && !e.target.closest("a") && !e.target.closest("button")) {
-      setIsCollapsed(!isCollapsed);
+      toggleCollapsed();
     }
   };
 
@@ -88,6 +113,19 @@ export default function SidebarLayout({
         }`}
         onClick={isMobile ? undefined : handleSidebarClick}
       >
+        {/* Always-visible expand / collapse button (desktop) */}
+        {!isMobile && (
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-label={isCollapsed ? t("Expand sidebar") : t("Collapse sidebar")}
+            title={isCollapsed ? t("Expand sidebar") : t("Collapse sidebar")}
+            className="absolute -right-3 top-5 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-600 shadow hover:bg-gray-100 hover:text-black"
+          >
+            {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
+        )}
+
         {/* Sidebar header - visible only on mobile or expanded desktop */}
         {(isMobile || !isCollapsed) && (
           <div
@@ -99,14 +137,14 @@ export default function SidebarLayout({
               <h2
                 className={`${montserrat.variable} font-montserrat text-lg font-bold`}
               >
-                Menu
+                <T>Menu</T>
               </h2>
             ) : (
               <div className="h-12 w-full flex items-center justify-center">
                 <Link href="/">
                   <Image
                     src="/manifest/favicon.svg"
-                    alt="Logo de l'application"
+                    alt={t("Application logo")}
                     width={50}
                     height={50}
                     className="object-contain hover:opacity-80 transition-opacity"
@@ -130,7 +168,7 @@ export default function SidebarLayout({
               <Link href="/">
                 <Image
                   src="/manifest/favicon.svg"
-                  alt="Logo de l'application"
+                  alt={t("Application logo")}
                   width={50}
                   height={50}
                   className="object-contain hover:opacity-80 transition-opacity"
@@ -158,6 +196,7 @@ export default function SidebarLayout({
         />
 
         {/* Logout button */}
+        {!isCollapsed && <LanguageSwitcher className="mb-2 px-3" />}
         <LogoutButton isMobile={isMobile} isCollapsed={isCollapsed} />
       </div>
 

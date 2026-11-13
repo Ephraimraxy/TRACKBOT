@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import MobileFilters from "@/components/store/catalogpage/filters/MobileFilters";
 import { montserrat } from "@/styles/fonts";
+import { T } from "@/components/i18n/T";
 
 interface CatalogHeaderProps {
   totalItems: number;
@@ -55,7 +56,7 @@ export default function CatalogHead({
             <h1
               className={`text-2xl md:text-[32px] font-extrabold uppercase tracking-tight ${montserrat.className}`}
             >
-              Nos produits
+              <T>Our products</T>
             </h1>
             <FiShoppingCart className="text-black text-2xl md:text-3xl" />
           </div>
@@ -71,20 +72,20 @@ export default function CatalogHead({
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
           <span className="text-sm md:text-base text-black/60">
-            Affichage de {startIndex} à {endIndex} sur {totalItems} produits
+            <T>Showing</T> {startIndex} <T>to</T> {endIndex} <T>of</T> {totalItems} <T>products</T>
           </span>
           <div className="flex items-center">
-            Trier par:{" "}
+            <T>Sort by:</T>{" "}
             <Select defaultValue="most-popular" onValueChange={onSortChange}>
               <SelectTrigger className="font-medium text-sm px-1.5 sm:text-base w-fit text-black bg-transparent shadow-none border-none">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="most-popular">Le plus populaire</SelectItem>
-                <SelectItem value="low-price">Prix bas</SelectItem>
-                <SelectItem value="high-price">Prix élevé</SelectItem>
-                <SelectItem value="newest">Plus récent</SelectItem>
-                <SelectItem value="oldest">Plus ancien</SelectItem>
+                <SelectItem value="most-popular"><T>Most popular</T></SelectItem>
+                <SelectItem value="low-price"><T>Low price</T></SelectItem>
+                <SelectItem value="high-price"><T>High price</T></SelectItem>
+                <SelectItem value="newest"><T>Newest</T></SelectItem>
+                <SelectItem value="oldest"><T>Oldest</T></SelectItem>
               </SelectContent>
             </Select>
           </div>

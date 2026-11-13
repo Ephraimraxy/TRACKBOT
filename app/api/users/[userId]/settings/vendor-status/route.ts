@@ -56,14 +56,14 @@ export async function GET(
 
     if (!user || !user.client?.vendeur) {
       return NextResponse.json(
-        { error: "Vous n'êtes pas encore vendeur." },
+        { error: "You are not a vendor yet." },
         { status: 404 }
       );
     }
 
     return NextResponse.json(
       {
-        message: "Données du vendeur récupérées avec succès",
+        message: "Vendor data retrieved successfully",
         data: user.client.vendeur,
       },
       { status: 200 }
@@ -101,6 +101,11 @@ export async function POST(
     );
   }
 
+  // Vendor accounts are not part of this shop (owner, customer and delivery person only).
+  if (process.env.ALLOW_VENDORS !== "true") {
+    return NextResponse.json({ error: "Vendor accounts are not available." }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
     const parsed = becomeVendorSchema.safeParse(body);
@@ -126,7 +131,7 @@ export async function POST(
 
     if (!user || !user.client) {
       return NextResponse.json(
-        { error: "Utilisateur non trouvé ou non client" },
+        { error: "User not found or not a customer" },
         { status: 404 }
       );
     }
@@ -134,7 +139,7 @@ export async function POST(
     // Check if user is already a vendor
     if (user.client.vendeur) {
       return NextResponse.json(
-        { error: "Vous êtes déjà vendeur" },
+        { error: "You are already a vendor" },
         { status: 400 }
       );
     }
@@ -160,7 +165,7 @@ export async function POST(
     });
 
     return NextResponse.json(
-      { message: "Statut vendeur attribué avec succès" },
+      { message: "Vendor status granted successfully" },
       { status: 201 }
     );
   } catch (error) {
@@ -217,7 +222,7 @@ export async function PATCH(
 
     if (!user || !user.client?.vendeur) {
       return NextResponse.json(
-        { error: "Vous n'êtes pas encore vendeur." },
+        { error: "You are not a vendor yet." },
         { status: 404 }
       );
     }
@@ -235,14 +240,14 @@ export async function PATCH(
 
     if (!updatedVendor) {
       return NextResponse.json(
-        { error: "Erreur lors de la mise à jour du profil vendeur" },
+        { error: "Error while updating the vendor profile" },
         { status: 500 }
       );
     }
 
     return NextResponse.json(
       {
-        message: "Profil vendeur mis à jour avec succès",
+        message: "Vendor profile updated successfully",
         data: updatedVendor,
       },
       { status: 200 }

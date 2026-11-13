@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { prisma } from "@/lib/utils/prisma";
 import { sendPasswordResetEmail } from "@/lib/helpers/emailService";
+import { createRateLimiter } from "@/lib/utils/rateLimit";
 import {
   generateTOTPCode,
   generateTOTPSecret,
@@ -9,57 +11,62 @@ import {
 } from "@/lib/utils/totp";
 import { ERROR_MESSAGES } from "@/lib/constants/settings";
 
+const bodySchema = z.object({ email: z.string().trim().email().max(255) });
+
+// At most 3 code requests per 10 minutes, per visitor and per email address.
+// (In-memory: one server instance. See lib/utils/rateLimit.ts for the limits of that.)
+const allow = createRateLimiter({ limit: 3, windowMs: 10 * 60_000 });
+
+// The answer is identical whether or not an account exists, so this endpoint cannot be used
+// to find out which email addresses are registered.
+const GENERIC = "If an account exists for that email address, a reset code has been sent.";
 
 export async function POST(req: Request) {
+  let parsed;
   try {
-    const { email } = await req.json();
+    parsed = bodySchema.safeParse(await req.json());
+  } catch {
+    return NextResponse.json({ error: ERROR_MESSAGES.BAD_REQUEST }, { status: 400 });
+  }
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
+  }
+  const email = parsed.data.email.toLowerCase();
 
-    // Check if the email exists in the database
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true },
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+  if (!allow(`ip:${ip}`) || !allow(`mail:${email}`)) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a few minutes and try again." },
+      { status: 429 }
+    );
+  }
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+      select: { id: true, email: true },
     });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Aucun compte associé à cet email." },
-        { status: 404 }
-      );
+    if (user) {
+      const secret = generateTOTPSecret();
+      const code = generateTOTPCode(secret);
+      const expiresLe = new Date(Date.now() + TOTP_EXPIRATION_DURATION * 1000);
+      await prisma.tOTPSecret.upsert({
+        where: { userId: user.id },
+        update: { secret, expiresLe },
+        create: { userId: user.id, secret, expiresLe },
+      });
+      try {
+        await sendPasswordResetEmail(user.email, code);
+      } catch (error) {
+        // Logged for the operator; the visitor still gets the generic answer.
+        console.error("Password reset email could not be sent:", (error as Error).message);
+      }
     }
 
-    // Generate secret for password reset
-    const secret = generateTOTPSecret();
-    const code = generateTOTPCode(secret);
-
-    // Store the secret in the database
-    await prisma.tOTPSecret.upsert({
-      where: { userId: user.id },
-      update: {
-        secret,
-        expiresLe: new Date(Date.now() + TOTP_EXPIRATION_DURATION * 1000),
-      },
-      create: {
-        userId: user.id,
-        secret,
-        expiresLe: new Date(Date.now() + TOTP_EXPIRATION_DURATION * 1000),
-      },
-    });
-
-    // Send the password reset code via email
-    await sendPasswordResetEmail(email, code);
-
-    return NextResponse.json(
-      {
-        message:
-          "Un code de réinitialisation a été envoyé à votre adresse e-mail.",
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: GENERIC }, { status: 200 });
   } catch (error) {
-    console.error("API Error : ", error);
-    return NextResponse.json(
-      { error: ERROR_MESSAGES.INTERNAL_ERROR },
-      { status: 500 }
-    );
+    console.error("API Error [send-reset-code]:", error);
+    return NextResponse.json({ error: ERROR_MESSAGES.INTERNAL_ERROR }, { status: 500 });
   }
 }

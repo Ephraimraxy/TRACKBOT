@@ -1,10 +1,14 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
 
 export default function ReviewCard({ productId }: { productId: string }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -50,7 +54,7 @@ export default function ReviewCard({ productId }: { productId: string }) {
       if (!response.ok) {
         const json = await response.json();
         console.log("error", json);
-        throw new Error("Erreur lors de l'envoi");
+        throw new Error("Error while sending");
       }
 
       setSuccess(true);
@@ -59,7 +63,7 @@ export default function ReviewCard({ productId }: { productId: string }) {
       }, 2000);
     } catch (error) {
       console.error("Review submission error:", error);
-      setError("Échec de l'envoi de l'avis. Veuillez réessayer.");
+      setError("Failed to submit the review. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -85,12 +89,12 @@ export default function ReviewCard({ productId }: { productId: string }) {
               />
             </svg>
           </div>
-          <h2 className="text-3xl font-bold text-gray-800 mb-3">Thank You!</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-3"><T>Thank You!</T></h2>
           <p className="text-gray-600 mb-6">
-            Votre avis a été soumis avec succès.
+            <T>Your review was submitted successfully.</T>
           </p>
           <div className="animate-pulse text-sm text-blue-500">
-            Redirection vers le produit en cours...
+            <T>Redirecting to the product...</T>
           </div>
         </div>
       </div>
@@ -101,9 +105,9 @@ export default function ReviewCard({ productId }: { productId: string }) {
     <div className="w-full max-w-md">
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
         <div className="bg-black p-6 text-center">
-          <h2 className="text-2xl font-bold text-white">Partagez votre avis</h2>
+          <h2 className="text-2xl font-bold text-white"><T>Share your review</T></h2>
           <p className="text-gray-300 mt-1">
-            Comment evaluerez-vous ce produit ?
+            <T>How would you rate this product?</T>
           </p>
         </div>
 
@@ -150,8 +154,8 @@ export default function ReviewCard({ productId }: { productId: string }) {
               </div>
               <p className="text-sm text-gray-500">
                 {rating
-                  ? `Vous avez choisis ${rating} étoile${rating > 1 ? "s" : ""}`
-                  : "Choisissez une note"}
+                  ? `You selected ${rating} star${rating > 1 ? "s" : ""}`
+                  : "Choose a rating"}
               </p>
             </div>
 
@@ -160,7 +164,7 @@ export default function ReviewCard({ productId }: { productId: string }) {
                 htmlFor="review"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Votre commentaire
+                <T>Your comment</T>
               </label>
               <textarea
                 id="review"
@@ -169,7 +173,7 @@ export default function ReviewCard({ productId }: { productId: string }) {
                 onChange={(e) => setReview(e.target.value)}
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                placeholder="Écrivez votre commentaire ici..."
+                placeholder={t("Write your comment here...")}
               />
             </div>
 
@@ -206,10 +210,10 @@ export default function ReviewCard({ productId }: { productId: string }) {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Submitting...
+                  <T>Submitting...</T>
                 </span>
               ) : (
-                "Soumettre un avis"
+                "Submit a review"
               )}
             </button>
           </form>
@@ -221,7 +225,7 @@ export default function ReviewCard({ productId }: { productId: string }) {
           onClick={() => router.back()}
           className="text-sm text-gray-600 hover:text-black font-medium"
         >
-          ← Revenir à la page produit
+          <T>← Back to the product page</T>
         </button>
       </div>
     </div>

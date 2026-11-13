@@ -6,14 +6,13 @@ import {
   getPaginationParams,
   getSortingOrdersParams,
 } from "@/lib/utils/params";
-import { PaiementStatut, Prisma, UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { formatOrderData, getOrderSelect } from "@/lib/helpers/orders";
 import {
   formatValidationErrors,
-  fullOrderWithPaymentSchema,
+  createOrderSchema,
 } from "@/lib/validations";
-import { Decimal } from "@prisma/client/runtime/library";
-import { BadRequestIdError } from "@/lib/classes/BadRequestIdError";
+import { createOrder, OrderError } from "@/lib/services/orderService";
 
 // GET & Search all orders for admin only
 export async function GET(request: NextRequest) {
@@ -107,7 +106,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Commandes récupérées avec succès",
+        message: "Orders retrieved successfully",
         pagination,
         data: formattedData,
       },
@@ -143,7 +142,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const parsed = fullOrderWithPaymentSchema.safeParse(body);
+  const parsed = createOrderSchema.safeParse(body);
 
   if (!parsed.success) {
     return formatValidationErrors(parsed);
@@ -159,81 +158,36 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Create address
-    const address = await prisma.adresse.create({ data: addresse });
-
-    // Build order lines and calculate total
-    let total = new Decimal(0);
-    const ligneCommandeData = await Promise.all(
-      produits.map(async (line) => {
-        const produit = await prisma.produit.findUnique({
-          where: { id: line.produitId },
-          select: {
-            id: true,
-            nom: true,
-            prix: true,
-            images: { select: { imagePublicId: true }, take: 1 },
-          },
-        });
-
-        if (!produit) {
-          throw new BadRequestIdError(`Produit ${line.produitId} introuvable.`);
-        }
-
-        const prixUnit = produit.prix;
-        const sousTotal = prixUnit.mul(line.quantite);
-        total = total.add(sousTotal);
-
-        return {
-          nomProduit: produit.nom,
-          quantite: line.quantite,
-          prixUnit,
-          imagePublicId: produit.images[0]?.imagePublicId ?? null,
-          produitId: produit.id,
-          couleurId: line.couleurId ?? null,
-          tailleId: line.tailleId ?? null,
-        };
-      })
-    );
-
-    // Create order
-    const order = await prisma.commande.create({
-      data: {
-        montant: total,
-        clientId: userId,
-        adresseId: address.id,
-        lignesCommande: { create: ligneCommandeData },
-      },
-      select: getOrderSelect(),
-    });
-
-    // Create payment record
-    const paiement = await prisma.paiementCommande.create({
-      data: {
-        commandeId: order.id,
-        statut: PaiementStatut.VALIDE,
-      },
+    // Atomic: stock check/decrement, address, order, payment and history.
+    const { order, paiement } = await createOrder(prisma, {
+      userId,
+      addresse,
+      produits,
     });
 
     const formattedOrder = formatOrderData({ ...order, paiement });
 
     return NextResponse.json(
       {
-        message: "Commande et paiement réussis",
+        message: "Order placed. Payment is still to be made.",
         data: formattedOrder,
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error("API Error [POST /api/orders]:", error);
-
-    if (error instanceof BadRequestIdError) {
-      return NextResponse.json(
-        { error: ERROR_MESSAGES.BAD_REQUEST_ID },
-        { status: 400 }
-      );
+    if (error instanceof OrderError) {
+      if (error.code === "PRODUCT_NOT_FOUND") {
+        return NextResponse.json(
+          { error: ERROR_MESSAGES.BAD_REQUEST_ID },
+          { status: 400 }
+        );
+      }
+      if (error.code === "INSUFFICIENT_STOCK") {
+        return NextResponse.json({ error: error.message }, { status: 409 });
+      }
     }
 
+    console.error("API Error [POST /api/orders]:", error);
     return NextResponse.json(
       { error: ERROR_MESSAGES.INTERNAL_ERROR },
       { status: 500 }

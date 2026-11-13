@@ -205,17 +205,17 @@ export async function GET(_req: NextRequest) {
     // YearData (mois en abrégé français)
     const months = [
       "Jan",
-      "Fév",
+      "Feb",
       "Mar",
-      "Avr",
-      "Mai",
-      "Juin",
-      "Juil",
-      "Août",
-      "Sept",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
       "Oct",
       "Nov",
-      "Déc",
+      "Dec",
     ];
     const yearDataMap = new Map();
     for (const cmd of commandes) {
@@ -265,7 +265,7 @@ export async function GET(_req: NextRequest) {
       yearData,
     });
   } catch (error) {
-    console.error("Erreur dans /api/analytics/vendor:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    console.error("Error in /api/analytics/vendor:", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

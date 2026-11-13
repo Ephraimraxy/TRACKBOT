@@ -20,9 +20,20 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // /admin is the administrator's own sign-in page, separate from the customers' /auth/login.
+  if (pathname === "/admin" || pathname === "/admin/") {
+    if (session?.user.role === "ADMIN") {
+      return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+    }
+    return NextResponse.next();
+  }
+
   // Protect private routes
   if (PRIVATE_ROUTES.some((route) => pathname.startsWith(route))) {
     if (!session) {
+      if (pathname.startsWith("/admin")) {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
       const callbackUrl = encodeURIComponent(req.nextUrl.pathname);
       return NextResponse.redirect(
         new URL(`/auth/login?callbackUrl=${callbackUrl}`, req.url)
@@ -46,10 +57,14 @@ export async function middleware(req: NextRequest) {
     if (pathname.startsWith("/admin") && role !== "ADMIN") {
       return NextResponse.redirect(new URL("/", req.url));
     }
-    if (pathname.startsWith("/vendor") && role !== "VENDEUR") {
+    // The vendor area is switched off: this shop has an owner, customers and delivery staff only.
+    if (pathname.startsWith("/vendor") && (process.env.ALLOW_VENDORS !== "true" || role !== "VENDEUR")) {
       return NextResponse.redirect(new URL("/", req.url));
     }
     if (pathname.startsWith("/client") && role !== "CLIENT") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+    if (pathname.startsWith("/driver") && role !== "LIVREUR") {
       return NextResponse.redirect(new URL("/", req.url));
     }
   }

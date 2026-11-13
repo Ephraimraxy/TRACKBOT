@@ -6,7 +6,7 @@ import { ZodError, SafeParseReturnType, SafeParseError } from "zod";
  */
 export default function formatValidationErrors<T>(
   parseResult: SafeParseReturnType<T, T>,
-  customMessage = "Certains champs sont manquants ou incorrects"
+  customMessage = "Some fields are missing or incorrect"
 ) {
   return NextResponse.json(
     {

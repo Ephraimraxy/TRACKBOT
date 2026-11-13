@@ -28,7 +28,7 @@ export default function ContactInfo({ user, onUpdate }: ContactInfoProps) {
       toast.error(result.error);
     } else {
       onUpdate(result.data!);
-      toast.success("Informations de contact mises à jour avec succès");
+      toast.success("Contact information updated successfully");
     }
     setIsLoading(false);
   };
@@ -38,16 +38,16 @@ export default function ContactInfo({ user, onUpdate }: ContactInfoProps) {
       <div className="p-6 border-b">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Phone className="h-5 w-5 text-black" />
-          Informations de contact
+          Contact information
         </h2>
         <p className="text-sm text-gray-500">
-          Mettez à jour vos coordonnées pour les notifications de commande.
+          Update your contact details for order notifications.
         </p>
       </div>
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         <div className="space-y-2">
           <label htmlFor="tel" className="block text-sm font-medium">
-            Numéro de téléphone
+            Phone number
           </label>
           <input
             id="tel"
@@ -57,8 +57,7 @@ export default function ContactInfo({ user, onUpdate }: ContactInfoProps) {
             className="w-full px-3 py-2 border rounded-md"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Utilisé pour les mises à jour de commande et les notifications de
-            livraison
+            Used for order updates and delivery notifications
           </p>
         </div>
         <button
@@ -66,7 +65,7 @@ export default function ContactInfo({ user, onUpdate }: ContactInfoProps) {
           className="bg-black text-white px-4 py-2 rounded-md hover:bg-black/90 disabled:opacity-50"
           disabled={isLoading}
         >
-          {isLoading ? "Enregistrement..." : "Enregistrer les modifications"}
+          {isLoading ? "Saving..." : "Save changes"}
         </button>
       </form>
     </div>

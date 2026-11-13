@@ -121,7 +121,7 @@ export default function DashboardPage() {
   }
 
   if (!stats) {
-    return <ErrorState error="Aucune donnée disponible" onRetry={refetch} />;
+    return <ErrorState error="No data available" onRetry={refetch} />;
   }
 
   return (
@@ -134,18 +134,18 @@ export default function DashboardPage() {
               className={`text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.className}`}
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
-              Tableau de bord
+              Dashboard
             </h1>
           </div>
           <p className="mt-1 sm:mt-2 text-base sm:text-lg text-gray-600">
-            Aperçu des performances de votre boutique
+            Overview of your shop&apos;s performance
           </p>
         </div>
 
         {/* Section colorée (Bienvenue) et cartes statistiques à droite */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-10">
           <WelcomeCard
-            firstName={session?.user?.prenom || "Prenom"}
+            firstName={session?.user?.prenom || "First name"}
             lastName={session?.user?.nom || "Nom"}
           />
           <DashboardStats stats={stats} />

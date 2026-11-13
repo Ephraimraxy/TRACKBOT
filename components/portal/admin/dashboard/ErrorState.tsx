@@ -13,14 +13,14 @@ export default function ErrorState({ error, onRetry }: ErrorStateProps) {
         <h2
           className={`text-xl font-bold text-gray-900 mb-2 ${montserrat.className}`}
         >
-          Erreur de chargement
+          Loading error
         </h2>
         <p className="text-gray-700">{error}</p>
         <button
           onClick={onRetry}
           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          Réessayer
+          Try again
         </button>
       </div>
     </div>

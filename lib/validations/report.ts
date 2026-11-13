@@ -3,12 +3,12 @@ import { z } from "zod";
 export const reportSchema = z.object({
   objet: z
     .string()
-    .max(255, { message: "L'objet ne peut pas dépasser 255 caractères" }),
+    .max(255, { message: "The subject cannot exceed 255 characters" }),
   text: z
     .string()
-    .max(1000, { message: "Le texte ne peut pas dépasser 1000 caractères" })
+    .max(1000, { message: "The text cannot exceed 1000 characters" })
     .optional(),
   produitId: z
-    .string({ required_error: "L'ID du produit est requis" })
-    .min(1, { message: "L'ID du produit ne peut pas être vide" }),
+    .string({ required_error: "The product ID is required" })
+    .min(1, { message: "The product ID cannot be empty" }),
 });

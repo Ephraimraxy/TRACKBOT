@@ -41,7 +41,7 @@ export async function GET(
         { status: 404 }
       );
     return NextResponse.json(
-      { message: "Signalement récupéré", data: formatReportData(report) },
+      { message: "Report retrieved", data: formatReportData(report) },
       { status: 200 }
     );
   } catch (error) {
@@ -87,7 +87,7 @@ export async function PATCH(
   // Validate reponse if provided
   if (reponse && (typeof reponse !== "string" || reponse.trim().length === 0)) {
     return NextResponse.json(
-      { error: "La réponse doit être un texte non vide" },
+      { error: "The answer must be non-empty text" },
       { status: 400 }
     );
   }
@@ -133,9 +133,9 @@ export async function PATCH(
       await prisma.notification.create({
         data: {
           type: NotificationType.SIGNALEMENT,
-          objet: `L'administrateur a répondu à votre signalement concernant « ${
-            report.produit?.nom || "un produit"
-          } »`,
+          objet: `The administrator replied to your report about “${
+            report.produit?.nom || "a product"
+          }”`,
           text: reponse,
           userId: report.client.user.id,
           urlRedirection: `/products/${report.produit?.id}`,
@@ -145,7 +145,7 @@ export async function PATCH(
 
     return NextResponse.json(
       {
-        message: "Mise à jour effectuée avec succès",
+        message: "Update completed successfully",
         data: formatReportData(updated),
       },
       { status: 200 }
@@ -181,7 +181,7 @@ export async function DELETE(
   try {
     await prisma.signalement.delete({ where: { id: reportId } });
     return NextResponse.json(
-      { message: "Signalement supprimé" },
+      { message: "Report deleted" },
       { status: 200 }
     );
   } catch (error) {

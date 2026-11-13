@@ -38,10 +38,10 @@ export default function ConfirmationModal({
             className="bg-white/95 backdrop-blur-md rounded-xl p-6 max-w-md w-full shadow-2xl"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Confirmer le changement de statut
+              Confirm status change
             </h3>
             <p className="text-sm text-gray-600 mb-6">
-              Voulez-vous vraiment changer le statut de la commande #{orderId} à{" "}
+              Do you really want to change the status of order #{orderId} à{" "}
               <span className="font-semibold">{statusLabels[newStatus]}</span> ?
             </p>
             <div className="flex justify-end gap-4">
@@ -50,7 +50,7 @@ export default function ConfirmationModal({
                 className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all"
                 disabled={isUpdating}
               >
-                Annuler
+                Cancel
               </button>
               <button
                 onClick={onConfirm}
@@ -62,7 +62,7 @@ export default function ConfirmationModal({
                 ) : (
                   <CheckCircle className="h-5 w-5" />
                 )}
-                Confirmer
+                Confirm
               </button>
             </div>
           </motion.div>

@@ -13,14 +13,14 @@ export default function ErrorState({ error, onRetry }: ErrorStateProps) {
       <div className="text-center">
         <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Erreur lors du chargement
+          Error while loading
         </h3>
         <p className="text-gray-600 mb-4 max-w-md">{error}</p>
         <button
           onClick={onRetry}
           className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
         >
-          Réessayer
+          Try again
         </button>
       </div>
     </div>

@@ -46,7 +46,7 @@ export async function GET(
     const data = formatReviewResponsesData(response);
 
     return NextResponse.json(
-      { message: "Réponse récupérée avec succès", data },
+      { message: "Reply retrieved successfully", data },
       { status: 200 }
     );
   } catch (error) {
@@ -135,7 +135,7 @@ export async function PUT(
 
     return NextResponse.json(
       {
-        message: "Réponse mise à jour avec succès.",
+        message: "Reply updated successfully.",
         data: formatted,
       },
       { status: 200 }
@@ -212,7 +212,7 @@ export async function DELETE(
     });
 
     return NextResponse.json(
-      { message: "Réponse supprimée avec succès." },
+      { message: "Reply deleted successfully." },
       { status: 200 }
     );
   } catch (error) {

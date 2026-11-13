@@ -89,12 +89,12 @@ export const ProductForm = ({
     const sizeInMB = file.size / (1024 * 1024);
     if (sizeInMB > MAX_UPLOAD_SIZE_MB) {
       toast.error(
-        `L'image dépasse la taille maximale de ${MAX_UPLOAD_SIZE_MB} Mo`
+        `The image exceeds the maximum size of ${MAX_UPLOAD_SIZE_MB} MB`
       );
       return false;
     }
     if (!ALLOWED_IMAGE_FORMATS.includes(file.type)) {
-      toast.error("Format d'image non supporté. Utilisez JPEG, PNG ou WebP.");
+      toast.error("Unsupported image format. Use JPEG, PNG or WebP.");
       return false;
     }
     return true;
@@ -119,7 +119,7 @@ export const ProductForm = ({
       const newImages = Array.from(files).filter(validateImage);
       if (newImages.length > 2) {
         toast.error(
-          "Vous ne pouvez ajouter que 2 images supplémentaires maximum."
+          "You can add at most 2 additional images."
         );
         setAdditionalImages([]);
         e.target.value = "";
@@ -158,7 +158,7 @@ export const ProductForm = ({
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Produit mis à jour avec succès");
+        toast.success("Product updated successfully");
         setFormData(initialFormData);
         setMainImage(null);
         setAdditionalImages([]);
@@ -167,7 +167,7 @@ export const ProductForm = ({
     } else {
       if (!mainImage) {
         toast.error(
-          "Une image principale est requise pour ajouter un produit."
+          "A main image is required to add a product."
         );
         setIsLoading(false);
         return;
@@ -199,7 +199,7 @@ export const ProductForm = ({
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Produit ajouté avec succès");
+        toast.success("Product added successfully");
         onSubmit();
         setFormData(initialFormData);
         setMainImage(null);
@@ -230,7 +230,7 @@ export const ProductForm = ({
           <h2
             className={`text-2xl sm:text-3xl font-extrabold text-gray-900 ${montserrat.className}`}
           >
-            {editingProduct ? "Modifier le produit" : "Ajouter un produit"}
+            {editingProduct ? "Edit product" : "Add a product"}
           </h2>
         </div>
 
@@ -239,13 +239,12 @@ export const ProductForm = ({
           {/* General Information Section */}
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <Package className="h-5 w-5 text-gray-600" /> Informations
-              générales
+              <Package className="h-5 w-5 text-gray-600" /> General information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <FileText className="h-4 w-4" /> Nom
+                  <FileText className="h-4 w-4" /> Last name
                 </label>
                 <input
                   type="text"
@@ -259,7 +258,7 @@ export const ProductForm = ({
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <FileText className="h-4 w-4" /> Objet
+                  <FileText className="h-4 w-4" /> Subject
                 </label>
                 <input
                   type="text"
@@ -289,7 +288,7 @@ export const ProductForm = ({
                 />
                 <div className="text-right text-sm text-gray-500 mt-1">
                   {formData.description?.length || 0} /{" "}
-                  {MAX_PRODUCT_DESCRIPTION_LENGTH} caractères
+                  {MAX_PRODUCT_DESCRIPTION_LENGTH} characters
                 </div>
               </div>
             </div>
@@ -298,12 +297,12 @@ export const ProductForm = ({
           {/* Pricing and Stock Section */}
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-gray-600" /> Prix et stock
+              <DollarSign className="h-5 w-5 text-gray-600" /> Price and stock
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <DollarSign className="h-4 w-4" /> Prix (DA)
+                  <DollarSign className="h-4 w-4" /> Price (₦)
                 </label>
                 <input
                   type="number"
@@ -322,7 +321,7 @@ export const ProductForm = ({
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <Box className="h-4 w-4" /> Quantité en stock
+                  <Box className="h-4 w-4" /> Quantity in stock
                 </label>
                 <input
                   type="number"
@@ -344,12 +343,12 @@ export const ProductForm = ({
           {/* Attributes Section */}
           <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <Folder className="h-5 w-5 text-gray-600" /> Attributs
+              <Folder className="h-5 w-5 text-gray-600" /> Attributes
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <Folder className="h-4 w-4" /> Catégorie
+                  <Folder className="h-4 w-4" /> Category
                 </label>
                 <select
                   value={formData.categorie?.id || ""}
@@ -364,7 +363,7 @@ export const ProductForm = ({
                   }}
                   className="mt-1 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black transition-all duration-200"
                 >
-                  <option value="">Sélectionner une catégorie</option>
+                  <option value="">Select a category</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.nom}
@@ -374,7 +373,7 @@ export const ProductForm = ({
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <User className="h-4 w-4" /> Genre
+                  <User className="h-4 w-4" /> Gender
                 </label>
                 <select
                   value={formData.genre?.id || ""}
@@ -386,7 +385,7 @@ export const ProductForm = ({
                   }}
                   className="mt-1 w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-black transition-all duration-200"
                 >
-                  <option value="">Sélectionner un genre</option>
+                  <option value="">Select a gender</option>
                   {genders.map((gen) => (
                     <option key={gen.id} value={gen.id}>
                       {gen.nom}
@@ -396,7 +395,7 @@ export const ProductForm = ({
               </div>
               <div className="sm:col-span-2">
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <Palette className="h-4 w-4" /> Couleurs
+                  <Palette className="h-4 w-4" /> Colours
                 </label>
                 <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {colors.map((color) => (
@@ -429,7 +428,7 @@ export const ProductForm = ({
               </div>
               <div className="sm:col-span-2">
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                  <Ruler className="h-4 w-4" /> Tailles
+                  <Ruler className="h-4 w-4" /> Sizes
                 </label>
                 <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {sizes.map((size) => (
@@ -464,7 +463,7 @@ export const ProductForm = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <ImageIcon className="h-4 w-4" /> Image principale (requise)
+                    <ImageIcon className="h-4 w-4" /> Main image (required)
                   </label>
                   <input
                     type="file"
@@ -481,8 +480,7 @@ export const ProductForm = ({
                 </div>
                 <div>
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <ImageIcon className="h-4 w-4" /> Images supplémentaires
-                    (max 2)
+                    <ImageIcon className="h-4 w-4" /> Additional images (max 2)
                   </label>
                   <input
                     type="file"
@@ -513,10 +511,10 @@ export const ProductForm = ({
               disabled={isLoading}
             >
               {isLoading
-                ? "Enregistrement..."
+                ? "Saving..."
                 : editingProduct
-                ? "Mettre à jour"
-                : "Ajouter"}
+                ? "Update"
+                : "Add"}
             </button>
             <button
               type="button"
@@ -528,7 +526,7 @@ export const ProductForm = ({
               }}
               className="bg-gray-200 text-gray-800 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-all duration-300 shadow-md"
             >
-              Annuler
+              Cancel
             </button>
           </div>
         </form>

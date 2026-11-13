@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Les évaluations ont été récupérées avec succès",
+        message: "Reviews were retrieved successfully",
         pagination,
         data: evaluations,
       },
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
     const data = formatReviewData(newReview);
 
     return NextResponse.json(
-      { message: "L'évaluation a été bien enregistrée", data },
+      { message: "The review was saved", data },
       { status: 201 }
     );
   } catch (error) {
@@ -228,7 +228,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: "Toutes les évaluations ont été supprimées avec succès.",
+        message: "All reviews were deleted successfully.",
         count: deleted.count,
       },
       { status: 200 }

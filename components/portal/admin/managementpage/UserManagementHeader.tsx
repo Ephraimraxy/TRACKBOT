@@ -46,7 +46,7 @@ export function UserManagementHeader({
           className={`text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight ${montserrat.className}`}
           style={{ fontFamily: "'Montserrat', sans-serif" }}
         >
-          Gestion des utilisateurs
+          User management
         </h1>
       </div>
 
@@ -55,7 +55,7 @@ export function UserManagementHeader({
           className={`text-base sm:text-lg text-gray-700 ${montserrat.className}`}
           style={{ fontFamily: "'Montserrat', sans-serif" }}
         >
-          Gérez efficacement vos clients et vendeurs depuis cette interface.
+          Manage your customers and vendors efficiently from this interface.
         </p>
       </div>
 
@@ -64,7 +64,7 @@ export function UserManagementHeader({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-                {userType === "CLIENT" ? "Clients" : "Vendeurs"}
+                {userType === "CLIENT" ? "Customers" : "Vendors"}
               </h2>
               <div className="flex gap-2">
                 <button
@@ -75,7 +75,7 @@ export function UserManagementHeader({
                       : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
-                  <User className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1" /> Clients
+                  <User className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1" /> Customers
                 </button>
                 <button
                   onClick={() => setUserType("VENDEUR")}
@@ -86,7 +86,7 @@ export function UserManagementHeader({
                   }`}
                 >
                   <Store className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1" />{" "}
-                  Vendeurs
+                  Vendors
                 </button>
               </div>
             </div>
@@ -96,7 +96,7 @@ export function UserManagementHeader({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher..."
+                  placeholder="Search..."
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -113,7 +113,7 @@ export function UserManagementHeader({
                   className="p-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-100 transition flex items-center gap-1 flex-1 sm:flex-none"
                 >
                   <Download className="h-4 w-4" />
-                  <span className="text-xs sm:text-sm">Exporter</span>
+                  <span className="text-xs sm:text-sm">Export</span>
                 </button>
               </div>
             </div>
@@ -122,13 +122,13 @@ export function UserManagementHeader({
             <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 flex flex-col sm:flex-row flex-wrap gap-3">
               <div className="w-full sm:w-auto">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                  Trier par nom
+                  Sort by name
                 </label>
                 <select
                   onChange={(_e) => handleSort("name")}
                   className="w-full sm:w-auto px-3 py-2 bg-white border border-gray-200 rounded-md text-xs sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
                 >
-                  <option value="">Aucun</option>
+                  <option value="">None</option>
                   <option value="asc">A-Z</option>
                   <option value="desc">Z-A</option>
                 </select>
@@ -137,41 +137,41 @@ export function UserManagementHeader({
                 <>
                   <div className="w-full sm:w-auto">
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      Trier par commandes
+                      Sort by orders
                     </label>
                     <select
                       onChange={(_e) => handleSort("orders")}
                       className="w-full sm:w-auto px-3 py-2 bg-white border border-gray-200 rounded-md text-xs sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
                     >
-                      <option value="">Aucun</option>
-                      <option value="asc">Croissant</option>
-                      <option value="desc">Décroissant</option>
+                      <option value="">None</option>
+                      <option value="asc">Ascending</option>
+                      <option value="desc">Descending</option>
                     </select>
                   </div>
                   <div className="w-full sm:w-auto">
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      Trier par dépense
+                      Sort by spending
                     </label>
                     <select
                       onChange={(_e) => handleSort("expenses")}
                       className="w-full sm:w-auto px-3 py-2 bg-white border border-gray-200 rounded-md text-xs sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
                     >
-                      <option value="">Aucun</option>
-                      <option value="asc">Croissant</option>
-                      <option value="desc">Décroissant</option>
+                      <option value="">None</option>
+                      <option value="asc">Ascending</option>
+                      <option value="desc">Descending</option>
                     </select>
                   </div>
                   <div className="w-full sm:w-auto">
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      Trier par date
+                      Sort by date
                     </label>
                     <select
                       onChange={(_e) => handleSort("createdAt")}
                       className="w-full sm:w-auto px-3 py-2 bg-white border border-gray-200 rounded-md text-xs sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
                     >
-                      <option value="">Aucun</option>
-                      <option value="asc">Plus ancien</option>
-                      <option value="desc">Plus récent</option>
+                      <option value="">None</option>
+                      <option value="asc">Oldest</option>
+                      <option value="desc">Newest</option>
                     </select>
                   </div>
                 </>
@@ -179,41 +179,41 @@ export function UserManagementHeader({
                 <>
                   <div className="w-full sm:w-auto">
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      Trier par date
+                      Sort by date
                     </label>
                     <select
                       onChange={(_e) => handleSort("createdAt")}
                       className="w-full sm:w-auto px-3 py-2 bg-white border border-gray-200 rounded-md text-xs sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
                     >
-                      <option value="">Aucun</option>
-                      <option value="asc">Plus ancien</option>
-                      <option value="desc">Plus récent</option>
+                      <option value="">None</option>
+                      <option value="asc">Oldest</option>
+                      <option value="desc">Newest</option>
                     </select>
                   </div>
                   <div className="w-full sm:w-auto">
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      Trier par produits vendus
+                      Sort by products sold
                     </label>
                     <select
                       onChange={(_e) => handleSort("produitsVendus")}
                       className="w-full sm:w-auto px-3 py-2 bg-white border border-gray-200 rounded-md text-xs sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
                     >
-                      <option value="">Aucun</option>
-                      <option value="asc">Croissant</option>
-                      <option value="desc">Décroissant</option>
+                      <option value="">None</option>
+                      <option value="asc">Ascending</option>
+                      <option value="desc">Descending</option>
                     </select>
                   </div>
                   <div className="w-full sm:w-auto">
                     <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                      Trier par total ventes
+                      Sort by total sales
                     </label>
                     <select
                       onChange={(_e) => handleSort("totalVentes")}
                       className="w-full sm:w-auto px-3 py-2 bg-white border border-gray-200 rounded-md text-xs sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
                     >
-                      <option value="">Aucun</option>
-                      <option value="asc">Croissant</option>
-                      <option value="desc">Décroissant</option>
+                      <option value="">None</option>
+                      <option value="asc">Ascending</option>
+                      <option value="desc">Descending</option>
                     </select>
                   </div>
                 </>

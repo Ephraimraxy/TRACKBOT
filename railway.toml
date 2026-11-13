@@ -1,0 +1,12 @@
+# Railway deployment configuration for the web service.
+# `npm start` (see package.json) applies pending database migrations and then starts the
+# server; it exits (and the deploy fails) if a migration fails, so a half-migrated database
+# never serves traffic.
+[build]
+builder = "RAILPACK"
+
+[deploy]
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

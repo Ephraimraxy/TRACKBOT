@@ -1,5 +1,8 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -29,6 +32,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const { t } = useI18n();
   const { update } = useSession();
   const router = useRouter();
 
@@ -61,7 +65,7 @@ export function LoginForm({
       const responseJson = await response.json();
       if (!response.ok) {
         setErrorMessage(
-          responseJson?.error || "Une erreur est survenue. Veuillez réessayer."
+          responseJson?.error || "An error occurred. Please try again."
         );
         if (responseJson?.data) {
           const errors: Record<string, string> = {};
@@ -77,18 +81,22 @@ export function LoginForm({
 
       // update the session
       await update();
-      toast(responseJson.message || "Connexion réussie.");
+      toast(responseJson.message || "Login successful.");
 
-      // Valider l'URL de redirection (interne uniquement)
+      // The administrator lands in the admin area; everyone else goes back where they came from
+      // (internal addresses only).
       const callbackUrl = searchParams.get("callbackUrl");
-      const redirectUrl =
-        callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//")
-          ? callbackUrl
-          : "/";
+      const redirectUrl = responseJson.role === "ADMIN"
+        ? "/admin/dashboard"
+        : responseJson.role === "LIVREUR"
+        ? "/driver/deliveries"
+        : callbackUrl?.startsWith("/") && !callbackUrl.startsWith("//") && !callbackUrl.startsWith("/admin")
+        ? callbackUrl
+        : "/";
       router.push(redirectUrl);
       router.refresh();
     } catch {
-      setErrorMessage("Erreur réseau. Veuillez réessayer.");
+      setErrorMessage("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -98,9 +106,9 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Connectez-vous à votre compte</CardTitle>
+          <CardTitle><T>Log in to your account</T></CardTitle>
           <CardDescription>
-            Entrez votre e-mail ci-dessous pour vous connecter.
+            <T>Enter your email below to log in.</T>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -108,11 +116,11 @@ export function LoginForm({
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
                 {/* email */}
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email"><T>Email</T></Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="exemple@email.com"
+                  placeholder={t("example@email.com")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
@@ -126,12 +134,12 @@ export function LoginForm({
               {/* password */}
               <div className="grid gap-3">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Mot de passe</Label>
+                  <Label htmlFor="password"><T>Password</T></Label>
                   <Link
                     href="/auth/reset-password"
                     className="text-sm underline-offset-4 hover:underline"
                   >
-                    Mot de passe oublié ?
+                    <T>Forgot password?</T>
                   </Link>
                 </div>
                 <Input
@@ -150,7 +158,7 @@ export function LoginForm({
 
               {/* submit button */}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Connexion en cours..." : "Se connecter"}
+                {isLoading ? t("Logging in...") : t("Log in")}
               </Button>
 
               <FormErrorMessage message={errorMessage} />
@@ -158,12 +166,12 @@ export function LoginForm({
 
             {/* link to login page */}
             <div className="mt-4 text-center text-sm">
-              Vous n&apos;avez pas de compte ?{" "}
+              <T>Don&apos;t have an account?</T>{" "}
               <Link
                 href={registerHref}
                 className="underline underline-offset-4"
               >
-                Inscrivez-vous
+                <T>Sign up</T>
               </Link>
             </div>
           </form>

@@ -29,7 +29,7 @@ export default function SearchAndFilters({
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Rechercher par produit ou client..."
+          placeholder="Search by product or customer..."
           className="w-full px-4 py-2 sm:py-3 bg-white/80 backdrop-blur-md border border-gray-300 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] focus:ring-2 focus:ring-gradient-to-r focus:from-gray-400 focus:to-black focus:border-transparent transition-all duration-300 text-gray-800 placeholder-gray-500 hover:shadow-[0_6px_25px_rgba(0,0,0,0.1)] text-sm sm:text-base"
         />
         <svg
@@ -57,7 +57,7 @@ export default function SearchAndFilters({
             ? sortConfig.direction === "asc"
               ? "A-Z"
               : "Z-A"
-            : "Produit"}
+            : "Product"}
         </button>
         {isProductOpen && (
           <motion.div
@@ -73,7 +73,7 @@ export default function SearchAndFilters({
               }}
               className="w-full px-4 py-2 text-gray-800 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-200"
             >
-              Produit
+              Product
             </button>
             <button
               onClick={() => {
@@ -105,9 +105,9 @@ export default function SearchAndFilters({
         >
           {sortConfig?.key === "quantity"
             ? sortConfig.direction === "asc"
-              ? "Croissant"
-              : "Décroissant"
-            : "Quantité"}
+              ? "Ascending"
+              : "Descending"
+            : "Quantity"}
         </button>
         {isQuantityOpen && (
           <motion.div
@@ -123,7 +123,7 @@ export default function SearchAndFilters({
               }}
               className="w-full px-4 py-2 text-gray-800 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-200"
             >
-              Quantité
+              Quantity
             </button>
             <button
               onClick={() => {
@@ -132,7 +132,7 @@ export default function SearchAndFilters({
               }}
               className="w-full px-4 py-2 text-gray-800 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-200"
             >
-              Croissant
+              Ascending
             </button>
             <button
               onClick={() => {
@@ -141,7 +141,7 @@ export default function SearchAndFilters({
               }}
               className="w-full px-4 py-2 text-gray-800 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-200"
             >
-              Décroissant
+              Descending
             </button>
           </motion.div>
         )}
@@ -155,8 +155,8 @@ export default function SearchAndFilters({
         >
           {sortConfig?.key === "date"
             ? sortConfig.direction === "asc"
-              ? "Ancien"
-              : "Récent"
+              ? "Old"
+              : "Recent"
             : "Date"}
         </button>
         {isDateOpen && (
@@ -182,7 +182,7 @@ export default function SearchAndFilters({
               }}
               className="w-full px-4 py-2 text-gray-800 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-200"
             >
-              Ancien
+              Old
             </button>
             <button
               onClick={() => {
@@ -191,7 +191,7 @@ export default function SearchAndFilters({
               }}
               className="w-full px-4 py-2 text-gray-800 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-200"
             >
-              Récent
+              Recent
             </button>
           </motion.div>
         )}
@@ -205,8 +205,8 @@ export default function SearchAndFilters({
         >
           {sortConfig?.key === "total"
             ? sortConfig.direction === "asc"
-              ? "Croissant"
-              : "Décroissant"
+              ? "Ascending"
+              : "Descending"
             : "Total"}
         </button>
         {isTotalOpen && (
@@ -232,7 +232,7 @@ export default function SearchAndFilters({
               }}
               className="w-full px-4 py-2 text-gray-800 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-200"
             >
-              Croissant
+              Ascending
             </button>
             <button
               onClick={() => {
@@ -241,7 +241,7 @@ export default function SearchAndFilters({
               }}
               className="w-full px-4 py-2 text-gray-800 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-200"
             >
-              Décroissant
+              Descending
             </button>
           </motion.div>
         )}

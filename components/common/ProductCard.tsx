@@ -1,6 +1,7 @@
+import { T } from "@/components/i18n/T";
 import React from "react";
 import Rating from "../ui/Rating";
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import Link from "next/link";
 import { ProductFromAPI } from "@/lib/types/product.types";
 import { getImageUrlFromPublicId } from "@/lib/utils";
@@ -45,31 +46,31 @@ const ProductCard = ({ data }: ProductCardProps) => {
             <span className="text-black/60">/5</span>
           </span>
           <span className="text-black text-xs xl:text-sm ml-[11px] xl:ml-[13px] pb-0.5 xl:pb-0">
-            {`(${data.totalEvaluations} avis)`}
+            {`(${data.totalEvaluations} reviews)`}
           </span>
         </div>
       </div>
       <div className="flex items-center justify-between w-full">
         <span className="font-bold text-black text-xl xl:text-2xl">
-          {data.prix}DA
+          ₦{data.prix}
         </span>
 
         {data.type === "marketplace" ? (
           <div className="relative group">
             <div className="text-xs xl:text-sm bg-[#F0EEED] text-gray-700 font-medium px-2.5 py-1 rounded-full">
-              Marketplace
+              <T>Marketplace</T>
             </div>
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black text-white text-xs rounded px-2 py-1 z-10 w-max max-w-[200px] text-center">
-              Vendu par un vendeur tiers inscrit sur notre plateforme.
+              <T>Sold by a third-party vendor registered on our platform.</T>
             </div>
           </div>
         ) : (
           <div className="relative group">
             <div className="text-xs xl:text-sm bg-[#F0EEED] text-black font-medium px-2.5 py-1 rounded-full">
-              Boutique
+              <T>Shop</T>
             </div>
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black text-white text-xs rounded px-2 py-1 z-10 w-max max-w-[200px] text-center">
-              Vendu et expédié directement par notre boutique.
+              <T>Sold and shipped directly by our shop.</T>
             </div>
           </div>
         )}

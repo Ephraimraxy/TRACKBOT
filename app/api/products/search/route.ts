@@ -38,7 +38,13 @@ export async function GET(req: NextRequest) {
   if (type === "boutique") whereClause.produitBoutique = { isNot: null };
   if (type === "marketplace") whereClause.produitMarketplace = { isNot: null };
 
-  if (gender) whereClause.genre = { nom: containsFilter(gender) };
+  if (gender) {
+    // Unisex items fit everyone, so they also show under Men and Women.
+    const unisexToo = gender === "Men" || gender === "Women";
+    whereClause.genre = unisexToo
+      ? { nom: { in: [gender, "Unisex"] } }
+      : { nom: containsFilter(gender) };
+  }
   if (category) whereClause.categorie = { nom: containsFilter(category) };
   if (size) whereClause.tailles = { some: { nom: containsFilter(size) } };
   if (color) whereClause.couleurs = { some: { nom: containsFilter(color) } };
@@ -74,7 +80,7 @@ export async function GET(req: NextRequest) {
     // Return response
     return NextResponse.json(
       {
-        message: "Les résultats de la recherche ont été récupérés avec succès",
+        message: "Search results were retrieved successfully",
         pagination,
         data,
       },

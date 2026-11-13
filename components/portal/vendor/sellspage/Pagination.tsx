@@ -61,7 +61,7 @@ export default function Pagination({
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
       {/* Info sur les éléments affichés */}
       <div className="text-sm text-gray-600">
-        Affichage de {startItem} à {endItem} sur {totalItems} ventes
+        Showing {startItem} to {endItem} of {totalItems} sales
       </div>
 
       {/* Pagination */}

@@ -1,5 +1,8 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+
 import { FormEvent, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -29,6 +32,7 @@ export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const { t } = useI18n();
   const { update } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,7 +72,7 @@ export function RegisterForm({
 
       const responseJson = await response.json();
       if (!response.ok) {
-        setErrorMessage(responseJson?.error || "Une erreur est survenue.");
+        setErrorMessage(responseJson?.error || "An error occurred.");
         if (responseJson?.data) {
           const errors: Record<string, string> = {};
           responseJson.data.forEach(
@@ -83,7 +87,7 @@ export function RegisterForm({
 
       // update the session
       await update();
-      toast(responseJson.message || "Inscription réussie.");
+      toast(responseJson.message || "Registration successful.");
 
       // Valider l'URL de redirection (interne uniquement)
       const callbackUrl = searchParams.get("callbackUrl");
@@ -98,7 +102,7 @@ export function RegisterForm({
       );
       router.refresh();
     } catch {
-      setErrorMessage("Erreur réseau. Veuillez réessayer.");
+      setErrorMessage("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -108,9 +112,9 @@ export function RegisterForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Créer un compte</CardTitle>
+          <CardTitle><T>Create an account</T></CardTitle>
           <CardDescription>
-            Remplissez les informations ci-dessous pour créer votre compte.
+            <T>Fill in the information below to create your account.</T>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -118,11 +122,11 @@ export function RegisterForm({
             <div className="flex flex-col gap-6">
               {/* email */}
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email"><T>Email</T></Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="exemple@email.com"
+                  placeholder={t("example@email.com")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -134,7 +138,7 @@ export function RegisterForm({
 
               {/* password */}
               <div className="grid gap-3">
-                <Label htmlFor="password">Mot de passe</Label>
+                <Label htmlFor="password"><T>Password</T></Label>
                 <Input
                   id="password"
                   type="password"
@@ -150,11 +154,11 @@ export function RegisterForm({
 
               {/* nom */}
               <div className="grid gap-3">
-                <Label htmlFor="nom">Nom</Label>
+                <Label htmlFor="nom"><T>Last name</T></Label>
                 <Input
                   id="nom"
                   type="text"
-                  placeholder="Doe"
+                  placeholder={t("Doe")}
                   value={nom}
                   onChange={(e) => setNom(e.target.value)}
                   required
@@ -166,11 +170,11 @@ export function RegisterForm({
 
               {/* prenom */}
               <div className="grid gap-3">
-                <Label htmlFor="prenom">Prénom</Label>
+                <Label htmlFor="prenom"><T>First name</T></Label>
                 <Input
                   id="prenom"
                   type="text"
-                  placeholder="John"
+                  placeholder={t("John")}
                   value={prenom}
                   onChange={(e) => setPrenom(e.target.value)}
                   required
@@ -182,7 +186,7 @@ export function RegisterForm({
 
               {/* submit button */}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Inscription en cours..." : "S'inscrire"}
+                {isLoading ? t("Signing up...") : t("Sign up")}
               </Button>
 
               {/* Error Message */}
@@ -191,9 +195,9 @@ export function RegisterForm({
 
             {/* link to register page  */}
             <div className="mt-4 text-center text-sm">
-              Vous avez déjà un compte ?{" "}
+              <T>Already have an account?</T>{" "}
               <Link href={loginHref} className="underline underline-offset-4">
-                Connectez-vous
+                <T>Log in</T>
               </Link>
             </div>
           </form>

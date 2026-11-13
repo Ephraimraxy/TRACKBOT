@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import {
   Accordion,
   AccordionContent,
@@ -47,7 +49,7 @@ export default function ShoesSizeSection({
     <Accordion type="single" collapsible defaultValue="filter-size">
       <AccordionItem value="filter-size" className="border-none">
         <AccordionTrigger className="text-black font-bold text-xl hover:no-underline p-0 py-0.5">
-          Tailles chaussures
+          <T>Shoe sizes</T>
         </AccordionTrigger>
         <AccordionContent className="pt-4 pb-0">
           <div className="flex items-center flex-wrap">

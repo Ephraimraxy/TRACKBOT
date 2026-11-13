@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/utils/prisma";
 import { ERROR_MESSAGES } from "@/lib/constants/settings";
-import { deleteFromCloudinary } from "@/lib/helpers/cloudinary";
+import { deleteStoredImage } from "@/lib/helpers/storage";
 import { getUserSelect, formatUserData } from "@/lib/helpers/users";
 import { triggerEmailVerification } from "@/lib/helpers/emailService";
 import { formatValidationErrors, updateUserSchema } from "@/lib/validations";
@@ -42,7 +42,7 @@ export async function GET(
     // Check if user exists
     if (!user) {
       return NextResponse.json(
-        { error: `L'utilisateur avec l'ID ${userId} n'existe pas` },
+        { error: `The user with ID ${userId} does not exist` },
         { status: 404 }
       );
     }
@@ -51,7 +51,7 @@ export async function GET(
     const data = formatUserData(user);
 
     return NextResponse.json(
-      { message: "L’utilisateur a été récupéré avec succès", data },
+      { message: "The user was retrieved successfully", data },
       { status: 200 }
     );
   } catch (error) {
@@ -116,27 +116,27 @@ export async function DELETE(
     // Check if user exists
     if (!user) {
       return NextResponse.json(
-        { error: `L'utilisateur avec l'ID ${userId} n'existe pas.` },
+        { error: `The user with ID ${userId} does not exist.` },
         { status: 404 }
       );
     }
 
-    // Delete profile image from Cloudinary if exists
+    // Delete profile image from R2 storage if exists
     if (user.imagePublicId) {
-      await deleteFromCloudinary(user.imagePublicId);
+      await deleteStoredImage(user.imagePublicId);
     }
 
     // If the user is a vendor & has products
 
-    // Uncomment the following lines if you want to delete images from Cloudinary
+    // Uncomment the following lines if you want to delete images from R2 storage
     // Keep it commented for now to avoid accidental deletions
     // const produits = user?.client?.vendeur?.produitMarketplace || [];
     // if (produits.length > 0) {
-    //   // Delete all his product images from Cloudinary
+    //   // Delete all his product images from R2 storage
     //   await Promise.all(
     //     produits.flatMap((pm) =>
     //       (pm.produit?.images || []).map((img) =>
-    //         deleteFromCloudinary(img.imagePublicId)
+    //         deleteStoredImage(img.imagePublicId)
     //       )
     //     )
     //   );
@@ -156,7 +156,7 @@ export async function DELETE(
     await signOut({ redirect: false });
 
     return NextResponse.json(
-      { message: `L'utilisateur avec l'ID ${userId} a été supprimé.` },
+      { message: `The user with ID ${userId} was deleted.` },
       { status: 200 }
     );
   } catch (error) {
@@ -199,7 +199,7 @@ export async function PATCH(
     if (!parsedData.success) {
       return formatValidationErrors(
         parsedData,
-        "Certains champs fournis sont incorrects"
+        "Some of the fields provided are incorrect"
       );
     }
 
@@ -214,7 +214,7 @@ export async function PATCH(
 
     if (!currentUser) {
       return NextResponse.json(
-        { error: "Utilisateur introuvable." },
+        { error: "User not found." },
         { status: 404 }
       );
     }
@@ -226,7 +226,7 @@ export async function PATCH(
       });
       if (existingUser) {
         return NextResponse.json(
-          { error: "Cette adresse e-mail est déjà utilisée." },
+          { error: "This email address is already in use." },
           { status: 409 }
         );
       }
@@ -240,7 +240,7 @@ export async function PATCH(
       );
       if (!isPasswordValid) {
         return NextResponse.json(
-          { error: "Mot de passe actuel incorrect." },
+          { error: "Incorrect current password." },
           { status: 401 }
         );
       }
@@ -285,8 +285,8 @@ export async function PATCH(
       {
         message:
           email && email !== currentUser.email
-            ? "Mise à jour réussie. Veuillez vérifier votre nouvelle adresse e-mail."
-            : "Utilisateur mis à jour avec succès",
+            ? "Update successful. Please verify your new email address."
+            : "User updated successfully",
         data,
       },
       { status: 200 }

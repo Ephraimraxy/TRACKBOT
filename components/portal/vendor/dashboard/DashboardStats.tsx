@@ -17,10 +17,10 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-xs sm:text-sm font-medium text-gray-600">
-              Total des ventes
+              Total sales
             </h3>
             <p className="text-base sm:text-lg font-bold text-gray-900">
-              {stats.totalVentes?.toLocaleString() || 0} DZD
+              ₦{stats.totalVentes?.toLocaleString() || 0}
             </p>
           </div>
         </div>
@@ -33,10 +33,10 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-xs sm:text-sm font-medium text-gray-600">
-              Total des produits
+              Total products
             </h3>
             <p className="text-base sm:text-lg font-bold text-gray-900">
-              {stats.totalProduits} produits
+              {stats.totalProduits} products
             </p>
           </div>
         </div>
@@ -49,10 +49,10 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-xs sm:text-sm font-medium text-gray-600">
-              Produits vendus
+              Products sold
             </h3>
             <p className="text-base sm:text-lg font-bold text-gray-900">
-              {stats.produitsVendus || 0} articles vendus
+              {stats.produitsVendus || 0} items sold
             </p>
           </div>
         </div>
@@ -65,13 +65,13 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-xs sm:text-sm font-medium text-gray-600">
-              Produit avec plus de revenus
+              Highest-revenue product
             </h3>
-            <p className="text-base sm:text-lg font-bold text-gray-900 truncate" title={stats.produitPlusRevenu?.nom || "Aucun produit"}>
-              {stats.produitPlusRevenu?.nom || "Aucun produit"}
+            <p className="text-base sm:text-lg font-bold text-gray-900 truncate" title={stats.produitPlusRevenu?.nom || "No products"}>
+              {stats.produitPlusRevenu?.nom || "No products"}
             </p>
             <p className="text-[10px] sm:text-xs text-gray-500 truncate">
-              {stats.produitPlusRevenu?.totalRevenu?.toLocaleString() || 0} DZD de revenus
+              {stats.produitPlusRevenu?.totalRevenu?.toLocaleString() || 0} NGN in revenue
             </p>
           </div>
         </div>

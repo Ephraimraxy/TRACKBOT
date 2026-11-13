@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/common/SafeImage";
 import { SellFromAPI } from "@/lib/types/sell.types";
 import { extractDateString, getImageUrlFromPublicId } from "@/lib/utils";
 
@@ -17,14 +17,14 @@ export default function MobileSellsCards({ sells, onSellClick }: MobileSellsCard
           width={100}
           height={100}
           src="/images/not-found.png"
-          alt="Aucune vente"
+          alt="No sales"
           className="mx-auto w-24 h-24 sm:w-32 sm:h-32 mb-4"
         />
         <p className="text-lg sm:text-xl font-semibold text-gray-800">
-          Aucune vente trouvée
+          No sales found
         </p>
         <p className="text-gray-600 mt-2 text-sm sm:text-base">
-          Aucun résultat ne correspond à votre recherche.
+          No results match your search.
         </p>
       </div>
     );
@@ -51,18 +51,18 @@ export default function MobileSellsCards({ sells, onSellClick }: MobileSellsCard
                 {sell.nomProduit}
               </h3>
               <p className="text-xs text-gray-600">
-                {sell.commande.client ? `${sell.commande.client.nom} ${sell.commande.client.prenom}` : "Client inconnu"}
+                {sell.commande.client ? `${sell.commande.client.nom} ${sell.commande.client.prenom}` : "Unknown customer"}
               </p>
             </div>
           </div>
           <div className="text-xs text-gray-600 mb-1">
-            Quantité: {sell.quantite}
+            Quantity: {sell.quantite}
           </div>
           <div className="text-xs text-gray-600 mb-1">
             Date: {extractDateString(sell.commande.date)}
           </div>
           <div className="text-xs font-semibold text-green-600">
-            Total: {sell.total.toFixed(2)} DA
+            Total: ₦{sell.total.toFixed(2)}
           </div>
         </div>
       ))}

@@ -44,14 +44,14 @@ export async function GET(
 
     if (!userWithAdresse) {
       return NextResponse.json(
-        { error: "Utilisateur introuvable." },
+        { error: "User not found." },
         { status: 404 }
       );
     }
 
     if (!userWithAdresse.adresse) {
       return NextResponse.json(
-        { error: "Aucune adresse associée à cet utilisateur." },
+        { error: "No address is associated with this user." },
         { status: 404 }
       );
     }
@@ -66,7 +66,7 @@ export async function GET(
       error
     );
     return NextResponse.json(
-      { error: "Erreur interne du serveur." },
+      { error: "Internal server error." },
       { status: 500 }
     );
   }
@@ -110,7 +110,7 @@ export async function PUT(
 
     if (!currentUser) {
       return NextResponse.json(
-        { error: "Utilisateur introuvable." },
+        { error: "User not found." },
         { status: 404 }
       );
     }
@@ -137,7 +137,7 @@ export async function PUT(
 
     return NextResponse.json(
       {
-        message: "Adresse mise à jour avec succès.",
+        message: "Address updated successfully.",
         data: adresse,
       },
       { status: 200 }
@@ -183,14 +183,14 @@ export async function DELETE(
 
     if (!user) {
       return NextResponse.json(
-        { error: "Utilisateur introuvable." },
+        { error: "User not found." },
         { status: 404 }
       );
     }
 
     if (!user.adresseId) {
       return NextResponse.json(
-        { error: "Aucune adresse à supprimer." },
+        { error: "No address to delete." },
         { status: 404 }
       );
     }
@@ -207,7 +207,7 @@ export async function DELETE(
     });
 
     return NextResponse.json(
-      { message: "Adresse supprimée avec succès." },
+      { message: "Address deleted successfully." },
       { status: 200 }
     );
   } catch (error) {
@@ -216,7 +216,7 @@ export async function DELETE(
       error
     );
     return NextResponse.json(
-      { error: "Erreur interne du serveur." },
+      { error: "Internal server error." },
       { status: 500 }
     );
   }

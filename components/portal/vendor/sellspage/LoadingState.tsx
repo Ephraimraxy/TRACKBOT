@@ -7,7 +7,7 @@ export default function LoadingState() {
     <div className="flex items-center justify-center py-12">
       <div className="text-center">
         <SpinnerLoader className="w-8 h-8" />
-        <p className="mt-4 text-gray-600">Chargement des ventes...</p>
+        <p className="mt-4 text-gray-600">Loading sales...</p>
       </div>
     </div>
   );

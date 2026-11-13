@@ -1,5 +1,7 @@
 "use client";
 
+import { T } from "@/components/i18n/T";
+
 import {
   Accordion,
   AccordionContent,
@@ -10,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { SizeFromAPI } from "@/lib/types/size.types";
 
 const sizes: SizeFromAPI[] = [
-  { id: "1", nom: "Standart" },
+  { id: "1", nom: "Standard" },
   { id: "2", nom: "S" },
   { id: "3", nom: "M" },
   { id: "4", nom: "L" },
@@ -41,7 +43,7 @@ export default function SizeSection({
     <Accordion type="single" collapsible defaultValue="filter-size">
       <AccordionItem value="filter-size" className="border-none">
         <AccordionTrigger className="text-black font-bold text-xl hover:no-underline p-0 py-0.5">
-          Tailles
+          <T>Sizes</T>
         </AccordionTrigger>
         <AccordionContent className="pt-4 pb-0">
           <div className="flex items-center flex-wrap">
@@ -55,7 +57,7 @@ export default function SizeSection({
                 ])}
                 onClick={() => handleSelect(size.nom)}
               >
-                {size.nom}
+                <T>{size.nom}</T>
               </button>
             ))}
           </div>

@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     if (email !== session.user.email) {
       return NextResponse.json(
         {
-          error: "L'adresse e-mail ne correspond pas à l'utilisateur connecté",
+          error: "The email address does not match the logged-in user",
         },
         { status: 403 }
       );
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     // Check if email is already verified
     if (session.user.emailVerifie) {
       return NextResponse.json(
-        { message: "Adresse e-mail déjà vérifiée" },
+        { message: "Email address already verified" },
         { status: 200 }
       );
     }
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     // Generate and send verification code
     await triggerEmailVerification(session.user.id, email, false);
 
-    return NextResponse.json({ message: "Code envoyé" }, { status: 200 });
+    return NextResponse.json({ message: "Code sent" }, { status: 200 });
   } catch (error) {
     console.error("API Error : ", error);
     return NextResponse.json(

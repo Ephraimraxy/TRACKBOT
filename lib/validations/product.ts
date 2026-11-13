@@ -7,57 +7,57 @@ import { z } from "zod";
 
 // Définition du schéma de validation Zod pour un produit
 export const productSchema = z.object({
-  nom: z.string().min(1, "Le nom est requis").max(100, "Le nom est trop long"),
-  objet: z.string().max(255, "L'objet est trop long").optional(),
+  nom: z.string().min(1, "The name is required").max(100, "The name is too long"),
+  objet: z.string().max(255, "The subject is too long").optional(),
   description: z
     .string()
-    .max(1000, "La description est trop longue")
+    .max(1000, "The description is too long")
     .optional(),
   prix: z
-    .number({ invalid_type_error: "Le prix doit être un nombre" })
-    .min(0, "Le prix ne peut pas être négatif"),
+    .number({ invalid_type_error: "The price must be a number" })
+    .min(0, "The price cannot be negative"),
   qteStock: z
-    .number({ invalid_type_error: "La quantité doit être un entier" })
+    .number({ invalid_type_error: "The quantity must be a whole number" })
     .int()
-    .min(0, "La quantité ne peut pas être négative"),
+    .min(0, "The quantity cannot be negative"),
   categorieId: z
     .string()
-    .max(MAX_ID_LENGTH, "L'ID de la catégorie est invalide")
+    .max(MAX_ID_LENGTH, "The category ID is invalid")
     .optional(),
   genreId: z
     .string()
-    .max(MAX_ID_LENGTH, "L'ID du genre est invalide")
+    .max(MAX_ID_LENGTH, "The gender ID is invalid")
     .optional(),
   couleurs: z
-    .array(z.string().max(MAX_ID_LENGTH, "L'ID de la couleur est invalide"))
+    .array(z.string().max(MAX_ID_LENGTH, "The colour ID is invalid"))
     .optional(),
   tailles: z
-    .array(z.string().max(MAX_ID_LENGTH, "L'ID de la taille est invalide"))
+    .array(z.string().max(MAX_ID_LENGTH, "The size ID is invalid"))
     .optional(),
   images: z
     .array(
       z.instanceof(File).refine((file) => file.type.startsWith("image/"), {
-        message: "Le fichier doit être une image",
+        message: "The file must be an image",
       })
     )
     .refine(
       (files) =>
         files.every((file) => file.size <= MAX_UPLOAD_SIZE_MB * 1024 * 1024),
       {
-        message: `La taille des images ne peut pas dépasser ${MAX_UPLOAD_SIZE_MB} Mo`,
+        message: `Image size cannot exceed ${MAX_UPLOAD_SIZE_MB} MB`,
       }
     )
     .refine(
       (files) =>
         files.every((file) => ALLOWED_IMAGE_FORMATS.includes(file.type)),
       {
-        message: `Les formats autorisés sont : ${ALLOWED_IMAGE_FORMATS.join(
+        message: `Allowed formats: ${ALLOWED_IMAGE_FORMATS.join(
           ", "
         )}`,
       }
     )
     .refine((files) => files.length >= 1 && files.length <= 4, {
-      message: "Vous devez télécharger entre 1 et 4 images",
+      message: "You must upload between 1 and 4 images",
     }),
 });
 
@@ -66,38 +66,38 @@ export const updateProductSchema = z
   .object({
     nom: z
       .string()
-      .min(1, "Le nom est requis")
-      .max(100, "Le nom est trop long")
+      .min(1, "The name is required")
+      .max(100, "The name is too long")
       .optional(),
-    objet: z.string().max(255, "L'objet est trop long").optional(),
+    objet: z.string().max(255, "The subject is too long").optional(),
     description: z
       .string()
-      .max(1000, "La description est trop longue")
+      .max(1000, "The description is too long")
       .optional(),
     prix: z
-      .number({ invalid_type_error: "Le prix doit être un nombre" })
-      .min(0, "Le prix ne peut pas être négatif")
+      .number({ invalid_type_error: "The price must be a number" })
+      .min(0, "The price cannot be negative")
       .optional(),
     qteStock: z
-      .number({ invalid_type_error: "La quantité doit être un entier" })
+      .number({ invalid_type_error: "The quantity must be a whole number" })
       .int()
-      .min(0, "La quantité ne peut pas être négative")
+      .min(0, "The quantity cannot be negative")
       .optional(),
     categorieId: z
       .string()
-      .max(MAX_ID_LENGTH, "L'ID de la catégorie est invalide")
+      .max(MAX_ID_LENGTH, "The category ID is invalid")
       .optional(),
     genreId: z
       .string()
-      .max(MAX_ID_LENGTH, "L'ID du genre est invalide")
+      .max(MAX_ID_LENGTH, "The gender ID is invalid")
       .optional(),
     couleurs: z
-      .array(z.string().max(MAX_ID_LENGTH, "L'ID de la couleur est invalide"))
+      .array(z.string().max(MAX_ID_LENGTH, "The colour ID is invalid"))
       .optional(),
     tailles: z
-      .array(z.string().max(MAX_ID_LENGTH, "L'ID de la taille est invalide"))
+      .array(z.string().max(MAX_ID_LENGTH, "The size ID is invalid"))
       .optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
-    message: "Au moins un champ doit être renseigné.",
+    message: "At least one field must be filled in.",
   });
