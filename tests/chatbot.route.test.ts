@@ -65,7 +65,7 @@ describe("POST /api/chat (no AI keys: rule-based mode)", () => {
     // A forged userId in the body is simply not part of the API.
     const body = await (await chat({ message: "where is my order?", userId: "someone-else" })).json();
     expect(body.reply).toContain(`#${mine.slice(-8)}`);
-    expect(body.reply).toContain("Shipped");
+    expect(body.reply).toContain("Ready for delivery");
   });
 
   it("rejects invalid input with 400", async () => {

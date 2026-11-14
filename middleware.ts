@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import getAuth from "@/lib/auth/getAuth";
+import { homeFor } from "@/lib/helpers/roleHome";
 import {
   PRIVATE_ROUTES,
   AUTH_ROUTES,
@@ -52,18 +53,20 @@ export async function middleware(req: NextRequest) {
 
     // Role-based protection
     const role = session.user.role;
+    const own = homeFor(role);
+    const sendHome = () => NextResponse.redirect(new URL(own, req.url));
     if (pathname.startsWith("/admin") && role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/", req.url));
+      return sendHome();
     }
     // The vendor area is switched off: this shop has an owner, customers and delivery staff only.
     if (pathname.startsWith("/vendor") && (process.env.ALLOW_VENDORS !== "true" || role !== "VENDEUR")) {
-      return NextResponse.redirect(new URL("/", req.url));
+      return sendHome();
     }
     if (pathname.startsWith("/client") && role !== "CLIENT") {
-      return NextResponse.redirect(new URL("/", req.url));
+      return sendHome();
     }
     if (pathname.startsWith("/driver") && role !== "LIVREUR") {
-      return NextResponse.redirect(new URL("/", req.url));
+      return sendHome();
     }
   }
 

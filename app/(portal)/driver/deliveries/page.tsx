@@ -32,6 +32,20 @@ function mapsLink(a: { rue: string; ville: string; wilaya: string; latitude: num
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`;
 }
 
+type LocationCheck = "ok" | "denied" | "unavailable";
+
+/** Ask the phone for its position once. This shows the browser's permission question the first time. */
+function checkLocation(): Promise<LocationCheck> {
+  return new Promise((resolve) => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) return resolve("unavailable");
+    navigator.geolocation.getCurrentPosition(
+      () => resolve("ok"),
+      (err) => resolve(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable"),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    );
+  });
+}
+
 export default function DriverDeliveriesPage() {
   const [confirm, confirmDialog] = useConfirm();
   const [items, setItems] = useState<Delivery[]>([]);
@@ -67,6 +81,22 @@ export default function DriverDeliveriesPage() {
     setBusyId(orderId);
     setError(null);
     try {
+      // The customer follows this delivery on a map, so check the phone can share its position BEFORE the order is
+      // marked Out for delivery. This is also the moment the browser asks for permission.
+      if (statut === CommandeStatut.EN_LIVRAISON) {
+        const outcome = await checkLocation();
+        if (outcome === "denied") {
+          throw new Error("Location is blocked for this site. Tap the lock icon beside the web address, set Location to Allow, then press Start delivery again. The customer needs your location to follow the delivery.");
+        }
+        if (outcome === "unavailable") {
+          const goOn = await confirm({
+            title: "Location not found",
+            message: "We could not find your position yet (weak GPS signal or Location is off). If you start now, the customer will not see you on the map. Start anyway?",
+            confirmLabel: "Start anyway",
+          });
+          if (!goOn) return;
+        }
+      }
       const res = await fetch(`/api/delivery/orders/${orderId}/status`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
@@ -178,7 +208,7 @@ export default function DriverDeliveriesPage() {
             )}
             {(c.statut === CommandeStatut.EN_COURS || c.statut === CommandeStatut.EN_PREPARATION) && (
               <p className="rounded bg-amber-50 p-3 text-center text-sm text-amber-900">
-                <T>The shop is still preparing this order. You can start the delivery once the shop marks it as Shipped.</T>
+                <T>This order is not ready for delivery yet. You can start the delivery once it shows Ready for delivery.</T>
               </p>
             )}
           </div>

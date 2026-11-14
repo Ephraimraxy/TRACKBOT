@@ -3,13 +3,16 @@ import { CommandeStatut, UserRole } from "@prisma/client";
 /**
  * Single source of truth for the order lifecycle.
  *
- *  EN_COURS (Pending) -> EN_PREPARATION (Processing) -> EXPEDIEE (Shipped)
- *      -> EN_LIVRAISON (Out for delivery) -> LIVREE (Delivered)
- *  An order can be cancelled (ANNULEE) until it is out for delivery.
+ *  EN_COURS (Order placed) -> EXPEDIEE (Ready for delivery) -> EN_LIVRAISON (Out for delivery) -> LIVREE (Delivered)
+ *
+ *  The owner's only job is to assign a delivery person: assigning moves the order to "Ready for delivery" by
+ *  itself (see assignDriver). EN_PREPARATION ("Preparing") stays available as an optional step for shops that
+ *  want to show that packing has started. An order can be cancelled (ANNULEE) until it is out for delivery.
  */
 export const STATUS_TRANSITIONS: Record<CommandeStatut, CommandeStatut[]> = {
   [CommandeStatut.EN_COURS]: [
     CommandeStatut.EN_PREPARATION,
+    CommandeStatut.EXPEDIEE,
     CommandeStatut.ANNULEE,
   ],
   [CommandeStatut.EN_PREPARATION]: [
@@ -26,18 +29,18 @@ export const STATUS_TRANSITIONS: Record<CommandeStatut, CommandeStatut[]> = {
 };
 
 export const STATUS_LABELS_FR: Record<CommandeStatut, string> = {
-  [CommandeStatut.EN_COURS]: "En attente",
+  [CommandeStatut.EN_COURS]: "Commande passée",
   [CommandeStatut.EN_PREPARATION]: "En préparation",
-  [CommandeStatut.EXPEDIEE]: "Expédiée",
+  [CommandeStatut.EXPEDIEE]: "Prête pour la livraison",
   [CommandeStatut.EN_LIVRAISON]: "En cours de livraison",
   [CommandeStatut.LIVREE]: "Livrée",
   [CommandeStatut.ANNULEE]: "Annulée",
 };
 
 export const STATUS_LABELS_EN: Record<CommandeStatut, string> = {
-  [CommandeStatut.EN_COURS]: "Pending",
-  [CommandeStatut.EN_PREPARATION]: "Processing",
-  [CommandeStatut.EXPEDIEE]: "Shipped",
+  [CommandeStatut.EN_COURS]: "Order placed",
+  [CommandeStatut.EN_PREPARATION]: "Preparing",
+  [CommandeStatut.EXPEDIEE]: "Ready for delivery",
   [CommandeStatut.EN_LIVRAISON]: "Out for delivery",
   [CommandeStatut.LIVREE]: "Delivered",
   [CommandeStatut.ANNULEE]: "Cancelled",

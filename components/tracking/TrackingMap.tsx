@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import { Crosshair, Layers, Maximize2, Minimize2 } from "lucide-react";
 
 import { useI18n } from "@/components/i18n/LocaleProvider";
+import { AUTO_FIT_MAX_ZOOM, LABELS, SATELLITE, STREET } from "@/lib/config/mapLayers";
 
 export interface MapPoint {
   latitude: number;
@@ -30,23 +31,6 @@ const LIVE_WITHIN_S = 30;
 /** How long the marker glides from one reported point to the next. */
 const GLIDE_MS = 1800;
 
-// maxNativeZoom is the closest level the provider really has pictures for. Zooming in further enlarges that last
-// picture instead of showing empty grey tiles.
-const STREET = { url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "© OpenStreetMap contributors", maxZoom: 20, maxNativeZoom: 19 };
-const SATELLITE = {
-  url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-  attribution: "Imagery © Esri, Maxar, Earthstar Geographics",
-  maxZoom: 20,
-  maxNativeZoom: 17,
-};
-// Place and area names drawn over the satellite picture, so it reads like a normal map.
-const LABELS = {
-  url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
-  attribution: "",
-  maxZoom: 20,
-  maxNativeZoom: 17,
-};
-
 /** The pulsing blue dot. Plain CSS so no marker image files are needed. */
 function ensureStyles() {
   if (document.getElementById("tb-map-styles")) return;
@@ -55,7 +39,8 @@ function ensureStyles() {
   style.textContent = `
     .tb-driver { position: relative; }
     .tb-driver .dot { position: absolute; inset: 3px; border-radius: 9999px; background: #2563eb; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
-    .tb-driver .ring { position: absolute; inset: -8px; border-radius: 9999px; background: rgba(37,99,235,.35); animation: tb-pulse 1.8s ease-out infinite; }
+    .tb-driver .ring { position: absolute; inset: -14px; border-radius: 9999px; background: rgba(37,99,235,.4); animation: tb-pulse 1.4s ease-out infinite; }
+    .tb-driver .ring2 { position: absolute; inset: -14px; border-radius: 9999px; background: rgba(37,99,235,.3); animation: tb-pulse 1.4s ease-out .7s infinite; }
     .tb-home svg { filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
     @keyframes tb-pulse { 0% { transform: scale(.35); opacity: .9; } 100% { transform: scale(1.5); opacity: 0; } }
   `;
@@ -96,7 +81,7 @@ export default function TrackingMap({ position, trail = [], destination = null, 
   latest.current = { position, trail, destination };
 
   const [follow, setFollowState] = useState(true);
-  const [satellite, setSatellite] = useState(false);
+  const [satellite, setSatellite] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const labels = useRef<TileLayer | null>(null);
   const dots = useRef<LayerGroup | null>(null);
@@ -144,11 +129,12 @@ export default function TrackingMap({ position, trail = [], destination = null, 
       const m = L.map(box.current, { zoomControl: false }).setView([p.latitude, p.longitude], 16);
       L.control.zoom({ position: "bottomleft" }).addTo(m);
       map.current = m;
-      tiles.current = L.tileLayer(STREET.url, STREET).addTo(m);
+      tiles.current = L.tileLayer(SATELLITE.url, SATELLITE).addTo(m);
+      if (LABELS) labels.current = L.tileLayer(LABELS.url, LABELS).addTo(m);
       route.current = L.polyline(toLine(tr, p), { color: "#2563eb", weight: 5, opacity: 0.75, lineCap: "round" }).addTo(m);
       halo.current = L.circle([p.latitude, p.longitude], { radius: p.accuracy ?? 0, color: "#2563eb", weight: 1, fillOpacity: 0.08 }).addTo(m);
       marker.current = L.marker([p.latitude, p.longitude], {
-        icon: L.divIcon({ className: "tb-driver", html: '<span class="ring"></span><span class="dot"></span>', iconSize: [22, 22], iconAnchor: [11, 11] }),
+        icon: L.divIcon({ className: "tb-driver", html: '<span class="ring"></span><span class="ring2"></span><span class="dot"></span>', iconSize: [24, 24], iconAnchor: [12, 12] }),
         keyboard: false,
       }).addTo(m);
 
@@ -158,9 +144,9 @@ export default function TrackingMap({ position, trail = [], destination = null, 
           keyboard: false,
           title: "Delivery address",
         }).addTo(m);
-        m.fitBounds(L.latLngBounds([[p.latitude, p.longitude], [dest.latitude, dest.longitude]]), { padding: [50, 50], maxZoom: 17 });
+        m.fitBounds(L.latLngBounds([[p.latitude, p.longitude], [dest.latitude, dest.longitude]]), { padding: [50, 50], maxZoom: AUTO_FIT_MAX_ZOOM });
       } else if (tr.length > 1) {
-        m.fitBounds(route.current.getBounds(), { padding: [40, 40], maxZoom: 17 });
+        m.fitBounds(route.current.getBounds(), { padding: [40, 40], maxZoom: AUTO_FIT_MAX_ZOOM });
       }
       // Dragging the map means "let me look around": stop following until asked.
       m.on("dragstart", () => setFollow(false));
@@ -214,8 +200,17 @@ export default function TrackingMap({ position, trail = [], destination = null, 
       const dest = latest.current.destination;
       if (followRef.current) {
         if (!dest) m.panTo(here, { animate: false });
-        // With a destination, "follow" keeps the delivery person AND the address in view.
-        else if (k === 1 && leaflet.current) m.fitBounds(leaflet.current.latLngBounds([here, [dest.latitude, dest.longitude]]), { padding: [50, 50], maxZoom: 17, animate: true });
+        // With a destination, "follow" keeps the delivery person AND the address in view. If the viewer has zoomed in
+        // closer than that, their zoom is respected: the map only keeps the delivery person in view.
+        else if (k === 1 && leaflet.current) {
+          const bounds = leaflet.current.latLngBounds([here, [dest.latitude, dest.longitude]]);
+          const fitZoom = m.getBoundsZoom(bounds, false, leaflet.current.point(50, 50));
+          if (m.getZoom() > fitZoom + 0.5) {
+            if (!m.getBounds().pad(-0.2).contains(here)) m.panTo(here, { animate: true });
+          } else {
+            m.fitBounds(bounds, { padding: [50, 50], maxZoom: AUTO_FIT_MAX_ZOOM, animate: true });
+          }
+        }
       }
       if (k < 1) frame.current = requestAnimationFrame(step);
     };
@@ -233,7 +228,7 @@ export default function TrackingMap({ position, trail = [], destination = null, 
     const source = satellite ? SATELLITE : STREET;
     tiles.current = L.tileLayer(source.url, source).addTo(m);
     tiles.current.bringToBack();
-    if (satellite) labels.current = L.tileLayer(LABELS.url, LABELS).addTo(m);
+    if (satellite && LABELS) labels.current = L.tileLayer(LABELS.url, LABELS).addTo(m);
   }, [satellite]);
 
   // Full screen: the map fills the window; the size is recalculated once the layout has changed. Esc closes it.
@@ -262,7 +257,7 @@ export default function TrackingMap({ position, trail = [], destination = null, 
     const m = map.current;
     if (!m) return;
     if (destination && leaflet.current) {
-      m.fitBounds(leaflet.current.latLngBounds([shown.current, [destination.latitude, destination.longitude]]), { padding: [50, 50], maxZoom: 17, animate: true });
+      m.fitBounds(leaflet.current.latLngBounds([shown.current, [destination.latitude, destination.longitude]]), { padding: [50, 50], maxZoom: AUTO_FIT_MAX_ZOOM, animate: true });
     } else {
       m.setView(shown.current, Math.max(m.getZoom(), 15), { animate: true });
     }
@@ -317,7 +312,7 @@ export default function TrackingMap({ position, trail = [], destination = null, 
           aria-pressed={satellite}
         >
           <Layers size={14} />
-          {satellite ? t("Map") : t("Satellite")}
+          {satellite ? t("Street map") : t("Satellite")}
         </button>
         <button
           type="button"

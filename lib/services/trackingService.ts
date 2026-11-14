@@ -158,9 +158,10 @@ export async function getTracking(
       id: h.id,
       from: h.ancienStatut,
       to: h.nouveauStatut,
-      label: STATUS_LABELS_EN[h.nouveauStatut],
+      // An entry that does not change the status (for example a payment) is shown by what happened, not by the status.
+      label: h.ancienStatut === h.nouveauStatut && h.note ? h.note : STATUS_LABELS_EN[h.nouveauStatut],
       labelFr: STATUS_LABELS_FR[h.nouveauStatut],
-      note: h.note,
+      note: h.ancienStatut === h.nouveauStatut ? null : h.note,
       date: h.date,
     })),
   };

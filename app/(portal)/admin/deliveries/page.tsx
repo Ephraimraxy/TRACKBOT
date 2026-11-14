@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 
 import DeliveryTeam from "@/components/portal/admin/deliveries/DeliveryTeam";
 import { T } from "@/components/i18n/T";
@@ -17,13 +18,8 @@ type BoardOrder = {
   montant: string | number;
   adresse: { ville: string; wilaya: string } | null;
   client: { user: { nom: string; prenom: string } } | null;
+  paiement: { statut: "EN_COURS" | "VALIDE" | "ECHOUE" } | null;
   livraison: { livreur: { id: string; nom: string; prenom: string } } | null;
-};
-
-/** The next move the shop owner makes for an order, and the sentence that explains it. */
-const NEXT_ACTION: Partial<Record<CommandeStatut, { to: CommandeStatut; label: string; hint: string }>> = {
-  [CommandeStatut.EN_COURS]: { to: CommandeStatut.EN_PREPARATION, label: "Start preparing", hint: "Confirm the order and begin packing it." },
-  [CommandeStatut.EN_PREPARATION]: { to: CommandeStatut.EXPEDIEE, label: "Mark as shipped", hint: "Packed and ready. The delivery person can now start." },
 };
 
 export default function AdminDeliveriesPage() {
@@ -52,24 +48,6 @@ export default function AdminDeliveriesPage() {
     load();
   }, [load]);
 
-  const advance = async (orderId: string, to: CommandeStatut) => {
-    setBusyId(orderId);
-    setError(null);
-    try {
-      const res = await fetch(`/api/orders/${orderId}/status`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ statut: to }),
-      });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Could not update the order.");
-      await load();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusyId(null);
-    }
-  };
-
   const assign = async (orderId: string) => {
     const driverId = choice[orderId];
     if (!driverId) return;
@@ -94,16 +72,16 @@ export default function AdminDeliveriesPage() {
     <div className="p-4 md:p-6">
       <h1 className="text-2xl font-semibold">Deliveries</h1>
       <p className="mb-4 text-sm text-gray-500">
-        Assign a driver to orders. An order that is out for delivery can no longer be reassigned.
+        Assign a delivery person to each paid order. An order that is out for delivery can no longer be reassigned.
       </p>
 
       <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
-        <p className="font-semibold"><T>How to get an order onto the live map</T></p>
+        <p className="font-semibold"><T>How a delivery works</T></p>
         <ol className="mt-2 list-decimal space-y-1 pl-5">
-          <li><T>Press Start preparing, then Mark as shipped, in the Next step column.</T></li>
-          <li><T>Assign a delivery person to the order.</T></li>
-          <li><T>The delivery person opens My deliveries and taps Start delivery. Their location starts sharing.</T></li>
-          <li><T>The customer now sees the live map and the time left on their tracking page.</T></li>
+          <li><T>A customer places an order and pays. You are notified.</T></li>
+          <li><T>Choose a delivery person for the order and press Assign. That is all you need to do.</T></li>
+          <li><T>The delivery person opens My deliveries and taps Start delivery. You and the customer are notified and their live location starts sharing.</T></li>
+          <li><T>Press Watch live to follow the delivery person on the map. The customer sees the same map on their tracking page.</T></li>
         </ol>
         <p className="mt-2 text-xs text-blue-900"><T>The time left only appears when the customer pinned their spot on the map at checkout.</T></p>
       </div>
@@ -120,7 +98,8 @@ export default function AdminDeliveriesPage() {
               <th className="p-3">Customer</th>
               <th className="p-3">City</th>
               <th className="p-3">Status</th>
-              <th className="p-3">Next step</th>
+              <th className="p-3">Payment</th>
+              <th className="p-3">What happens next</th>
               <th className="p-3">Delivery person</th>
               <th className="p-3">Assign</th>
             </tr>
@@ -141,25 +120,24 @@ export default function AdminDeliveriesPage() {
                     </span>
                   </td>
                   <td className="p-3">
-                    {NEXT_ACTION[o.statut] ? (
-                      <div>
-                        <button
-                          className="rounded bg-green-600 px-3 py-1 text-white disabled:opacity-40"
-                          disabled={busyId === o.id}
-                          onClick={() => advance(o.id, NEXT_ACTION[o.statut]!.to)}
-                          title={NEXT_ACTION[o.statut]!.hint}
-                        >
-                          {busyId === o.id ? "…" : <T>{NEXT_ACTION[o.statut]!.label}</T>}
-                        </button>
-                      </div>
-                    ) : o.statut === CommandeStatut.EXPEDIEE ? (
-                      <span className="text-xs text-gray-600">
-                        {o.livraison ? <T>Waiting for the delivery person to tap Start delivery</T> : <T>Assign a delivery person</T>}
-                      </span>
-                    ) : o.statut === CommandeStatut.EN_LIVRAISON ? (
-                      <span className="text-xs text-green-700"><T>On the road, live on the map</T></span>
+                    {o.paiement?.statut === "VALIDE" ? (
+                      <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-700"><T>Paid</T></span>
+                    ) : o.paiement?.statut === "ECHOUE" ? (
+                      <span className="rounded bg-red-100 px-2 py-1 text-xs text-red-700"><T>Payment failed</T></span>
                     ) : (
-                      <span className="text-xs text-gray-400">—</span>
+                      <span className="rounded bg-amber-100 px-2 py-1 text-xs text-amber-700"><T>Awaiting payment</T></span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    {o.statut === CommandeStatut.EN_LIVRAISON ? (
+                      <Link href={`/admin/deliveries/${o.id}/track`} className="inline-flex items-center gap-1 rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700">
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
+                        <T>Watch live</T>
+                      </Link>
+                    ) : o.livraison ? (
+                      <span className="text-xs text-gray-600"><T>Waiting for the delivery person to tap Start delivery</T></span>
+                    ) : (
+                      <span className="text-xs font-medium text-blue-700"><T>Assign a delivery person</T></span>
                     )}
                   </td>
                   <td className="p-3">
@@ -199,7 +177,7 @@ export default function AdminDeliveriesPage() {
             })}
             {!loading && orders.length === 0 && (
               <tr>
-                <td className="p-4 text-gray-500" colSpan={7}>
+                <td className="p-4 text-gray-500" colSpan={8}>
                   No orders to deliver at the moment.
                 </td>
               </tr>

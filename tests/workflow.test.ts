@@ -20,7 +20,9 @@ describe("order workflow (pure rules)", () => {
 
   it("rejects skipping steps and moving backwards", () => {
     expect(canTransition(S.EN_COURS, S.LIVREE)).toBe(false);
-    expect(canTransition(S.EN_COURS, S.EXPEDIEE)).toBe(false);
+    // Assigning a delivery person takes a newly placed order straight to Ready for delivery.
+    expect(canTransition(S.EN_COURS, S.EXPEDIEE)).toBe(true);
+    expect(canTransition(S.EN_COURS, S.EN_LIVRAISON)).toBe(false);
     expect(canTransition(S.EXPEDIEE, S.EN_COURS)).toBe(false);
     expect(canTransition(S.LIVREE, S.EN_LIVRAISON)).toBe(false);
   });

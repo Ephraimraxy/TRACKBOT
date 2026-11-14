@@ -33,6 +33,23 @@ export type OrderErrorCode =
  */
 export const TX_OPTIONS = { maxWait: 10_000, timeout: 30_000 } as const;
 
+const shortRef = (id: string) => id.slice(-8);
+
+/**
+ * Tell every administrator something about an order. The shop owner sees all orders, whoever placed them, so
+ * every administrator account is notified (a shop normally has one).
+ */
+export async function notifyAdmins(
+  tx: Prisma.TransactionClient,
+  note: { type: NotificationType; objet: string; text: string; url: string }
+) {
+  const admins = await tx.user.findMany({ where: { role: UserRole.ADMIN }, select: { id: true } });
+  if (admins.length === 0) return;
+  await tx.notification.createMany({
+    data: admins.map((a) => ({ userId: a.id, type: note.type, objet: note.objet, text: note.text, urlRedirection: note.url })),
+  });
+}
+
 export class OrderError extends Error {
   constructor(
     public code: OrderErrorCode,
@@ -142,6 +159,13 @@ export async function createOrder(db: PrismaClient, input: CreateOrderInput) {
       data: { commandeId: order.id, statut: "EN_COURS" },
     });
 
+    await notifyAdmins(tx, {
+      type: NotificationType.COMMANDE,
+      objet: "New order",
+      text: `A new order #${shortRef(order.id)} was placed (${total.toString()} NGN). Assign a delivery person once it is paid.`,
+      url: "/admin/deliveries",
+    });
+
     return { order, paiement };
   }, TX_OPTIONS);
 }
@@ -233,10 +257,26 @@ export async function changeOrderStatus(
         data: {
           userId: current.clientId,
           type: delivering ? NotificationType.LIVRAISON : NotificationType.COMMANDE,
-          objet: "Update on your order",
-          text: `Your order is now: ${STATUS_LABELS_EN[to]}.`,
-          urlRedirection: "/client/orders",
+          objet: to === CommandeStatut.EN_LIVRAISON ? "Your order is on the way" : "Update on your order",
+          text:
+            to === CommandeStatut.EN_LIVRAISON
+              ? "Your delivery person has started delivering your order. Follow them live on the map."
+              : `Your order is now: ${STATUS_LABELS_EN[to]}.`,
+          urlRedirection: to === CommandeStatut.EN_LIVRAISON ? `/client/orders/${orderId}/track` : "/client/orders",
         },
+      });
+    }
+
+    // The owner sees every delivery, whoever ordered it: tell them when one starts and when it ends.
+    if (to === CommandeStatut.EN_LIVRAISON || to === CommandeStatut.LIVREE) {
+      const started = to === CommandeStatut.EN_LIVRAISON;
+      await notifyAdmins(tx, {
+        type: NotificationType.LIVRAISON,
+        objet: started ? "Delivery started" : "Order delivered",
+        text: started
+          ? `Order #${shortRef(orderId)} is now out for delivery. You can watch the delivery person live.`
+          : `Order #${shortRef(orderId)} was delivered.`,
+        url: started ? `/admin/deliveries/${orderId}/track` : "/admin/orders",
       });
     }
 

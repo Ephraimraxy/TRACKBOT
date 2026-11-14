@@ -210,7 +210,8 @@ describe("driverChangeStatus", () => {
     const orderId = await orderAt(client, admin, S.EN_PREPARATION);
     await assignDriver(db, { orderId, driverId: driver.id, actor: adminActor(admin) });
 
-    await expect(driverChangeStatus(db, { orderId, to: S.EXPEDIEE, actor: driverActor(driver) })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    // Assigning already made the order Ready for delivery, so there is no admin step left for the driver to take.
+    await expect(driverChangeStatus(db, { orderId, to: S.EN_PREPARATION, actor: driverActor(driver) })).rejects.toMatchObject({ code: "INVALID_TRANSITION" });
     await expect(driverChangeStatus(db, { orderId, to: S.LIVREE, actor: driverActor(driver) })).rejects.toMatchObject({ code: "INVALID_TRANSITION" });
     await expect(driverChangeStatus(db, { orderId, to: S.ANNULEE, actor: driverActor(driver) })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
@@ -233,7 +234,7 @@ describe("customer notification on status change", () => {
     const notes = await db.notification.findMany({ where: { userId: client.id }, orderBy: { date: "desc" }, take: 1 });
     expect(await db.notification.count({ where: { userId: client.id } })).toBe(before + 1);
     expect(notes[0]).toMatchObject({ type: NotificationType.COMMANDE, urlRedirection: "/client/orders" });
-    expect(notes[0].text).toContain("Processing");
+    expect(notes[0].text).toContain("Preparing");
   });
 });
 

@@ -75,6 +75,18 @@ const UserMenu = () => {
                 <T>Log out</T>
               </DropdownMenuItem>
             </>
+          ) : session.user.role === "LIVREUR" ? (
+            <>
+              <DropdownMenuItem asChild>
+                <Link href="/driver/deliveries"><T>My deliveries</T></Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/driver/settings"><T>Alerts</T></Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                <T>Log out</T>
+              </DropdownMenuItem>
+            </>
           ) : (
             <>
               <DropdownMenuItem asChild>

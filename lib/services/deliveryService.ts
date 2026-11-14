@@ -38,6 +38,7 @@ export async function listDeliveryBoard(db: PrismaClient, actor: StatusActor) {
       montant: true,
       adresse: { select: { ville: true, wilaya: true } },
       client: { select: { user: { select: { nom: true, prenom: true } } } },
+      paiement: { select: { statut: true } },
       livraison: {
         select: { livreur: { select: { id: true, nom: true, prenom: true } } },
       },
@@ -62,7 +63,7 @@ export async function assignDriver(
   return db.$transaction(async (tx) => {
     const order = await tx.commande.findUnique({
       where: { id: orderId },
-      select: { id: true, statut: true },
+      select: { id: true, statut: true, clientId: true },
     });
     if (!order) throw new OrderError("ORDER_NOT_FOUND", "Order not found.");
 
@@ -86,6 +87,35 @@ export async function assignDriver(
       create: { commandeId: orderId, livreurId: driverId, assigneParId: actor.id },
       update: { livreurId: driverId, assigneParId: actor.id, dateAssignation: new Date() },
     });
+
+    // Assigning is the owner's whole job: it makes the order ready, so the delivery person can start at once.
+    if (order.statut !== CommandeStatut.EXPEDIEE) {
+      const moved = await tx.commande.updateMany({
+        where: { id: orderId, statut: order.statut },
+        data: { statut: CommandeStatut.EXPEDIEE },
+      });
+      if (moved.count === 0) throw new OrderError("INVALID_TRANSITION", "The order was changed in the meantime.");
+      await tx.historiqueStatutCommande.create({
+        data: {
+          commandeId: orderId,
+          ancienStatut: order.statut,
+          nouveauStatut: CommandeStatut.EXPEDIEE,
+          modifieParId: actor.id,
+          note: "Delivery person assigned",
+        },
+      });
+      if (order.clientId) {
+        await tx.notification.create({
+          data: {
+            userId: order.clientId,
+            type: NotificationType.LIVRAISON,
+            objet: "A delivery person is assigned",
+            text: "A delivery person has been assigned to your order and will start delivering soon.",
+            urlRedirection: `/client/orders/${orderId}/track`,
+          },
+        });
+      }
+    }
 
     await tx.notification.create({
       data: {

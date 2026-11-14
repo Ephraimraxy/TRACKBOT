@@ -5,4 +5,4 @@
 - `figures/` the diagrams drawn for the report (conceptual framework, order lifecycle, ER diagram, chatbot flow, architecture, payment sequence).
 - `screenshots/` the screens shown in Section 4.4, captured from the demonstration data (`npm run seed:demo`).
 
-The test numbers in the report come from `npm test` (348 tests, 24 files) and `tests/live/*.mjs` (65 checks).
+The test numbers in the report come from `npm test` (361 tests, 26 files) and `tests/live/*.mjs` (65 checks).

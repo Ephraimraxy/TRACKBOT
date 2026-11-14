@@ -157,7 +157,7 @@ describe("PATCH /api/orders/[orderId]/status", () => {
     expect(hist.status).toBe(200);
     const body = (await hist.json()).data;
     expect(body.currentStatus).toBe(S.EN_PREPARATION);
-    expect(body.currentStatusLabel).toBe("Processing");
+    expect(body.currentStatusLabel).toBe("Preparing");
     expect(body.history.map((h: { to: string }) => h.to)).toEqual([S.EN_COURS, S.EN_PREPARATION]);
     expect(body.history[1].note).toBe("Packing");
   });

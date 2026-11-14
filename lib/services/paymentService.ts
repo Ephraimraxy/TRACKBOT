@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { CommandeStatut, NotificationType, PaiementStatut, type PrismaClient } from "@prisma/client";
 
 import { PaymentError, toTransaction, verifyWebhookSignature, type PaystackClient, type PaystackTransaction } from "@/lib/payments/paystack";
-import { TX_OPTIONS } from "@/lib/services/orderService";
+import { notifyAdmins, TX_OPTIONS } from "@/lib/services/orderService";
 
 /** Naira to kobo, the unit Paystack counts in. Always computed from the stored order total. */
 export const toKobo = (naira: { toString(): string } | number) => Math.round(Number(naira.toString()) * 100);
@@ -103,6 +103,12 @@ async function applyTransaction(
           },
         });
       }
+      await notifyAdmins(t, {
+        type: NotificationType.PAIEMENT,
+        objet: "Payment received",
+        text: `Order #${shortId(order.id)} has been paid. Assign a delivery person.`,
+        url: "/admin/deliveries",
+      });
       return true;
     }, TX_OPTIONS);
 
