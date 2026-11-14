@@ -42,7 +42,6 @@ const order = await call('POST', '/api/orders', client, {
   userId: client.id,
   addresse: { rue: '5 Rue GPS', ville: 'Keffi', wilaya: 'Nasarawa', codePostal: '961101' },
   produits: [{ produitId: productId, quantite: 1 }],
-  payment: { cardNumber: '4242424242424242', cvc: '123', expirationDate: '12/30', legalName: 'GPS Test' },
 });
 const id = order.body.data.id;
 for (const s of ['EN_PREPARATION', 'EXPEDIEE']) await call('PATCH', `/api/orders/${id}/status`, admin, { statut: s });

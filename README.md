@@ -67,6 +67,10 @@ tests/          automated tests (live/ = end-to-end scripts)
 docs/           design notes for each stage of the project
 ```
 
+## Project report
+
+The full project report (Chapters One to Five, references and appendices, with the screenshots, diagrams, test results and the security review) is in [`docs/report/`](docs/report/).
+
 ## Credits and licence
 
 This project extends **Megashop** by Lyes Mersel and contributors (MIT licence), which provided the storefront,
@@ -76,6 +80,7 @@ live tracking, the chatbot, FAQ management, R2 storage, email, deployment) is by
 
 ## Known limits
 
-- Payment is not yet processed by a payment provider.
+- Online payment goes through Paystack (set `PAYSTACK_SECRET_KEY`); without it orders can be placed but not paid. There is no refund function, and customers cannot cancel an order themselves.
+- The rate limiter is in memory (one server instance), a session keeps its role for up to 30 days, and no Content-Security-Policy header is set; see the report, Table 4.6, for the full list of known gaps.
 - GPS is reported by the delivery person's browser, so it only updates while that page is open.
 - Translations other than English are being added; screens not yet translated fall back to English.

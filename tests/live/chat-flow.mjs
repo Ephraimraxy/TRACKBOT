@@ -55,7 +55,6 @@ const place = await api('POST', '/api/orders', client, {
   userId: client.id,
   addresse: { rue: '9 Rue Chat', ville: 'Keffi', wilaya: 'Nasarawa', codePostal: '961101' },
   produits: [{ produitId: prod.id, quantite: 1 }],
-  payment: { cardNumber: '4242424242424242', cvc: '123', expirationDate: '12/30', legalName: 'Chat Test' },
 });
 const orderId = place.body.data.id;
 const ref = orderId.slice(-8);
@@ -74,9 +73,9 @@ check("another customer cannot see it", !r.body.reply.includes('Out for delivery
 r = await chat(other, 'my orders');
 check("other customer's list does not include it", !r.body.reply.includes(ref));
 
-// 5 admin and driver are not customers
+// 5 the owner is not treated as a customer: they get the shop overview, never a customer's order list
 r = await chat(admin, 'where is my order?');
-check('admin gets no customer order data', /customer account|comptes clients/i.test(r.body.reply));
+check('admin gets the owner overview (shop_overview tool), not customer tools', r.body.usedTools.includes('shop_overview') && !r.body.usedTools.includes('list_my_orders'));
 
 // 6 forged identity in the body is ignored
 r = await api('POST', '/api/chat', other, { message: 'where is my order?', userId: client.id });

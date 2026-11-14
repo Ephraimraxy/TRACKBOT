@@ -4,6 +4,11 @@ import getAuth from "@/lib/auth/getAuth";
 import { prisma } from "@/lib/utils/prisma";
 import { verifyTOTPCode } from "@/lib/utils/totp";
 import { ERROR_MESSAGES } from "@/lib/constants/settings";
+import { createRateLimiter } from "@/lib/utils/rateLimit";
+
+// A 6-digit code has only a million possibilities: 5 guesses per 15 minutes per account,
+// after which the code is destroyed and a new one must be requested.
+const allowAttempt = createRateLimiter({ limit: 5, windowMs: 15 * 60_000 });
 
 export async function POST(req: Request) {
   try {
@@ -31,6 +36,14 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { message: "Email address already verified" },
         { status: 200 }
+      );
+    }
+
+    if (!allowAttempt(session.user.id)) {
+      await prisma.tOTPSecret.deleteMany({ where: { userId: session.user.id } });
+      return NextResponse.json(
+        { error: "Too many attempts. Request a new code and try again." },
+        { status: 429 }
       );
     }
 

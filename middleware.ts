@@ -10,8 +10,6 @@ export async function middleware(req: NextRequest) {
   const session = await getAuth();
   const { pathname } = req.nextUrl;
 
-  console.log("Middleware : ", pathname);
-
   // Auth routes should not be accessible to authenticated users
   if (AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
     if (session) {
