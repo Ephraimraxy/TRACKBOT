@@ -5,12 +5,14 @@ import { Shield } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { PASSWORD_MIN } from "@/lib/constants/password";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 interface SecurityProps {
   userId: string;
 }
 
 export default function Security({ userId }: SecurityProps) {
+  const [confirm, confirmDialog] = useConfirm();
   const router = useRouter();
 
   const [passwordData, setPasswordData] = useState({
@@ -58,9 +60,12 @@ export default function Security({ userId }: SecurityProps) {
 
   const handleDeleteAccount = async () => {
     if (
-      confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
-      )
+      await confirm({
+        title: "Delete account",
+        message: "Are you sure you want to delete your account? This action cannot be undone.",
+        confirmLabel: "Delete my account",
+        destructive: true,
+      })
     ) {
       setIsLoading(true);
       const result = await fetchDataFromAPI<null>(`/api/users/${userId}`, {
@@ -80,6 +85,7 @@ export default function Security({ userId }: SecurityProps) {
 
   return (
     <div className="bg-white rounded-xl border shadow-sm">
+      {confirmDialog}
       <div className="p-6 border-b">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Shield className="h-5 w-5 text-black" />

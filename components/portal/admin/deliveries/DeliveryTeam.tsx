@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { UserPlus, Trash2 } from "lucide-react";
 
 import { PasswordInput } from "@/components/ui/input";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export type TeamMember = { id: string; nom: string; prenom: string; tel: string | null; email?: string };
 
@@ -14,6 +15,7 @@ const field = "w-full rounded border border-gray-300 px-3 py-2 text-sm focus:out
  * starting password and gives it to the person, who signs in at the normal login page.
  */
 export default function DeliveryTeam({ drivers, onChanged }: { drivers: TeamMember[]; onChanged: () => void }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ prenom: "", nom: "", email: "", tel: "", password: "" });
   const [busy, setBusy] = useState(false);
@@ -50,7 +52,7 @@ export default function DeliveryTeam({ drivers, onChanged }: { drivers: TeamMemb
   };
 
   const remove = async (d: TeamMember) => {
-    if (!window.confirm(`Remove ${d.prenom} ${d.nom} from the delivery team?`)) return;
+    if (!(await confirm({ title: "Remove delivery person", message: `Remove ${d.prenom} ${d.nom} from the delivery team?`, confirmLabel: "Remove", destructive: true }))) return;
     setError(null);
     const res = await fetch(`/api/drivers/${d.id}`, { method: "DELETE" });
     if (!res.ok) {
@@ -62,6 +64,7 @@ export default function DeliveryTeam({ drivers, onChanged }: { drivers: TeamMemb
 
   return (
     <section className="mb-6 rounded border bg-white p-4">
+      {confirmDialog}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-lg font-semibold">Delivery team</h2>

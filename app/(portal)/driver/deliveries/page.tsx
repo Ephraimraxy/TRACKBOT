@@ -8,6 +8,7 @@ import { CommandeStatut } from "@prisma/client";
 import { getStatusColor } from "@/lib/helpers/orderStatus";
 import { STATUS_LABELS_EN } from "@/lib/orders/workflow";
 import LocationSharer from "@/components/tracking/LocationSharer";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 type Delivery = {
   id: string;
@@ -32,6 +33,7 @@ function mapsLink(a: { rue: string; ville: string; wilaya: string; latitude: num
 }
 
 export default function DriverDeliveriesPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const [items, setItems] = useState<Delivery[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export default function DriverDeliveriesPage() {
   }, [load]);
 
   const advance = async (orderId: string, statut: CommandeStatut) => {
-    if (statut === CommandeStatut.LIVREE && !window.confirm("Confirm that the order was handed over to the customer?")) {
+    if (statut === CommandeStatut.LIVREE && !(await confirm({ title: "Confirm delivery", message: "Confirm that the order was handed over to the customer?", confirmLabel: "Yes, delivered" }))) {
       return;
     }
     setBusyId(orderId);
@@ -82,6 +84,7 @@ export default function DriverDeliveriesPage() {
 
   return (
     <div className="p-4 md:p-6">
+      {confirmDialog}
       <h1 className="text-2xl font-semibold"><T>My deliveries</T></h1>
       <p className="mb-4 text-sm text-gray-500"><T>Updates automatically every 10 seconds.</T></p>
 
