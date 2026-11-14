@@ -1,24 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Circle, Map as LeafletMap, Marker, TileLayer } from "leaflet";
-import "leaflet/dist/leaflet.css";
-import { Crosshair, Layers, X } from "lucide-react";
+import type { GeoJSONSource, Map as MapLibreMap, Marker } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { Box, Crosshair, Layers, X } from "lucide-react";
 
 import { T } from "@/components/i18n/T";
 import { useI18n } from "@/components/i18n/LocaleProvider";
-import { LABELS, SATELLITE, STREET } from "@/lib/config/mapLayers";
+import { circlePolygon, ensureMapStyles, fallbackFor, HOME_PIN_SVG, MAX_ZOOM, styleFor, TILT, type MapMode } from "@/lib/maps/styles";
 
 export interface Pin {
   latitude: number;
   longitude: number;
 }
 
-/** Where the map opens when nothing is pinned yet (Keffi). */
-const START: [number, number] = [8.8465, 7.8737];
-
-const PIN_SVG =
-  '<svg width="30" height="38" viewBox="0 0 30 38" xmlns="http://www.w3.org/2000/svg"><path d="M15 1C7.8 1 2 6.6 2 13.6 2 23 15 37 15 37s13-14 13-23.4C28 6.6 22.2 1 15 1z" fill="#dc2626" stroke="#fff" stroke-width="2"/><circle cx="15" cy="13.5" r="5" fill="#fff"/></svg>';
+/** Where the map opens when nothing is pinned yet (Keffi). [longitude, latitude] */
+const START: [number, number] = [7.8737, 8.8465];
 
 /**
  * Lets the customer drop a pin on their exact delivery spot. It is optional, but it is what lets the delivery
@@ -28,109 +25,116 @@ const PIN_SVG =
 export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; onChange: (pin: Pin | null) => void }) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
-  const map = useRef<LeafletMap | null>(null);
+  const map = useRef<MapLibreMap | null>(null);
   const marker = useRef<Marker | null>(null);
-  const leaflet = useRef<typeof import("leaflet") | null>(null);
+  const lib = useRef<typeof import("maplibre-gl") | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const pinRef = useRef(pin);
+  pinRef.current = pin;
+  const accuracyRef = useRef<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
-  const [satellite, setSatellite] = useState(true);
+  const [mode, setMode] = useState<MapMode>("satellite");
+  const modeRef = useRef<MapMode>("satellite");
+  const [tilted, setTilted] = useState(true);
   const [accuracy, setAccuracy] = useState<number | null>(null);
-  const tiles = useRef<TileLayer | null>(null);
-  const labels = useRef<TileLayer | null>(null);
-  const halo = useRef<Circle | null>(null);
+  accuracyRef.current = accuracy;
+
+  /** The accuracy halo; recreated after every style load. */
+  const addHalo = (m: MapLibreMap) => {
+    const p = pinRef.current;
+    if (!m.getSource("halo")) {
+      m.addSource("halo", { type: "geojson", data: circlePolygon(p?.longitude ?? 0, p?.latitude ?? 0, p ? accuracyRef.current ?? 0 : 0) });
+      m.addLayer({ id: "halo-fill", type: "fill", source: "halo", paint: { "fill-color": "#2563eb", "fill-opacity": 0.14 } });
+      m.addLayer({ id: "halo-line", type: "line", source: "halo", paint: { "line-color": "#2563eb", "line-width": 1 } });
+    }
+  };
 
   // Build the map once.
   useEffect(() => {
     let cancelled = false;
+    ensureMapStyles();
     (async () => {
-      const L = await import("leaflet");
+      const ml = await import("maplibre-gl");
       if (cancelled || !box.current || map.current) return;
-      leaflet.current = L;
-      const m = L.map(box.current, { zoomControl: true, maxZoom: 21 }).setView(START, 15);
-      tiles.current = L.tileLayer(SATELLITE.url, SATELLITE).addTo(m);
-      if (LABELS) labels.current = L.tileLayer(LABELS.url, LABELS).addTo(m);
-      m.on("click", (e) => onChangeRef.current({ latitude: e.latlng.lat, longitude: e.latlng.lng }));
+      lib.current = ml;
+      const start = pinRef.current ? ([pinRef.current.longitude, pinRef.current.latitude] as [number, number]) : START;
+      const m = new ml.Map({ container: box.current, style: styleFor("satellite"), center: start, zoom: pinRef.current ? 18 : 15, pitch: TILT, maxPitch: 80, maxZoom: MAX_ZOOM, attributionControl: { compact: true } });
       map.current = m;
-      // The container may still be settling its size when the map is created.
-      setTimeout(() => m.invalidateSize(), 200);
+      m.addControl(new ml.NavigationControl({ visualizePitch: true }), "bottom-left");
+      m.on("style.load", () => addHalo(m));
+      let fellBack = false;
+      m.on("error", (e) => {
+        const status = (e as unknown as { error?: { status?: number } }).error?.status;
+        if (!fellBack && !m.isStyleLoaded() && !status) {
+          fellBack = true;
+          m.setStyle(fallbackFor(modeRef.current));
+        }
+      });
+      m.on("click", (e) => onChangeRef.current({ latitude: e.lngLat.lat, longitude: e.lngLat.lng }));
       // A pin that was already chosen (for example after coming back to the page) is drawn straight away.
-      setPinState(pinRef.current);
+      drawPin(pinRef.current);
     })();
     return () => {
       cancelled = true;
       map.current?.remove();
       map.current = null;
       marker.current = null;
-      halo.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pinRef = useRef(pin);
-  pinRef.current = pin;
-
-  function setPinState(p: Pin | null) {
-    const L = leaflet.current;
+  function drawPin(p: Pin | null) {
+    const ml = lib.current;
     const m = map.current;
-    if (!L || !m) return;
+    if (!ml || !m) return;
     if (!p) {
       marker.current?.remove();
       marker.current = null;
       return;
     }
     if (!marker.current) {
-      marker.current = L.marker([p.latitude, p.longitude], {
-        draggable: true,
-        icon: L.divIcon({ className: "tb-home", html: PIN_SVG, iconSize: [30, 38], iconAnchor: [15, 37] }),
-        title: "Delivery spot",
-      }).addTo(m);
+      const el = document.createElement("div");
+      el.className = "tb-home";
+      el.innerHTML = HOME_PIN_SVG;
+      el.title = "Delivery spot";
+      marker.current = new ml.Marker({ element: el, anchor: "bottom", draggable: true }).setLngLat([p.longitude, p.latitude]).addTo(m);
       marker.current.on("dragend", () => {
-        const at = marker.current!.getLatLng();
+        const at = marker.current!.getLngLat();
+        setAccuracy(null);
         onChangeRef.current({ latitude: at.lat, longitude: at.lng });
       });
     } else {
-      marker.current.setLatLng([p.latitude, p.longitude]);
+      marker.current.setLngLat([p.longitude, p.latitude]);
     }
   }
 
-  // Keep the pin drawn in step with the chosen value.
+  // Keep the pin and the halo drawn in step with the chosen value.
   useEffect(() => {
-    setPinState(pin);
-    if (pin && map.current) map.current.setView([pin.latitude, pin.longitude], Math.max(map.current.getZoom(), 16), { animate: true });
-  }, [pin]);
-
-  // Street <-> satellite.
-  const firstLayer = useRef(true);
-  useEffect(() => {
-    if (firstLayer.current) {
-      firstLayer.current = false;
-      return;
-    }
-    const L = leaflet.current;
+    drawPin(pin);
     const m = map.current;
-    if (!L || !m) return;
-    tiles.current?.remove();
-    labels.current?.remove();
-    labels.current = null;
-    const source = satellite ? SATELLITE : STREET;
-    tiles.current = L.tileLayer(source.url, source).addTo(m);
-    tiles.current.bringToBack();
-    if (satellite && LABELS) labels.current = L.tileLayer(LABELS.url, LABELS).addTo(m);
-  }, [satellite]);
-
-  // A circle showing how precise the phone says the position is.
-  useEffect(() => {
-    const L = leaflet.current;
-    const m = map.current;
-    if (!L || !m) return;
-    halo.current?.remove();
-    halo.current = null;
-    if (pin && accuracy) {
-      halo.current = L.circle([pin.latitude, pin.longitude], { radius: accuracy, color: "#2563eb", weight: 1, fillOpacity: 0.12 }).addTo(m);
-    }
+    if (!m) return;
+    if (pin) m.easeTo({ center: [pin.longitude, pin.latitude], zoom: Math.max(m.getZoom(), 17), duration: 700 });
+    const src = m.getSource("halo") as GeoJSONSource | undefined;
+    src?.setData(circlePolygon(pin?.longitude ?? 0, pin?.latitude ?? 0, pin && accuracy ? accuracy : 0));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pin, accuracy]);
+
+  const changeMode = () => {
+    const m = map.current;
+    if (!m) return;
+    const next: MapMode = mode === "satellite" ? "street" : "satellite";
+    modeRef.current = next;
+    setMode(next);
+    m.setStyle(styleFor(next));
+  };
+
+  const toggleTilt = () => {
+    const next = !tilted;
+    setTilted(next);
+    map.current?.easeTo({ pitch: next ? TILT : 0, bearing: 0, duration: 600 });
+  };
 
   const useMyLocation = () => {
     setMessage(null);
@@ -147,7 +151,7 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
       setLocating(false);
       setAccuracy(pos.coords.accuracy);
       onChange({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      map.current?.setView([pos.coords.latitude, pos.coords.longitude], 18, { animate: true });
+      map.current?.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 18, duration: 900 });
       if (pos.coords.accuracy > 200) {
         setMessage(t("Your device gave only an approximate position. Drag the pin onto your exact spot."));
       }
@@ -195,12 +199,21 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
         </button>
         <button
           type="button"
-          onClick={() => setSatellite((v) => !v)}
+          onClick={changeMode}
           className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-          aria-pressed={satellite}
+          aria-pressed={mode === "satellite"}
         >
           <Layers className="h-4 w-4" />
-          {satellite ? <T>Street map</T> : <T>Satellite</T>}
+          {mode === "satellite" ? <T>Street map</T> : <T>Satellite</T>}
+        </button>
+        <button
+          type="button"
+          onClick={toggleTilt}
+          className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm ${tilted ? "border-gray-900 bg-gray-900 text-white" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+          aria-pressed={tilted}
+        >
+          <Box className="h-4 w-4" />
+          {tilted ? <T>3D view</T> : <T>Flat view</T>}
         </button>
         {pin && (
           <button
@@ -218,7 +231,7 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
 
       <div
         ref={box}
-        className="relative z-0 mt-4 h-72 w-full overflow-hidden rounded-xl border border-black/10"
+        className="relative z-0 mt-4 h-80 w-full overflow-hidden rounded-xl border border-black/10"
         data-testid="pin-picker"
         data-pinned={pin ? "true" : "false"}
       />

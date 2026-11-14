@@ -26,11 +26,12 @@ const PAYMENT_LABEL: Record<PaiementStatut, string> = {
 
 /** What should happen next, in words the shop owner can act on. */
 export const NEXT_STEP_EN: Record<CommandeStatut, string> = {
-  [CommandeStatut.EN_COURS]: "The shop should assign a delivery person. Assigning makes the order Ready for delivery.",
-  [CommandeStatut.EN_PREPARATION]: "The order is being prepared. Assigning a delivery person makes it Ready for delivery.",
+  [CommandeStatut.EN_COURS]: "The shop should confirm the order and start preparing it (mark it Processing).",
+  [CommandeStatut.EN_PREPARATION]: "The shop should finish packing and mark it Shipped, then assign a delivery person.",
   [CommandeStatut.EXPEDIEE]: "The assigned delivery person can now tap Start delivery. That begins the live map for the customer.",
   [CommandeStatut.EN_LIVRAISON]: "The delivery person is on the way and sharing their live location.",
-  [CommandeStatut.LIVREE]: "Nothing more to do. The order is delivered.",
+  [CommandeStatut.LIVREE]: "The delivery person says it was delivered. It stays open until the customer taps \"I received it\"; the owner can close it if the customer does not.",
+  [CommandeStatut.RECUE]: "Nothing more to do. The customer confirmed receipt and the delivery is closed.",
   [CommandeStatut.ANNULEE]: "The order was cancelled.",
 };
 
@@ -51,11 +52,11 @@ export const ADMIN_TOOL_SPECS: ToolSpec[] = [
   {
     name: "list_deliveries",
     description:
-      "Shop owner only. Orders in the delivery pipeline (Order placed, Preparing, Ready for delivery, Out for delivery) with customer first name, city, payment status, assigned delivery person and live time left. Optionally filter by status.",
+      "Shop owner only. Orders in the delivery pipeline (Pending, Processing, Shipped, Out for delivery) with customer first name, city, payment status, assigned delivery person and live time left. Optionally filter by status.",
     parameters: {
       type: "object",
       properties: {
-        status: { type: "string", enum: ["pending", "processing", "shipped", "out_for_delivery", "delivered", "cancelled"] },
+        status: { type: "string", enum: ["pending", "processing", "shipped", "out_for_delivery", "delivered", "received", "cancelled"] },
         limit: { type: "integer", description: "1-10, default 8" },
       },
     },
@@ -94,11 +95,12 @@ const STATUS_ARG: Record<string, CommandeStatut> = {
   shipped: CommandeStatut.EXPEDIEE,
   out_for_delivery: CommandeStatut.EN_LIVRAISON,
   delivered: CommandeStatut.LIVREE,
+  received: CommandeStatut.RECUE,
   cancelled: CommandeStatut.ANNULEE,
 };
 
 const listArgs = z.object({
-  status: z.enum(["pending", "processing", "shipped", "out_for_delivery", "delivered", "cancelled"]).optional(),
+  status: z.enum(["pending", "processing", "shipped", "out_for_delivery", "delivered", "received", "cancelled"]).optional(),
   limit: z.number().int().min(1).max(10).optional(),
 });
 const findArgs = z.object({ reference: z.string().trim().min(3).max(30) });

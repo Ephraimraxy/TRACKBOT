@@ -45,7 +45,7 @@ describe("owner tools", () => {
     const r = await executeTool(db, as(admin, R.ADMIN), "shop_overview", {});
     expect(r.ok).toBe(true);
     expect(r.output).toMatchObject({
-      ordersByStatus: { "Ready for delivery": 1, Preparing: 1 },
+      ordersByStatus: { Shipped: 1, Processing: 1 },
       shippedWaitingForDeliveryPerson: 1,
       activeUnpaidOrders: 2,
       customers: 1,
@@ -61,7 +61,7 @@ describe("owner tools", () => {
     const list = await executeTool(db, as(admin, R.ADMIN), "list_deliveries", { status: "shipped" });
     const orders = list.output.orders as Record<string, unknown>[];
     expect(orders).toHaveLength(1);
-    expect(orders[0]).toMatchObject({ reference: id.slice(-8), status: "Ready for delivery", deliveryPerson: `${driver.prenom} ${driver.nom}` });
+    expect(orders[0]).toMatchObject({ reference: id.slice(-8), status: "Shipped", deliveryPerson: `${driver.prenom} ${driver.nom}` });
     expect(String(orders[0].nextStep)).toContain("Start delivery");
 
     const one = await executeTool(db, as(admin, R.ADMIN), "find_order", { reference: id.slice(-8) });
@@ -105,8 +105,8 @@ describe("customer tracking answer", () => {
     const { client, admin } = await world();
     await orderAt(client, admin, S.EN_PREPARATION);
     const r = await executeTool(db, as(client, R.CLIENT), "track_my_order", {});
-    expect(r.output).toMatchObject({ status: "Preparing", minutesLeft: null });
-    expect(String(r.output.whatHappensNext)).toContain("Ready for delivery");
+    expect(r.output).toMatchObject({ status: "Processing", minutesLeft: null });
+    expect(String(r.output.whatHappensNext)).toContain("Shipped");
     expect(typeof r.output.payment).toBe("string");
   });
 });
@@ -124,7 +124,7 @@ describe("prompts and the fallback bot", () => {
     await orderAt(client, admin, S.EXPEDIEE);
     const r = await ruleBasedReply({ db, ctx: as(admin, R.ADMIN), message: "how are my deliveries doing?" });
     expect(r.usedTools).toEqual(["shop_overview", "list_deliveries"]);
-    expect(r.reply).toContain("Ready for delivery");
+    expect(r.reply).toContain("Shipped");
     expect(r.reply).toContain("waiting for a delivery person");
   });
 

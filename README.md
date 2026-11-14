@@ -11,9 +11,9 @@ It serves three kinds of user: the **shop owner (admin)**, the **customer** and 
 
 | Role | Can do |
 |---|---|
-| Customer | Browse and search products, order, see every status change of an order on a tracking page (with a live map while it is out for delivery), chat with the assistant |
-| Shop owner | Manage products and photos, assign a delivery person to each order (that is all it takes: the order becomes Ready for delivery by itself), get notified when an order is placed, paid, started and delivered, watch any delivery live on a satellite map, manage the assistant's FAQ answers, see reports |
-| Delivery person | See assigned deliveries, start delivery (the phone is asked for its location first), confirm delivery, share their position for the current delivery only |
+| Customer | Browse and search products, order and pay, follow every step of an order on a tracking page with a live 3D map while it is out for delivery, confirm "I received my order" to close the delivery, chat with the assistant |
+| Shop owner | Manage products and photos; process each paid order (Processing, Shipped) and assign a delivery person; get notified when an order is placed, paid, started, delivered and received; watch any delivery live on a 3D map; close a delivery the customer never confirms; manage the assistant's FAQ answers; see reports |
+| Delivery person | See assigned deliveries, start delivery once the order is Shipped (the phone is asked for its location first), share their live position, mark the order Delivered when handed over |
 
 The assistant (**TrackBot**) answers from the shop's real data through read-only server tools: product prices
 and stock, the logged-in customer's own orders and tracking, and the owner's FAQ answers. It cannot invent a price
@@ -23,7 +23,7 @@ rule-based mode; with keys it tries DeepSeek, then OpenAI, then Claude.
 ## Stack
 
 Next.js 15 (App Router) and React 19, TypeScript, PostgreSQL with Prisma, NextAuth (credentials, role-based access),
-Leaflet with satellite imagery (Esri, or Mapbox when `NEXT_PUBLIC_MAPBOX_TOKEN` is set) and OpenStreetMap for the maps, Cloudflare R2 for images, Resend for email, Vitest for tests, Railway for hosting.
+MapLibre GL for the 3D maps (satellite pictures from Esri, or Mapbox when `NEXT_PUBLIC_MAPBOX_TOKEN` is set, and OpenFreeMap/OpenStreetMap vector tiles), Cloudflare R2 for images, Resend for email, Vitest for tests, Railway for hosting.
 
 ## Run it locally
 

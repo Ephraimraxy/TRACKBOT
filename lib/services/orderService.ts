@@ -219,6 +219,10 @@ export async function changeOrderStatus(
     if (actor.role === UserRole.LIVREUR && !driverAssigned) {
       throw new OrderError("FORBIDDEN", "This order is not assigned to you.");
     }
+    // A customer may only close their own delivery. Someone else's order looks the same as one that does not exist.
+    if (actor.role === UserRole.CLIENT && current.clientId !== actor.id) {
+      throw new OrderError("ORDER_NOT_FOUND", "Order not found.");
+    }
 
     // Guard against a concurrent change: only update if status is still what we read.
     const res = await tx.commande.updateMany({
@@ -250,34 +254,68 @@ export async function changeOrderStatus(
       },
     });
 
-    // Tell the customer. Their tracking page reads the same history rows.
-    if (current.clientId) {
-      const delivering = to === CommandeStatut.EN_LIVRAISON || to === CommandeStatut.LIVREE;
+    // Tell the customer (unless they are the one acting). Their tracking page reads the same history rows.
+    const link = `/client/orders/${orderId}/track`;
+    if (current.clientId && actor.id !== current.clientId) {
+      const copy: Partial<Record<CommandeStatut, { objet: string; text: string; url: string }>> = {
+        [CommandeStatut.EN_LIVRAISON]: {
+          objet: "Your order is on the way",
+          text: "Your delivery person has started delivering your order. Follow them live on the map.",
+          url: link,
+        },
+        [CommandeStatut.LIVREE]: {
+          objet: "Your order has arrived",
+          text: "Your delivery person says your order has been delivered. Please check it and confirm that you received it.",
+          url: link,
+        },
+      };
+      const c = copy[to];
       await tx.notification.create({
         data: {
           userId: current.clientId,
-          type: delivering ? NotificationType.LIVRAISON : NotificationType.COMMANDE,
-          objet: to === CommandeStatut.EN_LIVRAISON ? "Your order is on the way" : "Update on your order",
-          text:
-            to === CommandeStatut.EN_LIVRAISON
-              ? "Your delivery person has started delivering your order. Follow them live on the map."
-              : `Your order is now: ${STATUS_LABELS_EN[to]}.`,
-          urlRedirection: to === CommandeStatut.EN_LIVRAISON ? `/client/orders/${orderId}/track` : "/client/orders",
+          type: to === CommandeStatut.EN_LIVRAISON || to === CommandeStatut.LIVREE ? NotificationType.LIVRAISON : NotificationType.COMMANDE,
+          objet: c?.objet ?? "Update on your order",
+          text: c?.text ?? `Your order is now: ${STATUS_LABELS_EN[to]}.`,
+          urlRedirection: c?.url ?? "/client/orders",
         },
       });
     }
 
-    // The owner sees every delivery, whoever ordered it: tell them when one starts and when it ends.
-    if (to === CommandeStatut.EN_LIVRAISON || to === CommandeStatut.LIVREE) {
-      const started = to === CommandeStatut.EN_LIVRAISON;
-      await notifyAdmins(tx, {
-        type: NotificationType.LIVRAISON,
-        objet: started ? "Delivery started" : "Order delivered",
-        text: started
-          ? `Order #${shortRef(orderId)} is now out for delivery. You can watch the delivery person live.`
-          : `Order #${shortRef(orderId)} was delivered.`,
-        url: started ? `/admin/deliveries/${orderId}/track` : "/admin/orders",
-      });
+    // The owner sees every delivery, whoever ordered it.
+    const forOwner: Partial<Record<CommandeStatut, { objet: string; text: string; url: string }>> = {
+      [CommandeStatut.EN_LIVRAISON]: {
+        objet: "Delivery started",
+        text: `Order #${shortRef(orderId)} is now out for delivery. You can watch the delivery person live.`,
+        url: `/admin/deliveries/${orderId}/track`,
+      },
+      [CommandeStatut.LIVREE]: {
+        objet: "Order delivered",
+        text: `The delivery person says order #${shortRef(orderId)} was delivered. It stays open until the customer confirms receipt.`,
+        url: `/admin/deliveries/${orderId}/track`,
+      },
+      [CommandeStatut.RECUE]: {
+        objet: "Order received",
+        text: `The customer confirmed that they received order #${shortRef(orderId)}. The delivery is closed.`,
+        url: "/admin/orders",
+      },
+    };
+    const o = forOwner[to];
+    if (o) await notifyAdmins(tx, { type: NotificationType.LIVRAISON, ...o });
+
+    // Tell the delivery person when the customer closes the delivery.
+    if (to === CommandeStatut.RECUE) {
+      const livraison = await tx.livraison.findUnique({ where: { commandeId: orderId }, select: { livreurId: true } });
+      if (livraison) {
+        await tx.notification.create({
+          data: {
+            userId: livraison.livreurId,
+            type: NotificationType.LIVRAISON,
+            objet: "Delivery confirmed",
+            text: `The customer confirmed that they received order #${shortRef(orderId)}. Thank you.`,
+            urlRedirection: "/driver/deliveries",
+          },
+        });
+      }
     }
 
     return tx.commande.findUniqueOrThrow({

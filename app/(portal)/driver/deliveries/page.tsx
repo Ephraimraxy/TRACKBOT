@@ -74,9 +74,20 @@ export default function DriverDeliveriesPage() {
     return () => clearInterval(t);
   }, [load]);
 
+  // How far the server last worked out the delivery person is from the customer's pinned spot (null if unknown).
+  const distanceLeft = (orderId: string): number | null => {
+    const d = items.find((x) => x.commande.id === orderId)?.distanceMetres;
+    return typeof d === "number" ? d : null;
+  };
+
   const advance = async (orderId: string, statut: CommandeStatut) => {
-    if (statut === CommandeStatut.LIVREE && !(await confirm({ title: "Confirm delivery", message: "Confirm that the order was handed over to the customer?", confirmLabel: "Yes, delivered" }))) {
-      return;
+    if (statut === CommandeStatut.LIVREE) {
+      const far = distanceLeft(orderId);
+      const message =
+        far !== null && far > 300
+          ? `The map shows you about ${Math.round(far)} m from the customer's spot. Only mark the order delivered once you have reached the customer and handed it over. The customer will then be asked to confirm that they received it.`
+          : "Confirm that you reached the customer and handed over the order? The customer will then be asked to confirm that they received it.";
+      if (!(await confirm({ title: "Mark as delivered", message, confirmLabel: "Yes, delivered" }))) return;
     }
     setBusyId(orderId);
     setError(null);
@@ -204,11 +215,16 @@ export default function DriverDeliveriesPage() {
               </>
             )}
             {c.statut === CommandeStatut.LIVREE && (
-              <p className="text-center text-sm text-green-700"><T>Delivered ✔</T></p>
+              <p className="rounded bg-teal-50 p-3 text-center text-sm text-teal-800">
+                <T>Delivered ✔ Waiting for the customer to confirm that they received it.</T>
+              </p>
+            )}
+            {c.statut === CommandeStatut.RECUE && (
+              <p className="text-center text-sm text-green-700"><T>Received ✔ The customer confirmed this delivery.</T></p>
             )}
             {(c.statut === CommandeStatut.EN_COURS || c.statut === CommandeStatut.EN_PREPARATION) && (
               <p className="rounded bg-amber-50 p-3 text-center text-sm text-amber-900">
-                <T>This order is not ready for delivery yet. You can start the delivery once it shows Ready for delivery.</T>
+                <T>The shop is still preparing this order. You can start the delivery once the shop marks it as Shipped.</T>
               </p>
             )}
           </div>

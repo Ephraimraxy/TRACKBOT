@@ -20,9 +20,7 @@ describe("order workflow (pure rules)", () => {
 
   it("rejects skipping steps and moving backwards", () => {
     expect(canTransition(S.EN_COURS, S.LIVREE)).toBe(false);
-    // Assigning a delivery person takes a newly placed order straight to Ready for delivery.
-    expect(canTransition(S.EN_COURS, S.EXPEDIEE)).toBe(true);
-    expect(canTransition(S.EN_COURS, S.EN_LIVRAISON)).toBe(false);
+    expect(canTransition(S.EN_COURS, S.EXPEDIEE)).toBe(false);
     expect(canTransition(S.EXPEDIEE, S.EN_COURS)).toBe(false);
     expect(canTransition(S.LIVREE, S.EN_LIVRAISON)).toBe(false);
   });
@@ -34,8 +32,9 @@ describe("order workflow (pure rules)", () => {
     expect(canTransition(S.EN_LIVRAISON, S.ANNULEE)).toBe(false);
   });
 
-  it("treats delivered and cancelled as terminal", () => {
-    expect(isTerminalStatus(S.LIVREE)).toBe(true);
+  it("treats received and cancelled as terminal, and delivered as still open", () => {
+    expect(isTerminalStatus(S.RECUE)).toBe(true);
+    expect(isTerminalStatus(S.LIVREE)).toBe(false); // the customer still has to confirm
     expect(isTerminalStatus(S.ANNULEE)).toBe(true);
     expect(isTerminalStatus(S.EN_COURS)).toBe(false);
   });
@@ -67,5 +66,15 @@ describe("order workflow (pure rules)", () => {
   it("gives customers and vendors no status-change rights", () => {
     expect(roleCanTransition(R.CLIENT, S.EN_COURS, S.ANNULEE)).toBe(false);
     expect(roleCanTransition(R.VENDEUR, S.EN_COURS, S.EN_PREPARATION)).toBe(false);
+  });
+});
+
+describe("the customer's one step", () => {
+  it("a customer may only confirm receipt of a delivered order", () => {
+    expect(roleCanTransition(R.CLIENT, S.LIVREE, S.RECUE)).toBe(true);
+    expect(roleCanTransition(R.CLIENT, S.EN_COURS, S.ANNULEE)).toBe(false);
+    expect(roleCanTransition(R.CLIENT, S.EN_LIVRAISON, S.LIVREE)).toBe(false);
+    expect(roleCanTransition(R.LIVREUR, S.LIVREE, S.RECUE)).toBe(false);
+    expect(roleCanTransition(R.ADMIN, S.LIVREE, S.RECUE)).toBe(true); // the owner can close a stuck delivery
   });
 });

@@ -28,7 +28,8 @@ export async function listDrivers(db: PrismaClient, actor: StatusActor) {
 export async function listDeliveryBoard(db: PrismaClient, actor: StatusActor) {
   if (actor.role !== UserRole.ADMIN) throw new OrderError("FORBIDDEN", "Access denied.");
   return db.commande.findMany({
-    where: { statut: { in: [...ASSIGNABLE, CommandeStatut.EN_LIVRAISON] } },
+    // Delivered orders stay on the board until the customer confirms receipt.
+    where: { statut: { in: [...ASSIGNABLE, CommandeStatut.EN_LIVRAISON, CommandeStatut.LIVREE] } },
     orderBy: { date: "desc" },
     take: 100,
     select: {
@@ -63,7 +64,7 @@ export async function assignDriver(
   return db.$transaction(async (tx) => {
     const order = await tx.commande.findUnique({
       where: { id: orderId },
-      select: { id: true, statut: true, clientId: true },
+      select: { id: true, statut: true },
     });
     if (!order) throw new OrderError("ORDER_NOT_FOUND", "Order not found.");
 
@@ -87,35 +88,6 @@ export async function assignDriver(
       create: { commandeId: orderId, livreurId: driverId, assigneParId: actor.id },
       update: { livreurId: driverId, assigneParId: actor.id, dateAssignation: new Date() },
     });
-
-    // Assigning is the owner's whole job: it makes the order ready, so the delivery person can start at once.
-    if (order.statut !== CommandeStatut.EXPEDIEE) {
-      const moved = await tx.commande.updateMany({
-        where: { id: orderId, statut: order.statut },
-        data: { statut: CommandeStatut.EXPEDIEE },
-      });
-      if (moved.count === 0) throw new OrderError("INVALID_TRANSITION", "The order was changed in the meantime.");
-      await tx.historiqueStatutCommande.create({
-        data: {
-          commandeId: orderId,
-          ancienStatut: order.statut,
-          nouveauStatut: CommandeStatut.EXPEDIEE,
-          modifieParId: actor.id,
-          note: "Delivery person assigned",
-        },
-      });
-      if (order.clientId) {
-        await tx.notification.create({
-          data: {
-            userId: order.clientId,
-            type: NotificationType.LIVRAISON,
-            objet: "A delivery person is assigned",
-            text: "A delivery person has been assigned to your order and will start delivering soon.",
-            urlRedirection: `/client/orders/${orderId}/track`,
-          },
-        });
-      }
-    }
 
     await tx.notification.create({
       data: {
@@ -162,7 +134,7 @@ export async function listDriverDeliveries(db: PrismaClient, actor: StatusActor)
   });
 
   // Active deliveries first, finished ones after.
-  const rank = (s: CommandeStatut) => (s === CommandeStatut.LIVREE ? 1 : 0);
+  const rank = (s: CommandeStatut) => (s === CommandeStatut.LIVREE || s === CommandeStatut.RECUE ? 1 : 0);
   return rows.sort((a, b) => rank(a.commande.statut) - rank(b.commande.statut));
 }
 

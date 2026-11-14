@@ -106,7 +106,7 @@ async function applyTransaction(
       await notifyAdmins(t, {
         type: NotificationType.PAIEMENT,
         objet: "Payment received",
-        text: `Order #${shortId(order.id)} has been paid. Assign a delivery person.`,
+        text: `Order #${shortId(order.id)} has been paid. You can start processing it.`,
         url: "/admin/deliveries",
       });
       return true;

@@ -127,7 +127,7 @@ describe("getTracking", () => {
     expect(json).not.toContain(driver.email);
   });
 
-  it("hides the location before pickup and again once delivered", async () => {
+  it("hides the location before pickup, keeps it while waiting for the customer, and hides it once received", async () => {
     const w = await world();
     const orderId = await orderAt(w.client, w.admin, S.EXPEDIEE);
     await assignDriver(db, { orderId, driverId: w.driver.id, actor: adminActor(w.admin) });
@@ -143,9 +143,18 @@ describe("getTracking", () => {
 
     await changeOrderStatus(db, { orderId, to: S.LIVREE, actor: driverActor(w.driver), driverAssigned: true });
     t = await getTracking(db, { orderId, actor: clientActor(w.client) });
+    // Delivered is not the end: the delivery stays open and the map keeps showing where the driver stopped.
     expect(t.trackingActive).toBe(false);
-    expect(t.location).toBeNull(); // stored rows remain, but are no longer exposed
+    expect(t.awaitingConfirmation).toBe(true);
+    expect(t.mapOpen).toBe(true);
+    expect(t.location).not.toBeNull();
     expect(t.status).toBe(S.LIVREE);
+
+    await changeOrderStatus(db, { orderId, to: S.RECUE, actor: { id: w.client.id, role: R.CLIENT } });
+    t = await getTracking(db, { orderId, actor: clientActor(w.client) });
+    expect(t.mapOpen).toBe(false);
+    expect(t.location).toBeNull(); // stored rows remain, but are no longer exposed
+    expect(t.status).toBe(S.RECUE);
   });
 
   it("is visible to the owner and admin only", async () => {
@@ -231,7 +240,7 @@ describe("getTracking: the route so far", () => {
     expect(t.trail[0].latitude).toBeLessThan(t.trail[1].latitude); // still oldest first
   });
 
-  it("is empty before pickup and after delivery, like the location", async () => {
+  it("is empty before pickup and once received, like the location", async () => {
     const w = await world();
     const orderId = await orderAt(w.client, w.admin, S.EXPEDIEE);
     await assignDriver(db, { orderId, driverId: w.driver.id, actor: adminActor(w.admin) });
@@ -242,6 +251,8 @@ describe("getTracking: the route so far", () => {
     expect((await getTracking(db, { orderId, actor: clientActor(w.client) })).trail).toHaveLength(1);
 
     await changeOrderStatus(db, { orderId, to: S.LIVREE, actor: driverActor(w.driver), driverAssigned: true });
+    expect((await getTracking(db, { orderId, actor: clientActor(w.client) })).trail).toHaveLength(1);
+    await changeOrderStatus(db, { orderId, to: S.RECUE, actor: { id: w.client.id, role: R.CLIENT } });
     expect((await getTracking(db, { orderId, actor: clientActor(w.client) })).trail).toEqual([]);
   });
 });

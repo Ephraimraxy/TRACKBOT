@@ -3,16 +3,15 @@ import { CommandeStatut, UserRole } from "@prisma/client";
 /**
  * Single source of truth for the order lifecycle.
  *
- *  EN_COURS (Order placed) -> EXPEDIEE (Ready for delivery) -> EN_LIVRAISON (Out for delivery) -> LIVREE (Delivered)
- *
- *  The owner's only job is to assign a delivery person: assigning moves the order to "Ready for delivery" by
- *  itself (see assignDriver). EN_PREPARATION ("Preparing") stays available as an optional step for shops that
- *  want to show that packing has started. An order can be cancelled (ANNULEE) until it is out for delivery.
+ *  EN_COURS (Pending) -> EN_PREPARATION (Processing) -> EXPEDIEE (Shipped)
+ *      -> EN_LIVRAISON (Out for delivery) -> LIVREE (Delivered)
+ *      -> LIVREE (Delivered: the delivery person says it arrived) -> RECUE (Received: the customer confirms)
+ *  The delivery stays open after LIVREE until the customer confirms receipt. An order can be cancelled (ANNULEE)
+ *  until it is out for delivery.
  */
 export const STATUS_TRANSITIONS: Record<CommandeStatut, CommandeStatut[]> = {
   [CommandeStatut.EN_COURS]: [
     CommandeStatut.EN_PREPARATION,
-    CommandeStatut.EXPEDIEE,
     CommandeStatut.ANNULEE,
   ],
   [CommandeStatut.EN_PREPARATION]: [
@@ -24,25 +23,28 @@ export const STATUS_TRANSITIONS: Record<CommandeStatut, CommandeStatut[]> = {
     CommandeStatut.ANNULEE,
   ],
   [CommandeStatut.EN_LIVRAISON]: [CommandeStatut.LIVREE],
-  [CommandeStatut.LIVREE]: [],
+  [CommandeStatut.LIVREE]: [CommandeStatut.RECUE],
+  [CommandeStatut.RECUE]: [],
   [CommandeStatut.ANNULEE]: [],
 };
 
 export const STATUS_LABELS_FR: Record<CommandeStatut, string> = {
-  [CommandeStatut.EN_COURS]: "Commande passée",
+  [CommandeStatut.EN_COURS]: "En attente",
   [CommandeStatut.EN_PREPARATION]: "En préparation",
-  [CommandeStatut.EXPEDIEE]: "Prête pour la livraison",
+  [CommandeStatut.EXPEDIEE]: "Expédiée",
   [CommandeStatut.EN_LIVRAISON]: "En cours de livraison",
   [CommandeStatut.LIVREE]: "Livrée",
+  [CommandeStatut.RECUE]: "Reçue",
   [CommandeStatut.ANNULEE]: "Annulée",
 };
 
 export const STATUS_LABELS_EN: Record<CommandeStatut, string> = {
-  [CommandeStatut.EN_COURS]: "Order placed",
-  [CommandeStatut.EN_PREPARATION]: "Preparing",
-  [CommandeStatut.EXPEDIEE]: "Ready for delivery",
+  [CommandeStatut.EN_COURS]: "Pending",
+  [CommandeStatut.EN_PREPARATION]: "Processing",
+  [CommandeStatut.EXPEDIEE]: "Shipped",
   [CommandeStatut.EN_LIVRAISON]: "Out for delivery",
   [CommandeStatut.LIVREE]: "Delivered",
+  [CommandeStatut.RECUE]: "Received",
   [CommandeStatut.ANNULEE]: "Cancelled",
 };
 
@@ -60,6 +62,8 @@ export function canTransition(from: CommandeStatut, to: CommandeStatut): boolean
  *  - ADMIN (business owner): every legal transition.
  *  - LIVREUR (delivery person): only the two delivery steps. Whether the
  *    order is assigned to *this* driver is checked separately by the caller.
+ *  - CLIENT (customer): only "I received it" (Delivered -> Received). Whether the order is *theirs* is checked
+ *    separately by the caller.
  *  - everyone else: none.
  */
 const DRIVER_STEPS: Array<[CommandeStatut, CommandeStatut]> = [
@@ -76,6 +80,9 @@ export function roleCanTransition(
   if (role === UserRole.ADMIN) return true;
   if (role === UserRole.LIVREUR) {
     return DRIVER_STEPS.some(([f, t]) => f === from && t === to);
+  }
+  if (role === UserRole.CLIENT) {
+    return from === CommandeStatut.LIVREE && to === CommandeStatut.RECUE;
   }
   return false;
 }

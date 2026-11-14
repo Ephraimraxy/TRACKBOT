@@ -120,8 +120,12 @@ export async function getTracking(
   }
 
   const live = order.statut === CommandeStatut.EN_LIVRAISON;
+  // After the delivery person says "delivered", the delivery stays open and the map keeps showing where they stopped,
+  // until the customer confirms receipt. Once it is received, the position is no longer exposed.
+  const awaitingConfirmation = order.statut === CommandeStatut.LIVREE;
+  const open = live || awaitingConfirmation;
   // The latest points, oldest first, so the map can draw the route driven so far.
-  const recent = live
+  const recent = open
     ? await db.positionLivraison.findMany({
         where: { commandeId: orderId },
         orderBy: { date: "desc" },
@@ -145,6 +149,8 @@ export async function getTracking(
         : null,
     driverFirstName: order.livraison?.livreur.prenom ?? null,
     trackingActive: live,
+    awaitingConfirmation,
+    mapOpen: open,
     location: point
       ? {
           latitude: point.latitude,

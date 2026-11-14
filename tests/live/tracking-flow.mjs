@@ -85,9 +85,19 @@ check('tracking page redirects anonymous to login', anonPage.status >= 300 && an
 
 await call('PATCH', `/api/delivery/orders/${id}/status`, driver, { statut: 'LIVREE' });
 t = await call('GET', `/api/orders/${id}/tracking`, client);
-check('after delivery the location is no longer exposed', t.body.data.status === 'LIVREE' && t.body.data.location === null && t.body.data.trackingActive === false);
-check('after delivery the driver cannot post (409)', (await call('POST', `/api/delivery/orders/${id}/location`, driver, moved)).status === 409);
-check('timeline has all five steps', t.body.data.history.length === 5);
+// Delivered is not the end: the delivery stays open and the map keeps showing where the driver stopped.
+check('after "delivered" the delivery stays open, waiting for the customer', t.body.data.status === 'LIVREE' && t.body.data.awaitingConfirmation === true && t.body.data.mapOpen === true && t.body.data.location !== null && t.body.data.trackingActive === false);
+check('after delivered the driver cannot post more positions (409)', (await call('POST', `/api/delivery/orders/${id}/location`, driver, moved)).status === 409);
+check('the driver cannot close the delivery', (await call('POST', `/api/orders/${id}/receive`, driver)).status === 403);
+check('another customer cannot close it', (await call('POST', `/api/orders/${id}/receive`, stranger)).status === 404);
+check('the owner is not a customer, so the customer endpoint refuses', (await call('POST', `/api/orders/${id}/receive`, admin)).status === 403);
+
+const received = await call('POST', `/api/orders/${id}/receive`, client);
+check('the customer confirms receipt (200)', received.status === 200 && received.body.data.statut === 'RECUE');
+t = await call('GET', `/api/orders/${id}/tracking`, client);
+check('once received the location is no longer exposed', t.body.data.status === 'RECUE' && t.body.data.location === null && t.body.data.mapOpen === false);
+check('confirming twice is refused (409)', (await call('POST', `/api/orders/${id}/receive`, client)).status === 409);
+check('timeline has all six steps plus the placed order', t.body.data.history.length === 6);
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
 process.exit(failures === 0 ? 0 : 1);

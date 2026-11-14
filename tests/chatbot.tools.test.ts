@@ -229,11 +229,11 @@ describe("rule-based fallback", () => {
 
     const track = await ruleBasedReply({ db, ctx: asClient(client), message: "where is my order?" });
     expect(track.reply).toContain(`#${id.slice(-8)}`);
-    expect(track.reply).toContain("Ready for delivery");
+    expect(track.reply).toContain("Shipped");
 
     const list = await ruleBasedReply({ db, ctx: asClient(client), message: "mes commandes" });
     expect(list.reply).toContain(`#${id.slice(-8)}`);
-    expect(list.reply).toContain("Prête pour la livraison"); // asked in French, so the status label is French
+    expect(list.reply).toContain("Expédiée"); // asked in French, so the status label is French
   });
 
   it("never reveals another customer's order, whatever reference is typed", async () => {
@@ -245,12 +245,12 @@ describe("rule-based fallback", () => {
     // Written with "#", the reference is always taken literally and refused.
     const marked = await ruleBasedReply({ db, ctx: asClient(client), message: `where is my order #${theirs.slice(-8)}` });
     expect(marked.reply).toContain("can't find that order");
-    expect(marked.reply).not.toContain("Preparing");
+    expect(marked.reply).not.toContain("Processing");
 
     // Bare, it may or may not be recognised as a reference (depends on the random id).
     // Either way the other customer's order must never appear.
     const bare = await ruleBasedReply({ db, ctx: asClient(client), message: `where is my order ${theirs.slice(-8)}` });
-    expect(bare.reply).not.toContain("Preparing");
+    expect(bare.reply).not.toContain("Processing");
     expect(bare.reply).not.toContain(`#${theirs.slice(-8)}`);
   });
 

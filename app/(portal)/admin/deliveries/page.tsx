@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
+import { useConfirm } from "@/components/ui/confirm-dialog";
+
 import DeliveryTeam from "@/components/portal/admin/deliveries/DeliveryTeam";
 import { T } from "@/components/i18n/T";
 
@@ -22,7 +24,14 @@ type BoardOrder = {
   livraison: { livreur: { id: string; nom: string; prenom: string } } | null;
 };
 
+/** The next move the shop owner makes for an order, and the sentence that explains it. */
+const NEXT_ACTION: Partial<Record<CommandeStatut, { to: CommandeStatut; label: string; hint: string }>> = {
+  [CommandeStatut.EN_COURS]: { to: CommandeStatut.EN_PREPARATION, label: "Start processing", hint: "Confirm the order and begin packing it." },
+  [CommandeStatut.EN_PREPARATION]: { to: CommandeStatut.EXPEDIEE, label: "Mark as shipped", hint: "Packed and ready. Assign a delivery person; they can then start the delivery." },
+};
+
 export default function AdminDeliveriesPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const [orders, setOrders] = useState<BoardOrder[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [choice, setChoice] = useState<Record<string, string>>({});
@@ -48,6 +57,33 @@ export default function AdminDeliveriesPage() {
     load();
   }, [load]);
 
+  const advance = async (orderId: string, to: CommandeStatut, note?: string) => {
+    setBusyId(orderId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/status`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ statut: to, note }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? "Could not update the order.");
+      await load();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const closeAsReceived = async (orderId: string) => {
+    const ok = await confirm({
+      title: "Close this delivery",
+      message: "The delivery person says this order was delivered, but the customer has not confirmed it yet. Close it as received only if you know the customer has it.",
+      confirmLabel: "Close as received",
+    });
+    if (ok) await advance(orderId, CommandeStatut.RECUE, "Closed by the shop owner");
+  };
+
   const assign = async (orderId: string) => {
     const driverId = choice[orderId];
     if (!driverId) return;
@@ -72,21 +108,23 @@ export default function AdminDeliveriesPage() {
     <div className="p-4 md:p-6">
       <h1 className="text-2xl font-semibold">Deliveries</h1>
       <p className="mb-4 text-sm text-gray-500">
-        Assign a delivery person to each paid order. An order that is out for delivery can no longer be reassigned.
+        Process each order, then assign a delivery person. An order that is out for delivery can no longer be reassigned.
       </p>
 
       <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
         <p className="font-semibold"><T>How a delivery works</T></p>
         <ol className="mt-2 list-decimal space-y-1 pl-5">
           <li><T>A customer places an order and pays. You are notified.</T></li>
-          <li><T>Choose a delivery person for the order and press Assign. That is all you need to do.</T></li>
-          <li><T>The delivery person opens My deliveries and taps Start delivery. You and the customer are notified and their live location starts sharing.</T></li>
-          <li><T>Press Watch live to follow the delivery person on the map. The customer sees the same map on their tracking page.</T></li>
+          <li><T>Press Start processing, then Mark as shipped, as you pack the order.</T></li>
+          <li><T>Choose a delivery person for the order and press Assign.</T></li>
+          <li><T>The delivery person opens My deliveries and taps Start delivery. You and the customer are notified and the live location is shared with everyone involved.</T></li>
+          <li><T>When the delivery person arrives they mark it Delivered. The delivery stays open until the customer confirms that they received the order.</T></li>
         </ol>
         <p className="mt-2 text-xs text-blue-900"><T>The time left only appears when the customer pinned their spot on the map at checkout.</T></p>
       </div>
 
       {error && <p className="mb-3 rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {confirmDialog}
       {loading && <p className="text-sm text-gray-500">Loading…</p>}
       <DeliveryTeam drivers={drivers} onChanged={load} />
 
@@ -106,7 +144,7 @@ export default function AdminDeliveriesPage() {
           </thead>
           <tbody>
             {orders.map((o) => {
-              const locked = o.statut === CommandeStatut.EN_LIVRAISON;
+              const locked = o.statut === CommandeStatut.EN_LIVRAISON || o.statut === CommandeStatut.LIVREE;
               return (
                 <tr key={o.id} className="border-t">
                   <td className="p-3 font-mono text-xs">{o.id.slice(-8)}</td>
@@ -129,11 +167,29 @@ export default function AdminDeliveriesPage() {
                     )}
                   </td>
                   <td className="p-3">
-                    {o.statut === CommandeStatut.EN_LIVRAISON ? (
+                    {NEXT_ACTION[o.statut] ? (
+                      <div>
+                        <button
+                          className="rounded bg-green-600 px-3 py-1 text-white disabled:opacity-40"
+                          disabled={busyId === o.id}
+                          onClick={() => advance(o.id, NEXT_ACTION[o.statut]!.to)}
+                          title={NEXT_ACTION[o.statut]!.hint}
+                        >
+                          {busyId === o.id ? "…" : <T>{NEXT_ACTION[o.statut]!.label}</T>}
+                        </button>
+                      </div>
+                    ) : o.statut === CommandeStatut.EN_LIVRAISON ? (
                       <Link href={`/admin/deliveries/${o.id}/track`} className="inline-flex items-center gap-1 rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700">
                         <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
                         <T>Watch live</T>
                       </Link>
+                    ) : o.statut === CommandeStatut.LIVREE ? (
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="text-xs text-teal-700"><T>Delivered. Waiting for the customer to confirm.</T></span>
+                        <button className="rounded border border-teal-600 px-2 py-0.5 text-xs text-teal-700 hover:bg-teal-50 disabled:opacity-40" disabled={busyId === o.id} onClick={() => closeAsReceived(o.id)}>
+                          <T>Close as received</T>
+                        </button>
+                      </div>
                     ) : o.livraison ? (
                       <span className="text-xs text-gray-600"><T>Waiting for the delivery person to tap Start delivery</T></span>
                     ) : (

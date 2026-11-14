@@ -88,7 +88,15 @@ export default function OrderTable({
                       >
                         <T>{getStatusLabel(order.statut)}</T>
                       </span>
-                      {order.statut === "EN_LIVRAISON" ? (
+                      {order.statut === "LIVREE" ? (
+                        <Link
+                          href={`/client/orders/${order.id}/track`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-teal-600 px-3 py-1 text-xs font-semibold text-white hover:bg-teal-700"
+                        >
+                          <T>Confirm receipt</T>
+                        </Link>
+                      ) : order.statut === "EN_LIVRAISON" ? (
                         <Link
                           href={`/client/orders/${order.id}/track`}
                           onClick={(e) => e.stopPropagation()}

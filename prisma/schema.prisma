@@ -452,13 +452,15 @@ enum SignalementStatut {
 }
 
 // EN_COURS = Pending, EN_PREPARATION = Processing, EXPEDIEE = Shipped,
-// EN_LIVRAISON = Out for delivery, LIVREE = Delivered, ANNULEE = Cancelled
+// EN_LIVRAISON = Out for delivery, LIVREE = Delivered (handed over by the delivery person, waiting for the
+// customer), RECUE = Received (the customer confirmed; the delivery is closed), ANNULEE = Cancelled
 enum CommandeStatut {
   EN_COURS
   EN_PREPARATION
   EXPEDIEE
   EN_LIVRAISON
   LIVREE
+  RECUE
   ANNULEE
 }
 

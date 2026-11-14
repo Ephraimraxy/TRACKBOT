@@ -54,6 +54,3 @@ export const LABELS: BaseLayer | null = MAPBOX_TOKEN
       maxZoom: 21,
       maxNativeZoom: 18,
     };
-
-/** The closest zoom the automatic framing uses; the person can always zoom further by hand. */
-export const AUTO_FIT_MAX_ZOOM = 18;

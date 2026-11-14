@@ -5,10 +5,10 @@ import dynamic from "next/dynamic";
 import { ShieldAlert } from "lucide-react";
 
 import { useI18n } from "@/components/i18n/LocaleProvider";
-import type { MapPoint } from "@/components/tracking/TrackingMap";
+import type { MapPoint } from "@/components/tracking/LiveMap";
 import { formatDistance, formatMinutes } from "@/lib/services/etaService";
 
-const TrackingMap = dynamic(() => import("@/components/tracking/TrackingMap"), {
+const TrackingMap = dynamic(() => import("@/components/tracking/LiveMap"), {
   ssr: false,
   loading: () => <div className="mt-2 h-72 md:h-96 w-full animate-pulse rounded border bg-gray-100" />,
 });
