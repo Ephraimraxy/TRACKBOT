@@ -125,7 +125,7 @@ export async function listDriverDeliveries(db: PrismaClient, actor: StatusActor)
           id: true,
           statut: true,
           montant: true,
-          adresse: { select: { rue: true, ville: true, wilaya: true, codePostal: true, latitude: true, longitude: true } },
+          adresse: { select: { rue: true, ville: true, wilaya: true, codePostal: true, repere: true, latitude: true, longitude: true } },
           client: { select: { user: { select: { nom: true, prenom: true, tel: true } } } },
           lignesCommande: { select: { nomProduit: true, quantite: true } },
         },

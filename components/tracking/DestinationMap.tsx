@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
+import { highlightDestinationBuilding } from "@/lib/maps/destination";
 import { ensureMapStyles, fallbackFor, HOME_PIN_SVG, MAX_ZOOM, styleFor, TILT } from "@/lib/maps/styles";
 
 /** A 3D satellite map with one pin: the delivery address the customer chose. Shown before the delivery starts. */
@@ -31,6 +32,7 @@ export default function DestinationMap({ latitude, longitude, className = "h-72"
       pin.className = "tb-home";
       pin.innerHTML = HOME_PIN_SVG;
       new ml.Marker({ element: pin, anchor: "bottom" }).setLngLat([longitude, latitude]).addTo(m);
+      highlightDestinationBuilding(m, { latitude, longitude });
       map.current = m;
     })();
     return () => {

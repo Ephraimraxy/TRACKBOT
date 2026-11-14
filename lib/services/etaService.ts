@@ -60,6 +60,130 @@ export async function estimateRoute(from: LatLng, to: LatLng, fetchImpl: typeof 
   }
 }
 
+export interface RouteStep {
+  instruction: string;
+  /** Metres driven along this step, up to the next manoeuvre. */
+  distanceMetres: number;
+}
+
+/** A road route with its line on the map and its turn-by-turn steps. */
+export interface RoutePlan extends Eta {
+  /** [longitude, latitude] points of the route, in driving order. */
+  geometry: [number, number][];
+  steps: RouteStep[];
+}
+
+interface OsrmStep {
+  distance?: number;
+  name?: string;
+  maneuver?: { type?: string; modifier?: string };
+}
+
+/** One OSRM step in plain words: "Turn left onto Zaria Road". */
+export function describeStep(step: OsrmStep): string {
+  const type = step.maneuver?.type ?? "";
+  const modifier = step.maneuver?.modifier ?? "";
+  const road = step.name ? ` onto ${step.name}` : "";
+  if (type === "arrive") return "You have arrived at the customer's spot";
+  if (type === "depart") return step.name ? `Start on ${step.name}` : "Start driving";
+  if (type === "roundabout" || type === "rotary" || type === "roundabout turn") return `At the roundabout, take the exit${road}`;
+  const turn: Record<string, string> = {
+    left: "Turn left",
+    right: "Turn right",
+    "slight left": "Bear left",
+    "slight right": "Bear right",
+    "sharp left": "Turn sharply left",
+    "sharp right": "Turn sharply right",
+    straight: "Continue straight",
+    uturn: "Make a U-turn",
+  };
+  if (type === "new name" || type === "continue") return step.name ? `Continue on ${step.name}` : "Continue straight";
+  return `${turn[modifier] ?? "Continue"}${road}`;
+}
+
+/** The straight-line fallback as a route, so callers always get a line to draw. */
+function straightPlan(from: LatLng, to: LatLng): RoutePlan {
+  const eta = estimateStraightLine(from, to);
+  return {
+    ...eta,
+    geometry: [
+      [from.longitude, from.latitude],
+      [to.longitude, to.latitude],
+    ],
+    steps: [
+      { instruction: "Head towards the customer's spot", distanceMetres: eta.distanceMetres },
+      { instruction: "You have arrived at the customer's spot", distanceMetres: 0 },
+    ],
+  };
+}
+
+/**
+ * The road route from `from` to `to`, with the line to draw and the turns to follow. Same server and same
+ * fallback as `estimateRoute`: if the routing server cannot be reached the straight line is returned.
+ */
+export async function planRoute(from: LatLng, to: LatLng, fetchImpl: typeof fetch = fetch): Promise<RoutePlan> {
+  try {
+    const url = `${OSRM}/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson&steps=true`;
+    const res = await fetchImpl(url, {
+      headers: { "User-Agent": "TrackBot/1.0 (university project; delivery tracking)" },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return straightPlan(from, to);
+    const body = (await res.json()) as {
+      code?: string;
+      routes?: { distance?: number; duration?: number; geometry?: { coordinates?: [number, number][] }; legs?: { steps?: OsrmStep[] }[] }[];
+    };
+    const route = body.routes?.[0];
+    const coords = route?.geometry?.coordinates;
+    if (body.code !== "Ok" || typeof route?.distance !== "number" || typeof route.duration !== "number" || !coords || coords.length < 2) {
+      return straightPlan(from, to);
+    }
+    const steps = (route.legs?.[0]?.steps ?? []).map((st) => ({ instruction: describeStep(st), distanceMetres: Math.round(st.distance ?? 0) }));
+    return {
+      distanceMetres: Math.round(route.distance),
+      durationSeconds: Math.round(route.duration),
+      source: "route",
+      geometry: coords,
+      steps: steps.length > 0 ? steps : straightPlan(from, to).steps,
+    };
+  } catch {
+    return straightPlan(from, to);
+  }
+}
+
+/** How far (metres) a point is from the nearest part of a line: used to notice a driver who left the planned route. */
+export function distanceToLineMetres(point: LatLng, line: [number, number][]): number {
+  if (line.length === 0) return Infinity;
+  const kx = 111_320 * Math.cos(rad(point.latitude));
+  const ky = 110_540;
+  const px = point.longitude * kx;
+  const py = point.latitude * ky;
+  let best = Infinity;
+  for (let i = 0; i < line.length - 1; i++) {
+    const ax = line[i][0] * kx;
+    const ay = line[i][1] * ky;
+    const bx = line[i + 1][0] * kx;
+    const by = line[i + 1][1] * ky;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
+    best = Math.min(best, Math.hypot(px - (ax + t * dx), py - (ay + t * dy)));
+  }
+  return line.length === 1 ? Math.hypot(px - line[0][0] * kx, py - line[0][1] * ky) : best;
+}
+
+const COMPASS = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
+
+/** Where `to` lies from `from`, in words: "320 m to the north-east". */
+export function describeApproach(from: LatLng, to: LatLng): { distanceMetres: number; direction: string } {
+  const distanceMetres = Math.round(haversineMetres(from, to));
+  const y = Math.sin(rad(to.longitude - from.longitude)) * Math.cos(rad(to.latitude));
+  const x = Math.cos(rad(from.latitude)) * Math.sin(rad(to.latitude)) - Math.sin(rad(from.latitude)) * Math.cos(rad(to.latitude)) * Math.cos(rad(to.longitude - from.longitude));
+  const bearing = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+  return { distanceMetres, direction: COMPASS[Math.round(bearing / 45) % 8] };
+}
+
 /** "4.3 km" or "350 m". */
 export function formatDistance(metres: number): string {
   return metres >= 1000 ? `${(metres / 1000).toFixed(1)} km` : `${Math.max(10, Math.round(metres / 10) * 10)} m`;

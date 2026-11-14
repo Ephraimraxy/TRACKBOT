@@ -6,7 +6,10 @@ import { ShieldAlert } from "lucide-react";
 
 import { useI18n } from "@/components/i18n/LocaleProvider";
 import type { MapPoint } from "@/components/tracking/LiveMap";
-import { formatDistance, formatMinutes } from "@/lib/services/etaService";
+import { describeApproach, formatDistance, formatMinutes } from "@/lib/services/etaService";
+import { useRoutePlan } from "@/components/tracking/useRoutePlan";
+
+import StreetPhotos from "@/components/tracking/StreetPhotos";
 
 const TrackingMap = dynamic(() => import("@/components/tracking/LiveMap"), {
   ssr: false,
@@ -29,7 +32,7 @@ type Permission = "unknown" | "prompt" | "granted" | "denied";
  * - Sharing stops with the button, when the order leaves "out for delivery" (the server answers 409), or
  *   when this panel is removed from the page.
  */
-export default function LocationSharer({ orderId, autoStart = false, destination = null }: { orderId: string; autoStart?: boolean; destination?: MapPoint | null }) {
+export default function LocationSharer({ orderId, autoStart = false, destination = null, landmark = null }: { orderId: string; autoStart?: boolean; destination?: MapPoint | null; landmark?: string | null }) {
   const { t } = useI18n();
   const [sharing, setSharing] = useState(false);
   const [permission, setPermission] = useState<Permission>("unknown");
@@ -175,6 +178,9 @@ export default function LocationSharer({ orderId, autoStart = false, destination
   }, [autoStart, permission, sharing, start]);
 
   const ago = last ? Math.max(0, Math.round((now - last.at) / 1000)) : null;
+  // The road ahead and the next turn, worked out again from the latest position (so it follows a change of road).
+  const plan = useRoutePlan(orderId, sharing);
+  const approach = last && destination ? describeApproach(last, destination) : null;
 
   return (
     <div className="mt-3 rounded-lg border bg-white p-3 text-sm">
@@ -203,7 +209,23 @@ export default function LocationSharer({ orderId, autoStart = false, destination
               </p>
             )
           )}
-          {last && <TrackingMap position={{ latitude: last.latitude, longitude: last.longitude, accuracy: last.accuracy, updatedAt: new Date(last.at) }} trail={trail} destination={destination} className="mt-2 h-72 md:h-96" />}
+          {plan?.nextStep && (
+            <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sky-950">
+              <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t("Next turn")}</p>
+              <p className="text-base font-semibold">{plan.nextStep.instruction}</p>
+              <p className="text-xs">{t("in {distance}", { distance: formatDistance(plan.nextStep.distanceMetres) })}</p>
+              {plan.rerouted && <p className="mt-1 text-xs font-medium text-sky-800">{t("Rerouted: new road worked out from where you are.")}</p>}
+            </div>
+          )}
+          {(approach || landmark) && (
+            <div className="mt-2 rounded-lg bg-red-50 p-3 text-sm text-red-950">
+              {approach && <p className="font-medium">{t("Customer's spot: {distance} to the {direction}", { distance: formatDistance(approach.distanceMetres), direction: t(approach.direction) })}</p>}
+              {landmark && <p className="mt-1"><span className="font-semibold">{t("Landmark:")}</span> {landmark}</p>}
+              <p className="mt-1 text-xs text-red-800">{t("The building on the customer's pin is coloured red on the map, where the map data has it.")}</p>
+            </div>
+          )}
+          {last && <TrackingMap position={{ latitude: last.latitude, longitude: last.longitude, accuracy: last.accuracy, updatedAt: new Date(last.at) }} trail={trail} destination={destination} plannedRoute={plan?.available ? plan.geometry ?? null : null} rerouted={plan?.rerouted ?? false} className="mt-2 h-72 md:h-96" />}
+          {destination && <StreetPhotos latitude={destination.latitude} longitude={destination.longitude} />}
           <p className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-900">
             {t("Keep this page open and your screen on. Phones pause location when the screen is off or you switch apps.")}
           </p>

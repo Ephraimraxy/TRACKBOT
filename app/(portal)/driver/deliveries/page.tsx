@@ -18,7 +18,7 @@ type Delivery = {
     id: string;
     statut: CommandeStatut;
     montant: string | number;
-    adresse: { rue: string; ville: string; wilaya: string; codePostal: string; latitude: number | null; longitude: number | null } | null;
+    adresse: { rue: string; ville: string; wilaya: string; codePostal: string; repere?: string | null; latitude: number | null; longitude: number | null } | null;
     client: { user: { nom: string; prenom: string; tel: string | null } } | null;
     lignesCommande: { nomProduit: string; quantite: number }[];
   };
@@ -171,6 +171,11 @@ export default function DriverDeliveriesPage() {
                 {c.adresse.rue}, {c.adresse.ville}, {c.adresse.wilaya} {c.adresse.codePostal}
               </p>
             )}
+            {c.adresse?.repere && (
+              <p className="mb-2 rounded bg-amber-50 p-2 text-sm text-amber-900">
+                <span className="font-semibold"><T>Landmark:</T></span> {c.adresse.repere}
+              </p>
+            )}
             {c.adresse && (c.statut === CommandeStatut.EXPEDIEE || c.statut === CommandeStatut.EN_LIVRAISON) && (
               <a
                 href={mapsLink(c.adresse)}
@@ -211,6 +216,7 @@ export default function DriverDeliveriesPage() {
                   orderId={c.id}
                   autoStart={justStarted === c.id}
                   destination={c.adresse?.latitude != null && c.adresse.longitude != null ? { latitude: c.adresse.latitude, longitude: c.adresse.longitude } : null}
+                  landmark={c.adresse?.repere ?? null}
                 />
               </>
             )}

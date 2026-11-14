@@ -106,7 +106,7 @@ export async function getTracking(
       id: true,
       statut: true,
       clientId: true,
-      adresse: { select: { rue: true, ville: true, wilaya: true, latitude: true, longitude: true } },
+      adresse: { select: { rue: true, ville: true, wilaya: true, repere: true, latitude: true, longitude: true } },
       livraison: { select: { livreur: { select: { prenom: true } }, etaSecondes: true, distanceMetres: true, etaMisAJour: true } },
       historique: {
         orderBy: { date: "asc" },

@@ -38,6 +38,7 @@ export default function OrderPageMain() {
     city: "",
     wilaya: "",
     postalCode: "",
+    landmark: "",
   });
 
   useEffect(() => {
@@ -148,6 +149,7 @@ export default function OrderPageMain() {
         ville: deliveryAddress.city,
         wilaya: deliveryAddress.wilaya,
         codePostal: deliveryAddress.postalCode,
+        ...(deliveryAddress.landmark.trim() ? { repere: deliveryAddress.landmark.trim() } : {}),
         ...(pin ? { latitude: pin.latitude, longitude: pin.longitude } : {}),
       },
       produits: productsForOrder,

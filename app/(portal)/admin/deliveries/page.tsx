@@ -106,7 +106,10 @@ export default function AdminDeliveriesPage() {
 
   return (
     <div className="p-4 md:p-6">
-      <h1 className="text-2xl font-semibold">Deliveries</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-semibold">Deliveries</h1>
+        <Link href="/admin/map-check" className="text-sm text-blue-600 underline"><T>Check map coverage</T></Link>
+      </div>
       <p className="mb-4 text-sm text-gray-500">
         Process each order, then assign a delivery person. An order that is out for delivery can no longer be reassigned.
       </p>

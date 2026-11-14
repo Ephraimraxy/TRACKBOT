@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useRoutePlan } from "@/components/tracking/useRoutePlan";
+import StreetPhotos from "@/components/tracking/StreetPhotos";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { CommandeStatut } from "@prisma/client";
@@ -27,7 +29,7 @@ type Tracking = {
   orderId: string;
   status: CommandeStatut;
   statusLabel: string;
-  destination: { rue: string; ville: string; wilaya: string; latitude: number | null; longitude: number | null } | null;
+  destination: { rue: string; ville: string; wilaya: string; repere?: string | null; latitude: number | null; longitude: number | null } | null;
   eta: { seconds: number; metres: number; updatedAt: string } | null;
   driverFirstName: string | null;
   trackingActive: boolean;
@@ -69,6 +71,7 @@ export default function OrderTrackingView({
   const [data, setData] = useState<Tracking | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<"map" | "timeline">("map");
+  const [streaming, setStreaming] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -93,14 +96,37 @@ export default function OrderTrackingView({
     const tick = () => {
       if (document.visibilityState === "visible") load();
     };
-    const timer = setInterval(tick, trackingActive ? LIVE_POLL_MS : POLL_MS);
+    // While the live stream is connected, new positions arrive by themselves; polling is only a slow safety net.
+    const timer = setInterval(tick, streaming ? 20_000 : trackingActive ? LIVE_POLL_MS : POLL_MS);
     // Catch up straight away when the customer comes back to this tab.
     document.addEventListener("visibilitychange", tick);
     return () => {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", tick);
     };
-  }, [finished, trackingActive, load]);
+  }, [finished, trackingActive, streaming, load]);
+
+  // Live updates: the server pushes each new position, status and estimate as it is stored (Server-Sent Events).
+  useEffect(() => {
+    if (finished || typeof EventSource === "undefined") return;
+    const es = new EventSource(`/api/orders/${orderId}/live`);
+    es.addEventListener("tracking", (e) => {
+      try {
+        setData(JSON.parse((e as MessageEvent).data));
+        setError(null);
+        setStreaming(true);
+      } catch {
+        // ignore a malformed message; the next one replaces it
+      }
+    });
+    es.onerror = () => setStreaming(false); // the browser reconnects by itself; polling covers the gap
+    return () => {
+      es.close();
+      setStreaming(false);
+    };
+  }, [orderId, finished]);
+
+  const plan = useRoutePlan(orderId, trackingActive);
 
   const reached = new Set(data?.history.map((h) => h.to));
   // A step counts as reached once the order is at it or beyond it.
@@ -228,6 +254,11 @@ export default function OrderTrackingView({
                   )}
                 </div>
               )}
+              {view === "map" && admin && plan?.nextStep && data.trackingActive && (
+                <p className="mb-3 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2 text-sm text-sky-900">
+                  <span className="font-semibold"><T>Next turn:</T></span> {plan.nextStep.instruction} · {formatDistance(plan.nextStep.distanceMetres)}
+                </p>
+              )}
               {view === "map" && !data.eta && data.location && !(data.destination?.latitude != null) && (
                 <p className="mb-3 rounded border border-dashed p-3 text-sm text-gray-600">
                   <T>The time left is not shown because no delivery spot was pinned on the map for this order.</T>
@@ -239,6 +270,8 @@ export default function OrderTrackingView({
                     position={data.location}
                     trail={data.trail}
                     live={data.trackingActive}
+                    plannedRoute={plan?.available ? plan.geometry ?? null : null}
+                    rerouted={plan?.rerouted ?? false}
                     destination={data.destination?.latitude != null && data.destination.longitude != null ? { latitude: data.destination.latitude, longitude: data.destination.longitude } : null}
                   />
                 ) : (
@@ -264,6 +297,14 @@ export default function OrderTrackingView({
               <p className="text-sm text-gray-600">
                 <T>Delivery address:</T> {data.destination.rue}, {data.destination.ville}, {data.destination.wilaya}
               </p>
+              {data.destination.repere && (
+                <p className="mt-1 text-sm text-gray-600">
+                  <span className="font-medium"><T>Landmark:</T></span> {data.destination.repere}
+                </p>
+              )}
+              {data.destination.latitude != null && data.destination.longitude != null && (admin || data.mapOpen) && (
+                <StreetPhotos latitude={data.destination.latitude} longitude={data.destination.longitude} />
+              )}
               {/* Before the delivery starts and once it is over, the map shows the delivery spot. While the delivery person is on the road, the live map above shows it. */}
               {!data.mapOpen && data.status !== CommandeStatut.ANNULEE && data.destination.latitude != null && data.destination.longitude != null && (
                 <div className="mt-3">

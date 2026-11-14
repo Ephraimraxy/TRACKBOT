@@ -6,7 +6,8 @@
  *
  *  - With NEXT_PUBLIC_MAPBOX_TOKEN set (free account at mapbox.com), the satellite picture comes from Mapbox,
  *    which has sharper imagery and lets you zoom in much closer.
- *  - Without it, Esri World Imagery is used. It needs no account.
+ *  - With NEXT_PUBLIC_MAPTILER_KEY set (free plan at maptiler.com), MapTiler satellite pictures are used.
+ *  - Without either, Esri World Imagery is used. It needs no account.
  *
  * `maxNativeZoom` is the closest level the provider really has pictures for. Zooming in further enlarges the last
  * picture instead of showing empty grey tiles.
@@ -21,6 +22,7 @@ export interface BaseLayer {
 }
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN?.trim();
+const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY?.trim();
 
 export const STREET: BaseLayer = {
   url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -37,6 +39,13 @@ export const SATELLITE: BaseLayer = MAPBOX_TOKEN
       zoomOffset: -1,
       maxZoom: 22,
       maxNativeZoom: 21,
+    }
+  : MAPTILER_KEY
+  ? {
+      url: `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${MAPTILER_KEY}`,
+      attribution: "© MapTiler © OpenStreetMap contributors",
+      maxZoom: 21,
+      maxNativeZoom: 20,
     }
   : {
       url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",

@@ -21,6 +21,8 @@ model Adresse {
   ville      String     @db.VarChar(100)
   wilaya     String     @db.VarChar(100)
   codePostal String     @map("code_postal") @db.VarChar(20)
+  /// A landmark or directions that help the delivery person find the right building ("blue gate opposite the mosque").
+  repere     String?    @db.VarChar(200)
   /// Exact delivery spot, when the customer pinned it on the map. Without it there is no distance or ETA.
   latitude   Float?
   longitude  Float?

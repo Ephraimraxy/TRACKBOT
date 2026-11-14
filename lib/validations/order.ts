@@ -6,6 +6,8 @@ const deliveryAddressSchema = z.object({
   ville: z.string().min(1, "City is required"),
   wilaya: z.string().min(1, "State is required"),
   codePostal: z.string().min(1, "Postcode is required"),
+  // Optional landmark or directions for the delivery person.
+  repere: z.string().trim().max(200, "Directions are too long (200 characters at most)").optional(),
   // Optional pin on the map: where exactly to deliver.
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),

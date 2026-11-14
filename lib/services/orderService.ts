@@ -62,7 +62,7 @@ export class OrderError extends Error {
 
 export interface CreateOrderInput {
   userId: string;
-  addresse: { rue: string; ville: string; wilaya: string; codePostal: string; latitude?: number; longitude?: number };
+  addresse: { rue: string; ville: string; wilaya: string; codePostal: string; repere?: string; latitude?: number; longitude?: number };
   produits: Array<{
     produitId: string;
     quantite: number;

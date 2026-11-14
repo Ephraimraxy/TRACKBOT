@@ -25,6 +25,10 @@ rule-based mode; with keys it tries DeepSeek, then OpenAI, then Claude.
 Next.js 15 (App Router) and React 19, TypeScript, PostgreSQL with Prisma, NextAuth (credentials, role-based access),
 MapLibre GL for the 3D maps (satellite pictures from Esri, or Mapbox when `NEXT_PUBLIC_MAPBOX_TOKEN` is set, and OpenFreeMap/OpenStreetMap vector tiles), Cloudflare R2 for images, Resend for email, Vitest for tests, Railway for hosting.
 
+## Maps and navigation
+
+The tracking, checkout and coverage screens use MapLibre GL: 3D satellite with 3D buildings, a street style, tilt, rotate, full view and full screen. While a delivery is on the road the server works out the road route and the next turn (OSRM) and the page receives each new position over a live Server-Sent Events stream. Customers can add a landmark at checkout; the building on the pin is coloured red in 3D where the map data has it. Optional: `NEXT_PUBLIC_MAPBOX_TOKEN` or `NEXT_PUBLIC_MAPTILER_KEY` (sharper satellite pictures) and `NEXT_PUBLIC_MAPILLARY_TOKEN` (street photos). Before relying on a provider, open **Admin > Deliveries > Check map coverage** and measure it at three places you deliver to.
+
 ## Run it locally
 
 You need Node.js 20+ and a PostgreSQL database.

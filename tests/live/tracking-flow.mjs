@@ -40,7 +40,7 @@ const otherDriver = await login('livreur2@email.com');
 const productId = (await call('GET', '/api/products?pageSize=1')).body.data[0].id;
 const order = await call('POST', '/api/orders', client, {
   userId: client.id,
-  addresse: { rue: '5 Rue GPS', ville: 'Keffi', wilaya: 'Nasarawa', codePostal: '961101' },
+  addresse: { rue: '5 Rue GPS', ville: 'Keffi', wilaya: 'Nasarawa', codePostal: '961101', latitude: 8.852, longitude: 7.879 },
   produits: [{ produitId: productId, quantite: 1 }],
 });
 const id = order.body.data.id;
@@ -65,6 +65,14 @@ check('invalid coordinates rejected (400)', (await call('POST', `/api/delivery/o
 
 check('driver posts a point (201)', (await call('POST', `/api/delivery/orders/${id}/location`, driver, here)).status === 201);
 check('immediate repeat is throttled (429)', (await call('POST', `/api/delivery/orders/${id}/location`, driver, here)).status === 429);
+
+// the planned road and the next turn (the routing server may be unreachable; the straight line is then used)
+const routeD = await call('GET', `/api/orders/${id}/route`, driver);
+check('the delivery person gets the planned route and the next turn', routeD.status === 200 && routeD.body.data.geometry.length >= 2 && typeof routeD.body.data.nextStep?.instruction === 'string');
+const routeC = await call('GET', `/api/orders/${id}/route`, client);
+check('the customer gets the route line but not the turn-by-turn steps', routeC.status === 200 && routeC.body.data.geometry.length >= 2 && routeC.body.data.nextStep === undefined);
+check('a stranger cannot read the route (403)', (await call('GET', `/api/orders/${id}/route`, stranger)).status === 403);
+check('anonymous cannot read the route (401)', (await call('GET', `/api/orders/${id}/route`, null)).status === 401);
 
 t = await call('GET', `/api/orders/${id}/tracking`, client);
 check('customer sees the point', t.body.data.location?.latitude === here.latitude && t.body.data.location?.longitude === here.longitude);

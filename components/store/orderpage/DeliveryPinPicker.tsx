@@ -7,6 +7,7 @@ import { Box, Crosshair, Layers, X } from "lucide-react";
 
 import { T } from "@/components/i18n/T";
 import { useI18n } from "@/components/i18n/LocaleProvider";
+import { highlightDestinationBuilding } from "@/lib/maps/destination";
 import { circlePolygon, ensureMapStyles, fallbackFor, HOME_PIN_SVG, MAX_ZOOM, styleFor, TILT, type MapMode } from "@/lib/maps/styles";
 
 export interface Pin {
@@ -73,6 +74,8 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
         }
       });
       m.on("click", (e) => onChangeRef.current({ latitude: e.lngLat.lat, longitude: e.lngLat.lng }));
+      // The building on the pin is coloured red in 3D, so the customer can confirm it is the right one.
+      highlightDestinationBuilding(m, () => pinRef.current);
       // A pin that was already chosen (for example after coming back to the page) is drawn straight away.
       drawPin(pinRef.current);
     })();

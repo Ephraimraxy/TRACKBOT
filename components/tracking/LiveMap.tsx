@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { GeoJSONSource, Map as MapLibreMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Box, Crosshair, Focus, Layers, Maximize2, Minimize2 } from "lucide-react";
+import { Box, Camera, Crosshair, Focus, Layers, Maximize2, Minimize2 } from "lucide-react";
 
 import { useI18n } from "@/components/i18n/LocaleProvider";
+import { highlightDestinationBuilding } from "@/lib/maps/destination";
+import { MAPILLARY_TILES, mapillaryEnabled } from "@/lib/maps/mapillary";
 import {
   AUTO_FIT_MAX_ZOOM,
   circlePolygon,
@@ -33,6 +35,10 @@ interface Props {
   trail?: MapPoint[];
   /** Where the order is going (the customer's pin). The view keeps it and the delivery person in frame. */
   destination?: MapPoint | null;
+  /** The road route still to drive (from the routing service), drawn as a dashed line ahead of the marker. */
+  plannedRoute?: [number, number][] | null;
+  /** True for a few seconds after the delivery person left the planned road and the route was worked out again. */
+  rerouted?: boolean;
   /** False once the delivery person has stopped sharing (delivered): the badge says where they stopped. */
   live?: boolean;
   className?: string;
@@ -61,7 +67,7 @@ const routeData = (trail: MapPoint[], end: [number, number]): GeoJSON.Feature<Ge
  *    the delivery person and the destination together.
  *  - A badge says LIVE while positions keep arriving, or how long ago the last one was.
  */
-export default function LiveMap({ position, trail = [], destination = null, live: sharing = true, className = "h-[24rem]" }: Props) {
+export default function LiveMap({ position, trail = [], destination = null, plannedRoute = null, rerouted = false, live: sharing = true, className = "h-[24rem]" }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
@@ -72,8 +78,10 @@ export default function LiveMap({ position, trail = [], destination = null, live
   const frame = useRef<number | null>(null);
   const followRef = useRef(true);
   const modeRef = useRef<MapMode>("satellite");
-  const latest = useRef({ position, trail, destination });
-  latest.current = { position, trail, destination };
+  const latest = useRef({ position, trail, destination, plannedRoute });
+  latest.current = { position, trail, destination, plannedRoute };
+  const photosRef = useRef(false);
+  const [photos, setPhotos] = useState(false);
 
   const [follow, setFollowState] = useState(true);
   const [mode, setMode] = useState<MapMode>("satellite");
@@ -91,6 +99,16 @@ export default function LiveMap({ position, trail = [], destination = null, live
   const addCustomLayers = useCallback((m: MapLibreMap) => {
     const { position: p, trail: tr } = latest.current;
     const here = shown.current;
+    if (!m.getSource("planned")) {
+      m.addSource("planned", { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: latest.current.plannedRoute ?? [] } } });
+      m.addLayer({ id: "planned-line", type: "line", source: "planned", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#38bdf8", "line-width": 5, "line-opacity": 0.9, "line-dasharray": [1.2, 1.6] } });
+    }
+    if (mapillaryEnabled && !m.getSource("mapillary")) {
+      m.addSource("mapillary", { type: "vector", tiles: [MAPILLARY_TILES], minzoom: 6, maxzoom: 14 });
+      const vis = photosRef.current ? "visible" : "none";
+      m.addLayer({ id: "mly-lines", type: "line", source: "mapillary", "source-layer": "sequence", layout: { visibility: vis }, paint: { "line-color": "#05cb63", "line-width": 2.5, "line-opacity": 0.9 } });
+      m.addLayer({ id: "mly-points", type: "circle", source: "mapillary", "source-layer": "image", minzoom: 16, layout: { visibility: vis }, paint: { "circle-color": "#05cb63", "circle-radius": 4, "circle-stroke-color": "#fff", "circle-stroke-width": 1 } });
+    }
     if (!m.getSource("route")) {
       m.addSource("route", { type: "geojson", data: routeData(tr, here) });
       m.addLayer({ id: "route-casing", type: "line", source: "route", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffffff", "line-width": 9, "line-opacity": 0.85 } });
@@ -127,6 +145,8 @@ export default function LiveMap({ position, trail = [], destination = null, live
       map.current = m;
       m.addControl(new ml.NavigationControl({ visualizePitch: true }), "bottom-left");
       m.on("style.load", () => addCustomLayers(m));
+      // Colour the building on the customer's pin red, so the delivery person can see which one is meant.
+      if (dest) highlightDestinationBuilding(m, dest);
       // If the chosen style cannot be loaded (network), fall back to plain pictures so the map is never blank.
       let fellBack = false;
       m.on("error", (e) => {
@@ -218,6 +238,24 @@ export default function LiveMap({ position, trail = [], destination = null, live
     frame.current = requestAnimationFrame(step);
   }, [position.longitude, position.latitude, position.accuracy, position.updatedAt, trail]);
 
+  // The planned road ahead.
+  useEffect(() => {
+    const m = map.current;
+    const src = m?.getSource("planned") as GeoJSONSource | undefined;
+    if (!src || !plannedRoute) return;
+    src.setData({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: plannedRoute } });
+  }, [plannedRoute]);
+
+  // Street-photo coverage (Mapillary) on or off.
+  const togglePhotos = () => {
+    const next = !photosRef.current;
+    photosRef.current = next;
+    setPhotos(next);
+    const m = map.current;
+    if (!m) return;
+    for (const id of ["mly-lines", "mly-points"]) if (m.getLayer(id)) m.setLayoutProperty(id, "visibility", next ? "visible" : "none");
+  };
+
   // Satellite <-> street.
   const changeMode = (next: MapMode) => {
     const m = map.current;
@@ -283,6 +321,8 @@ export default function LiveMap({ position, trail = [], destination = null, live
       data-tilted={tilted}
       data-trail-points={trail.length}
       data-destination={destination ? "true" : "false"}
+      data-planned={plannedRoute ? plannedRoute.length : 0}
+      data-rerouted={rerouted}
     >
       <div ref={box} className="h-full w-full overflow-hidden rounded border" role="img" aria-label={t("Tracking map")} />
 
@@ -303,6 +343,9 @@ export default function LiveMap({ position, trail = [], destination = null, live
       </div>
 
       <div className="pointer-events-none absolute left-2 top-2 z-[5]">
+        {rerouted && (
+          <span className="mb-1 block w-fit rounded-full bg-sky-600 px-3 py-1 text-xs font-semibold text-white shadow">{t("Rerouted: new road worked out")}</span>
+        )}
         {isLive ? (
           <span className="flex items-center gap-1.5 rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white shadow">
             <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
@@ -324,6 +367,12 @@ export default function LiveMap({ position, trail = [], destination = null, live
           <Box size={14} />
           {tilted ? t("3D view") : t("Flat view")}
         </button>
+        {mapillaryEnabled && (
+          <button type="button" onClick={togglePhotos} className={`${btn} ${photos ? "!bg-emerald-600 !text-white" : ""}`} aria-pressed={photos}>
+            <Camera size={14} />
+            {t("Street photos")}
+          </button>
+        )}
         <button type="button" onClick={fullView} className={btn}>
           <Focus size={14} />
           {t("Full view")}
