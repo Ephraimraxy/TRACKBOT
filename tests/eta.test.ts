@@ -200,6 +200,22 @@ describe("ETA and reminders for the customer", () => {
   });
 });
 
+describe("ETA source (road route vs straight-line estimate)", () => {
+  it("remembers whether the time came from a road route or only a straight-line estimate, and tells the customer", async () => {
+    const { client, orderId } = await onTheRoad();
+    const guess = vi.fn(async () => ({ durationSeconds: 600, distanceMetres: 3000, source: "estimate" as const, fallbackReason: "unreachable" as const, updatedAt: at(0) }));
+    const result = await updateEtaAndReminders(db, { orderId, position: KEFFI, now: at(0), estimate: guess });
+    expect(result.eta?.source).toBe("estimate");
+    expect((await db.livraison.findUniqueOrThrow({ where: { commandeId: orderId } })).etaSource).toBe("estimate");
+    const tracking = await getTracking(db, { orderId, actor: clientActor(client) });
+    expect(tracking.eta?.source).toBe("estimate");
+
+    // the next time a road route answers, it is a road time again
+    await updateEtaAndReminders(db, { orderId, position: KEFFI, now: at(ETA_REFRESH_SECONDS + 1), estimate: answer(far(600, 3000)) });
+    expect((await db.livraison.findUniqueOrThrow({ where: { commandeId: orderId } })).etaSource).toBe("route");
+  });
+});
+
 describe("saving a position with ETA", () => {
   it("returns the ETA with the saved position", async () => {
     const { driver, orderId } = await onTheRoad();

@@ -35,7 +35,9 @@ describe("planRoute", () => {
     const plan = await planRoute({ latitude: 8.84, longitude: 7.87 }, { latitude: 8.852, longitude: 7.879 }, vi.fn(async () => { throw new Error("down"); }) as unknown as typeof fetch);
     expect(plan.source).toBe("estimate");
     expect(plan.geometry).toEqual([[7.87, 8.84], [7.879, 8.852]]);
-    expect(plan.steps.at(-1)?.instruction).toContain("arrived");
+    // a straight line has no turns: nothing that could be read out as road directions
+    expect(plan.steps).toEqual([]);
+    expect(plan.fallbackReason).toBe("unreachable");
   });
 
   it("describes the common manoeuvres", () => {
@@ -109,6 +111,24 @@ describe("getRoutePlan", () => {
 
     await driverChangeStatus(db, { orderId, to: S.LIVREE, actor: driverActor(driver) });
     await expect(getRoutePlan(db, { orderId, actor: driverActor(driver), plan })).rejects.toMatchObject({ code: "TRACKING_INACTIVE" });
+  });
+
+  it("never gives turn-by-turn directions for a straight-line estimate, to anyone, and says it is an estimate", async () => {
+    const { client, admin, driver, orderId } = await onTheRoad();
+    const estimatePlan = async (from: { latitude: number; longitude: number }, to: { latitude: number; longitude: number }): Promise<RoutePlan> => ({
+      distanceMetres: 900, durationSeconds: 200, source: "estimate", fallbackReason: "unreachable",
+      geometry: [[from.longitude, from.latitude], [to.longitude, to.latitude]], steps: [],
+    });
+    for (const actor of [driverActor(driver), adminActor(admin), clientActor(client)]) {
+      clearRouteCache();
+      const v = await getRoutePlan(db, { orderId, actor, plan: estimatePlan });
+      expect(v.kind).toBe("estimate");
+      expect(v.fallbackReason).toBe("unreachable");
+      expect(v.nextStep).toBeUndefined();
+    }
+    // and the road route is marked as a road
+    clearRouteCache();
+    expect((await getRoutePlan(db, { orderId, actor: driverActor(driver), plan: straight({ n: 0 }) })).kind).toBe("road");
   });
 
   it("says so, instead of failing, when the customer did not pin their spot", async () => {
