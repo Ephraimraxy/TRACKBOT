@@ -104,3 +104,29 @@ export function summariseCoverage(samples: TileSample[]): ZoomSummary[] {
     return { zoom, sampled: at.length, unreachable: at.length - real.length, sharp, soft, missing, placeholderSuspected, verdict };
   });
 }
+
+export interface ProviderZoomRow {
+  zoom: number;
+  byProvider: Record<string, ZoomSummary>;
+  /** The provider with the sharpest imagery at this zoom, or null when none has any usable imagery. */
+  best: string | null;
+}
+
+/** Side by side: for each zoom, how each provider did, and which looks best. A provider that was unreachable never wins. */
+export function compareProviders(samples: Record<string, TileSample[]>): ProviderZoomRow[] {
+  const summaries = Object.fromEntries(Object.entries(samples).map(([name, list]) => [name, summariseCoverage(list)]));
+  const zooms = [...new Set(Object.values(summaries).flatMap((rows) => rows.map((r) => r.zoom)))].sort((a, b) => a - b);
+  return zooms.map((zoom) => {
+    const byProvider: Record<string, ZoomSummary> = {};
+    for (const [name, rows] of Object.entries(summaries)) {
+      const row = rows.find((r) => r.zoom === zoom);
+      if (row) byProvider[name] = row;
+    }
+    const share = (r: ZoomSummary) => {
+      const real = r.sampled - r.unreachable;
+      return real === 0 || r.placeholderSuspected ? -1 : (r.sharp + 0.5 * r.soft) / real;
+    };
+    const ranked = Object.entries(byProvider).filter(([, r]) => share(r) > 0.1).sort((a, b) => share(b[1]) - share(a[1]));
+    return { zoom, byProvider, best: ranked[0]?.[0] ?? null };
+  });
+}

@@ -108,6 +108,7 @@ export default function AdminDeliveriesPage() {
     <div className="p-4 md:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">Deliveries</h1>
+        <Link href="/admin/delivery-analytics" className="text-sm text-blue-700 underline"><T>Delivery analytics</T></Link>
         <Link href="/admin/map-check" className="text-sm text-blue-600 underline"><T>Check map coverage</T></Link>
       </div>
       <p className="mb-4 text-sm text-gray-500">
@@ -192,6 +193,7 @@ export default function AdminDeliveriesPage() {
                         <button className="rounded border border-teal-600 px-2 py-0.5 text-xs text-teal-700 hover:bg-teal-50 disabled:opacity-40" disabled={busyId === o.id} onClick={() => closeAsReceived(o.id)}>
                           <T>Close as received</T>
                         </button>
+                        <Link href={`/admin/deliveries/${o.id}/replay`} className="text-xs text-blue-700 underline"><T>Replay the route</T></Link>
                       </div>
                     ) : o.livraison ? (
                       <span className="text-xs text-gray-600"><T>Waiting for the delivery person to tap Start delivery</T></span>

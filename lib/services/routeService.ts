@@ -1,4 +1,4 @@
-import { CommandeStatut, UserRole, type PrismaClient } from "@prisma/client";
+import { CommandeStatut, Prisma, UserRole, type PrismaClient } from "@prisma/client";
 
 import { OrderError, type StatusActor } from "@/lib/services/orderService";
 import { OFF_ROUTE_METRES, isSustainedDeviation, type Fix } from "@/lib/services/deviation";
@@ -91,6 +91,10 @@ export async function getRoutePlan(
     const left = hit && hit.plan.source === "route" ? isSustainedDeviation(fixes, hit.plan.geometry) : false;
     entry = { at: now, plan: fresh, reroutedAt: left ? now : hit?.reroutedAt ?? null };
     cache.set(orderId, entry);
+    // Keep the FIRST road route of this delivery for the owner's deviation report (best effort; never blocks the answer).
+    if (fresh.source === "route") {
+      db.livraison.updateMany({ where: { commandeId: orderId, routePlanifiee: { equals: Prisma.DbNull } }, data: { routePlanifiee: fresh.geometry as unknown as Prisma.InputJsonValue } }).catch(() => undefined);
+    }
   }
   const { plan: p, reroutedAt } = entry!;
 

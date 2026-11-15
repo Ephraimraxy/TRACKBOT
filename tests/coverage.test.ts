@@ -56,3 +56,22 @@ describe("summarising imagery coverage", () => {
     expect(summariseCoverage([s(16, null), s(16, null)])[0].verdict).toBe("unreachable");
   });
 });
+
+import { compareProviders } from "@/lib/maps/coverage";
+
+describe("comparing imagery providers", () => {
+  const tiles = (zoom: number, scores: (number | null)[], prefix: string) => scores.map((score, i) => ({ zoom, score, hash: `${prefix}${i}` }));
+  it("picks the sharpest provider per zoom and never an unreachable or placeholder one", () => {
+    const rows = compareProviders({
+      esri: [...tiles(17, [12, 13, 11, 14], "e"), ...tiles(19, [1, 1, 0.5, 1], "e")],
+      mapbox: [...tiles(17, [12, 13, 11, 14], "m"), ...tiles(19, [9, 8, 10, 7], "m")],
+      dead: [...tiles(17, [null, null], "d"), ...tiles(19, [null, null], "d")],
+      fake: [...Array.from({ length: 6 }, () => ({ zoom: 19, score: 9, hash: "same" }))],
+    });
+    expect(rows.map((r) => r.zoom)).toEqual([17, 19]);
+    expect(rows[1].best).toBe("mapbox"); // sharp where esri is blank; "fake" is one repeated placeholder
+    expect(rows[1].byProvider.fake.placeholderSuspected).toBe(true);
+    expect(rows[0].byProvider.dead.verdict).toBe("unreachable");
+    expect(compareProviders({ a: tiles(17, [null], "a") })[0].best).toBeNull();
+  });
+});
