@@ -21,7 +21,7 @@ by `scripts/migration-drill.sh` on scratch databases (last run: 18 of 18 checks 
 4. Release the code. The start-up `migrate deploy` is then a no-op.
 
 Migrations in this repo are written so the **previous** application version keeps working against the **new** schema
-(new columns are nullable with no default). That is what makes step 2 safe before step 4, and makes rollback of the
+(new columns are nullable, or have a default). That is what makes step 2 safe before step 4, and makes rollback of the
 code alone (section 5) possible. Keep it that way: add, backfill, then (in a later release) remove.
 
 ## 2. Before every production migration: back up
@@ -41,7 +41,7 @@ pg_restore --list trackbot-*.dump | head     # the dump is readable
 `CREATE DATABASE`). It creates throw-away databases, drops them afterwards, and checks:
 
 1. all migrations apply to an empty database and `migrate status` is clean;
-2. a production-like copy that is one migration behind upgrades without losing rows, and the new column is nullable with no default;
+2. a production-like copy that is one migration behind upgrades without losing rows, and the new columns have defaults;
 3. a deliberately broken migration is rejected, recorded as failed, leaves no partial change, blocks later deploys with
    **P3009**, is cleared with `migrate resolve --rolled-back`, and a corrected file then deploys;
 4. a `pg_dump` backup restores to a consistent copy, and changes made after the backup are absent from it;
@@ -73,7 +73,7 @@ Never edit a migration that has already been applied anywhere. Never run `prisma
 There are no automatic "down" migrations. Three options, in order of preference:
 
 **A. Roll back the code only.** Redeploy the previous release and leave the schema as it is. Safe when the migration only
-added nullable columns or tables (as `20261115100000_eta_source` does): the old code ignores them (drilled: existing rows
+added nullable or defaulted columns, or tables (as `20261115100000_eta_source` and `20261115110000_position_capture_times` do): the old code ignores them (drilled: existing rows
 read back with the new column empty). This loses nothing.
 
 **B. Restore the backup.** Restore into a new database, check it (section 6), point `DATABASE_URL` at it. This is the

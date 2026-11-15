@@ -68,3 +68,39 @@ export function measureTile(url: string): Promise<number | null> {
     img.src = url;
   });
 }
+
+export interface TileSample {
+  zoom: number;
+  /** null: the tile could not be fetched or read. */
+  score: number | null;
+  /** A fingerprint of the picture bytes, to spot a "no imagery here" placeholder repeated across tiles. */
+  hash?: string;
+}
+export interface ZoomSummary {
+  zoom: number;
+  sampled: number;
+  unreachable: number;
+  sharp: number;
+  soft: number;
+  missing: number;
+  /** True when most of the tiles are byte-identical: a placeholder, not real imagery. */
+  placeholderSuspected: boolean;
+  verdict: TileVerdict;
+}
+
+/** Per zoom level: how many sampled tiles were sharp, soft, blank or unreachable, and what that adds up to. */
+export function summariseCoverage(samples: TileSample[]): ZoomSummary[] {
+  const zooms = [...new Set(samples.map((s) => s.zoom))].sort((a, b) => a - b);
+  return zooms.map((zoom) => {
+    const at = samples.filter((s) => s.zoom === zoom);
+    const real = at.filter((s) => s.score !== null);
+    const sharp = real.filter((s) => (s.score as number) >= SHARP_FROM).length;
+    const soft = real.filter((s) => (s.score as number) >= SOFT_FROM && (s.score as number) < SHARP_FROM).length;
+    const missing = real.length - sharp - soft;
+    const counts = new Map<string, number>();
+    for (const s of real) if (s.hash) counts.set(s.hash, (counts.get(s.hash) ?? 0) + 1);
+    const placeholderSuspected = real.length >= 4 && Math.max(0, ...counts.values()) / real.length > 0.6;
+    const verdict: TileVerdict = real.length === 0 ? "unreachable" : placeholderSuspected ? "missing" : sharp / real.length >= 0.8 ? "sharp" : (sharp + soft) / real.length >= 0.8 ? "soft" : "missing";
+    return { zoom, sampled: at.length, unreachable: at.length - real.length, sharp, soft, missing, placeholderSuspected, verdict };
+  });
+}

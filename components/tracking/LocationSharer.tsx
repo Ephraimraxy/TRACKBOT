@@ -6,6 +6,7 @@ import { ShieldAlert } from "lucide-react";
 import { useI18n } from "@/components/i18n/LocaleProvider";
 import type { MapPoint } from "@/components/tracking/LiveMap";
 import { describeApproach, formatDistance, formatMinutes } from "@/lib/services/etaService";
+import { createLocationQueue, flushQueue, type LocationQueue, type QueuedPoint } from "@/lib/tracking/locationQueue";
 import { useRoutePlan } from "@/components/tracking/useRoutePlan";
 
 import StreetPhotos from "@/components/tracking/StreetPhotos";
@@ -42,6 +43,9 @@ export default function LocationSharer({ orderId, autoStart = false, destination
   const lastSent = useRef(0);
   const wakeLock = useRef<WakeLockSentinel | null>(null);
   const autoStarted = useRef(false);
+  // Points that could not be sent (no signal) wait here, with the time the GPS captured them, and are sent when back online.
+  const queue = useRef<LocationQueue | null>(null);
+  const [waiting, setWaiting] = useState(0);
 
   const holdScreenAwake = useCallback(async () => {
     try {
@@ -100,18 +104,60 @@ export default function LocationSharer({ orderId, autoStart = false, destination
     return () => status?.removeEventListener("change", apply);
   }, []);
 
+  const queueFor = useCallback(() => {
+    if (!queue.current) {
+      let store: Storage | null = null;
+      try {
+        store = window.localStorage;
+      } catch {
+        store = null;
+      }
+      queue.current = createLocationQueue(store, orderId);
+    }
+    return queue.current;
+  }, [orderId]);
+
+  /** Send the kept points, oldest first, with their original capture times. */
+  const flush = useCallback(async () => {
+    const q = queueFor();
+    if (q.size() === 0) return;
+    await flushQueue(q, async (points) => {
+      try {
+        const res = await fetch(`/api/delivery/orders/${orderId}/location`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ points: points.map((p) => ({ latitude: p.latitude, longitude: p.longitude, accuracy: p.accuracy ?? undefined, capturedAt: p.capturedAt })) }),
+        });
+        if (res.status === 403 || res.status === 409) return "stop";
+        return res.ok ? "sent" : "retry";
+      } catch {
+        return "retry";
+      }
+    });
+    setWaiting(q.size());
+  }, [orderId, queueFor]);
+
   const send = useCallback(
     async (pos: GeolocationPosition) => {
       const at = Date.now();
       if (at - lastSent.current < SEND_EVERY_MS) return;
       lastSent.current = at;
+      // When the phone's GPS captured this fix, which can be earlier than now.
+      const capturedAt = pos.timestamp || at;
+      const keep = () => {
+        const q = queueFor();
+        q.add({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy, capturedAt } satisfies QueuedPoint);
+        setWaiting(q.size());
+      };
       try {
         const res = await fetch(`/api/delivery/orders/${orderId}/location`, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+          body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy, capturedAt }),
         });
         if (res.status === 409 || res.status === 403) {
+          queueFor().clear();
+          setWaiting(0);
           stop();
           setMessage(t("Tracking has ended for this order."));
         } else if (res.ok) {
@@ -121,15 +167,27 @@ export default function LocationSharer({ orderId, autoStart = false, destination
           setLast(point);
           setTrail((tr) => [...tr, { latitude: point.latitude, longitude: point.longitude }].slice(-TRAIL_KEPT));
           setMessage(null);
+          if (queueFor().size() > 0) void flush(); // back online: send what was kept while there was no signal
         } else if (res.status !== 429) {
+          keep();
           setMessage(t("Could not send your position. Trying again…"));
         }
       } catch {
-        setMessage(t("No connection. Trying again…"));
+        keep();
+        setMessage(t("No connection. Your route is being saved and will be sent when you are back online."));
       }
     },
-    [orderId, stop, t]
+    [orderId, stop, t, queueFor, flush]
   );
+
+  // The moment the phone gets a connection back, send what was kept.
+  useEffect(() => {
+    if (!sharing) return;
+    const onOnline = () => void flush();
+    window.addEventListener("online", onOnline);
+    void flush(); // anything left from before the page was reloaded
+    return () => window.removeEventListener("online", onOnline);
+  }, [sharing, flush]);
 
   const start = useCallback(() => {
     if (!("geolocation" in navigator)) {
@@ -193,6 +251,11 @@ export default function LocationSharer({ orderId, autoStart = false, destination
             {ago === null ? t("Getting your position…") : t("Last sent {n}s ago", { n: ago })}
             {last ? ` · ±${Math.round(last.accuracy)} m` : ""}
           </p>
+          {waiting > 0 && (
+            <p className="mt-1 text-xs text-amber-800" data-testid="queued-points">
+              {t("{n} saved points will be sent when you are back online.", { n: waiting })}
+            </p>
+          )}
           {eta ? (
             <div className="mt-2 rounded-lg bg-blue-50 p-3 text-blue-950">
               <p className="text-lg font-semibold">{t("About {time} to the customer", { time: formatMinutes(eta.durationSeconds) })}{eta.source === "estimate" ? ` (${t("estimate")})` : ""}</p>

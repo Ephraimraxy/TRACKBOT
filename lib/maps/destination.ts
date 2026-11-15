@@ -1,5 +1,7 @@
 import type { GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
 
+import { pickBuilding } from "@/lib/maps/buildingPick";
+
 export interface LngLatPoint {
   latitude: number;
   longitude: number;
@@ -35,9 +37,13 @@ export function highlightDestinationBuilding(map: MapLibreMap, destination: LngL
     const layers = BUILDING_LAYERS.filter((id) => map.getLayer(id));
     if (layers.length === 0) return;
     const p = map.project([dest.longitude, dest.latitude]);
-    const found = map.queryRenderedFeatures([[p.x - 8, p.y - 8], [p.x + 8, p.y + 8]], { layers }).find((f) => f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon");
-    if (!found) return;
-    const props = found.properties as { render_height?: number; height?: number };
+    // Every building drawn near the pin, then the one that really holds the pin (point in polygon), not just the
+    // first one the picture happens to hit.
+    const nearby = map.queryRenderedFeatures([[p.x - 40, p.y - 40], [p.x + 40, p.y + 40]], { layers });
+    const picked = pickBuilding(nearby.filter((f) => f.geometry.type === "Polygon" || f.geometry.type === "MultiPolygon"), dest);
+    if (!picked) return src.setData(EMPTY);
+    const found = picked.feature;
+    const props = (found.properties ?? {}) as { render_height?: number; height?: number };
     src.setData({ type: "FeatureCollection", features: [{ type: "Feature", properties: { height: (props.render_height ?? props.height ?? 8) + 0.5 }, geometry: found.geometry }] });
   };
   // Buildings are drawn from tiles that arrive a moment after the style: try again when the map goes idle.

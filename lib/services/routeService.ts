@@ -1,12 +1,12 @@
 import { CommandeStatut, UserRole, type PrismaClient } from "@prisma/client";
 
 import { OrderError, type StatusActor } from "@/lib/services/orderService";
-import { distanceToLineMetres, planRoute, type FallbackReason, type RoutePlan } from "@/lib/services/etaService";
+import { OFF_ROUTE_METRES, isSustainedDeviation, type Fix } from "@/lib/services/deviation";
+import { planRoute, type FallbackReason, type RoutePlan } from "@/lib/services/etaService";
 
 /** A planned route is reused for this long, so many viewers of one delivery cost the routing server one request. */
 export const ROUTE_CACHE_MS = 8_000;
-/** A delivery person this far from the planned line has left it: the route is worked out again from where they are. */
-export const OFF_ROUTE_METRES = 60;
+export { OFF_ROUTE_METRES };
 /** "Rerouted" stays on screen for this long after the route changed. */
 export const REROUTED_SHOWN_MS = 20_000;
 
@@ -76,15 +76,19 @@ export async function getRoutePlan(
 
   const dest = order.adresse;
   if (dest?.latitude == null || dest.longitude == null) return { available: false, reason: "NO_DESTINATION" };
-  const last = await db.positionLivraison.findFirst({ where: { commandeId: orderId }, orderBy: { date: "desc" }, select: { latitude: true, longitude: true } });
+  // The newest live points (not late, queued ones: those say where the phone was, not where it is).
+  const recent = await db.positionLivraison.findMany({ where: { commandeId: orderId, backfilled: false }, orderBy: { date: "desc" }, take: 8, select: { latitude: true, longitude: true, precision: true, date: true } });
+  const last = recent[0] ?? (await db.positionLivraison.findFirst({ where: { commandeId: orderId }, orderBy: { date: "desc" }, select: { latitude: true, longitude: true, precision: true, date: true } }));
   if (!last) return { available: false, reason: "NO_POSITION" };
+  const fixes: Fix[] = recent.map((p) => ({ latitude: p.latitude, longitude: p.longitude, accuracy: p.precision, at: p.date.getTime() }));
 
   const here = { latitude: last.latitude, longitude: last.longitude };
   const hit = cache.get(orderId);
   let entry = hit;
   if (!hit || now - hit.at > ROUTE_CACHE_MS) {
     const fresh = await plan(here, { latitude: dest.latitude, longitude: dest.longitude });
-    const left = hit ? distanceToLineMetres(here, hit.plan.geometry) > OFF_ROUTE_METRES : false;
+    // "Rerouted" only when the delivery person has really left a ROAD route: several accurate fixes in a row, well away from it.
+    const left = hit && hit.plan.source === "route" ? isSustainedDeviation(fixes, hit.plan.geometry) : false;
     entry = { at: now, plan: fresh, reroutedAt: left ? now : hit?.reroutedAt ?? null };
     cache.set(orderId, entry);
   }

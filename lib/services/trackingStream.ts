@@ -24,7 +24,8 @@ export function createTrackingWatcher(db: PrismaClient, params: { orderId: strin
       },
     });
     if (!order) return null;
-    const point = await db.positionLivraison.findFirst({ where: { commandeId: orderId }, orderBy: { date: "desc" }, select: { id: true } });
+    // By arrival, not capture time: a late point that fills in the trail must still reach the viewers.
+    const point = await db.positionLivraison.findFirst({ where: { commandeId: orderId }, orderBy: [{ receivedAt: "desc" }, { id: "desc" }], select: { id: true } });
     return `${order.statut}|${order.historique[0]?.id ?? ""}|${point?.id ?? ""}|${order.livraison?.etaMisAJour?.getTime() ?? ""}`;
   };
 

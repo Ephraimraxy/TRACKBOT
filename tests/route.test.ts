@@ -137,6 +137,19 @@ describe("getRoutePlan", () => {
     expect(await getRoutePlan(db, { orderId, actor: driverActor(driver), plan: straight({ n: 0 }) })).toEqual({ available: false, reason: "NO_DESTINATION" });
   });
 
+  it("does not reroute for one stray fix, or for fixes too inaccurate to trust", async () => {
+    const { driver, orderId } = await onTheRoad({ latitude: 8.84, longitude: 7.87 });
+    const calls = { n: 0 };
+    const plan = straight(calls);
+    const t0 = new Date();
+    await getRoutePlan(db, { orderId, actor: driverActor(driver), plan, now: t0 });
+    // one accurate fix 400 m away, and two wild low-accuracy fixes: not a deviation
+    await db.positionLivraison.create({ data: { commandeId: orderId, livreurId: driver.id, latitude: 8.84, longitude: 7.8777, precision: 10, date: new Date(t0.getTime() + 20_000) } });
+    for (const s of [21, 22]) await db.positionLivraison.create({ data: { commandeId: orderId, livreurId: driver.id, latitude: 8.9, longitude: 7.95, precision: 900, date: new Date(t0.getTime() + s * 1000) } });
+    const view = await getRoutePlan(db, { orderId, actor: driverActor(driver), plan, now: new Date(t0.getTime() + ROUTE_CACHE_MS + 1000) });
+    expect(view.rerouted).toBe(false);
+  });
+
   it("notices a driver who left the planned road and reroutes from where they are", async () => {
     const { driver, orderId } = await onTheRoad({ latitude: 8.84, longitude: 7.87 });
     const calls = { n: 0 };
@@ -145,7 +158,8 @@ describe("getRoutePlan", () => {
     expect((await getRoutePlan(db, { orderId, actor: driverActor(driver), plan, now: t0 })).rerouted).toBe(false);
 
     // the driver takes another road: about 400 m east of the planned line
-    await db.positionLivraison.create({ data: { commandeId: orderId, livreurId: driver.id, latitude: 8.84, longitude: 7.8737 + 0.004, date: new Date(t0.getTime() + 5000) } });
+    // several accurate fixes in a row, spread over time, all well away from the line (not just one stray fix)
+    for (const s of [5, 12, 19, 26]) await db.positionLivraison.create({ data: { commandeId: orderId, livreurId: driver.id, latitude: 8.84, longitude: 7.8737 + 0.004, precision: 10, date: new Date(t0.getTime() + s * 1000) } });
     const later = new Date(t0.getTime() + ROUTE_CACHE_MS + 1000);
     const view = await getRoutePlan(db, { orderId, actor: driverActor(driver), plan, now: later });
     expect(calls.n).toBe(2);

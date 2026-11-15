@@ -34,3 +34,25 @@ describe("map coverage measurements", () => {
     expect(tileFor(85, -179.9, 2).x).toBe(0);
   });
 });
+
+import { summariseCoverage } from "@/lib/maps/coverage";
+
+describe("summarising imagery coverage", () => {
+  const s = (zoom: number, score: number | null, hash?: string) => ({ zoom, score, hash });
+  it("rates each zoom level from its sampled tiles", () => {
+    const rows = summariseCoverage([
+      s(17, 12, "a"), s(17, 14, "b"), s(17, 9, "c"), s(17, 11, "d"),
+      s(19, 3, "e"), s(19, 3.5, "f"), s(19, 4, "g"), s(19, 3.1, "h"),
+      s(20, 0.2, "i"), s(20, 0.3, "j"), s(20, null),
+    ]);
+    expect(rows.map((r) => [r.zoom, r.verdict])).toEqual([[17, "sharp"], [19, "soft"], [20, "missing"]]);
+    expect(rows[2]).toMatchObject({ sampled: 3, unreachable: 1 });
+  });
+  it("catches a 'no imagery here' placeholder repeated across tiles, even though it scores like a picture", () => {
+    const rows = summariseCoverage(Array.from({ length: 6 }, () => s(18, 8, "same")));
+    expect(rows[0]).toMatchObject({ placeholderSuspected: true, verdict: "missing" });
+  });
+  it("says unreachable when nothing could be fetched", () => {
+    expect(summariseCoverage([s(16, null), s(16, null)])[0].verdict).toBe("unreachable");
+  });
+});

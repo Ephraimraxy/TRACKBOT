@@ -44,15 +44,15 @@ check "migrate status says the database is up to date" "prisma_with '$A' '$WORK/
 echo "== 2. Upgrade with real data: a production-like copy, one migration behind"
 if pg_dump -Fc "$SRC" -f "$WORK/sample.dump" 2>/dev/null; then
   pg_restore --no-owner -d "$B" "$WORK/sample.dump" >/dev/null 2>&1
-  q "$B" "ALTER TABLE livraison DROP COLUMN IF EXISTS eta_source" >/dev/null
+  q "$B" "ALTER TABLE position_livraison DROP COLUMN IF EXISTS received_at, DROP COLUMN IF EXISTS backfilled" >/dev/null
   q "$B" "DELETE FROM _prisma_migrations WHERE migration_name = '$LATEST'" >/dev/null
-  BEFORE="$(q "$B" "SELECT (SELECT count(*) FROM commande)||'/'||(SELECT count(*) FROM livraison)||'/'||(SELECT count(*) FROM \"user\")")"
+  BEFORE="$(q "$B" "SELECT (SELECT count(*) FROM commande)||'/'||(SELECT count(*) FROM position_livraison)||'/'||(SELECT count(*) FROM livraison)||'/'||(SELECT count(*) FROM \"user\")")"
   prisma_with "$B" "$WORK/p" migrate deploy >"$WORK/2.log" 2>&1; RC=$?
-  AFTER="$(q "$B" "SELECT (SELECT count(*) FROM commande)||'/'||(SELECT count(*) FROM livraison)||'/'||(SELECT count(*) FROM \"user\")")"
+  AFTER="$(q "$B" "SELECT (SELECT count(*) FROM commande)||'/'||(SELECT count(*) FROM position_livraison)||'/'||(SELECT count(*) FROM livraison)||'/'||(SELECT count(*) FROM \"user\")")"
   check "the pending migration ($LATEST) is applied" "[ $RC -eq 0 ] && grep -q '$LATEST' $WORK/2.log"
-  check "no rows lost (orders/deliveries/users before $BEFORE, after $AFTER)" "[ -n '$BEFORE' ] && [ '$BEFORE' = '$AFTER' ]"
-  check "the new column exists, is nullable and has no default (so the previous app version keeps working)" "[ \"\$(q '$B' \"SELECT is_nullable||'/'||coalesce(column_default,'none') FROM information_schema.columns WHERE table_name='livraison' AND column_name='eta_source'\")\" = 'YES/none' ]"
-  check "existing rows read back with the new column empty (the previous app version never reads it)" "[ \"\$(q '$B' 'SELECT count(*) FROM livraison WHERE eta_source IS NULL')\" = \"\$(q '$B' 'SELECT count(*) FROM livraison')\" ]"
+  check "no rows lost (orders/positions/deliveries/users before $BEFORE, after $AFTER)" "[ -n '$BEFORE' ] && [ '$BEFORE' = '$AFTER' ]"
+  check "the new columns exist and have defaults, so inserts from the previous app version (which omits them) still work" "[ \"\$(q '$B' \"SELECT count(*) FROM information_schema.columns WHERE table_name='position_livraison' AND column_name IN ('received_at','backfilled') AND column_default IS NOT NULL\")\" = '2' ]"
+  check "existing positions were backfilled sensibly (received_at = capture time, not flagged late)" "[ \"\$(q '$B' 'SELECT count(*) FROM position_livraison WHERE received_at <> date OR backfilled')\" = '0' ]"
 else
   echo "SKIP  could not read a sample copy of $SRC_DB"
 fi

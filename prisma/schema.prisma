@@ -135,7 +135,12 @@ model PositionLivraison {
   latitude   Float
   longitude  Float
   precision  Float?
+  /// When the phone captured the GPS fix. Everything (order, trail, "current position") goes by this.
   date       DateTime @default(now())
+  /// When the server stored it. Later than `date` for a point sent after the phone came back online.
+  receivedAt DateTime @default(now()) @map("received_at")
+  /// True when the point arrived late (queued while offline): it is history, never the current position.
+  backfilled Boolean  @default(false)
   commande   Commande @relation(fields: [commandeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   livreur    User     @relation("PositionsLivreur", fields: [livreurId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
