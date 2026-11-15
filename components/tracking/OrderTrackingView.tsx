@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useRoutePlan } from "@/components/tracking/useRoutePlan";
 import StreetPhotos from "@/components/tracking/StreetPhotos";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { CommandeStatut } from "@prisma/client";
 
@@ -15,22 +14,16 @@ import { T } from "@/components/i18n/T";
 import { useI18n } from "@/components/i18n/LocaleProvider";
 import { formatDistance, formatMinutes } from "@/lib/services/etaService";
 
-const DestinationMap = dynamic(() => import("@/components/tracking/DestinationMap"), {
-  ssr: false,
-  loading: () => <div className="h-64 w-full animate-pulse rounded-xl border bg-gray-100" />,
-});
+import AdaptiveDestinationMap from "@/components/tracking/AdaptiveDestinationMap";
 
-const TrackingMap = dynamic(() => import("@/components/tracking/LiveMap"), {
-  ssr: false,
-  loading: () => <div className="h-72 w-full animate-pulse rounded border bg-gray-100" />,
-});
+import TrackingMap from "@/components/tracking/TrackingMap";
 
 type Tracking = {
   orderId: string;
   status: CommandeStatut;
   statusLabel: string;
   destination: { rue: string; ville: string; wilaya: string; repere?: string | null; latitude: number | null; longitude: number | null } | null;
-  eta: { seconds: number; metres: number; updatedAt: string } | null;
+  eta: { seconds: number; metres: number; source?: "route" | "estimate"; updatedAt: string } | null;
   driverFirstName: string | null;
   trackingActive: boolean;
   awaitingConfirmation: boolean;
@@ -246,7 +239,7 @@ export default function OrderTrackingView({
               {view === "map" && data.eta && data.trackingActive && (
                 <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
                   <span className="text-lg font-semibold text-blue-900">
-                    {t("About {time} away", { time: formatMinutes(data.eta.seconds) })}
+                    {t("About {time} away", { time: formatMinutes(data.eta.seconds) })}{data.eta.source === "estimate" ? ` (${t("estimate")})` : ""}
                   </span>
                   <span className="text-sm text-blue-800">{t(admin ? "{distance} to the customer" : "{distance} to your door", { distance: formatDistance(data.eta.metres) })}</span>
                   {!admin && (
@@ -254,9 +247,14 @@ export default function OrderTrackingView({
                   )}
                 </div>
               )}
-              {view === "map" && admin && plan?.nextStep && data.trackingActive && (
+              {view === "map" && admin && plan?.kind === "road" && plan.nextStep && data.trackingActive && (
                 <p className="mb-3 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2 text-sm text-sky-900">
                   <span className="font-semibold"><T>Next turn:</T></span> {plan.nextStep.instruction} · {formatDistance(plan.nextStep.distanceMetres)}
+                </p>
+              )}
+              {view === "map" && admin && plan?.kind === "estimate" && data.trackingActive && (
+                <p className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900" data-testid="estimate-notice">
+                  <T>Straight-line estimate only: road directions are not available right now, so the dotted line is not a road route.</T>
                 </p>
               )}
               {view === "map" && !data.eta && data.location && !(data.destination?.latitude != null) && (
@@ -271,7 +269,8 @@ export default function OrderTrackingView({
                     trail={data.trail}
                     live={data.trackingActive}
                     plannedRoute={plan?.available ? plan.geometry ?? null : null}
-                    rerouted={plan?.rerouted ?? false}
+                    rerouted={plan?.kind === "road" && (plan?.rerouted ?? false)}
+                    routeKind={plan?.available ? plan.kind ?? null : null}
                     destination={data.destination?.latitude != null && data.destination.longitude != null ? { latitude: data.destination.latitude, longitude: data.destination.longitude } : null}
                   />
                 ) : (
@@ -308,7 +307,7 @@ export default function OrderTrackingView({
               {/* Before the delivery starts and once it is over, the map shows the delivery spot. While the delivery person is on the road, the live map above shows it. */}
               {!data.mapOpen && data.status !== CommandeStatut.ANNULEE && data.destination.latitude != null && data.destination.longitude != null && (
                 <div className="mt-3">
-                  <DestinationMap latitude={data.destination.latitude} longitude={data.destination.longitude} />
+                  <AdaptiveDestinationMap latitude={data.destination.latitude} longitude={data.destination.longitude} />
                   <p className="mt-2 text-xs text-gray-500">
                     {data.status === CommandeStatut.RECUE ? (
                       <T>Your order was delivered to this spot.</T>

@@ -13,6 +13,7 @@
     "seed:catalog": "tsx prisma/seed-catalog.ts",
     "lint": "next lint",
     "test": "vitest run",
+    "test:browser": "node tests/browser/map-race.mjs && node tests/browser/webgl.mjs && node tests/browser/route-fallback.mjs",
     "postinstall": "prisma generate"
   },
   "prisma": {
@@ -43,6 +44,7 @@
     "embla-carousel-react": "^8.5.2",
     "framer-motion": "^12.5.0",
     "holy-loader": "^2.3.13",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.479.0",
     "maplibre-gl": "^5.24.1",
     "next": "^15.2.8",
@@ -70,6 +72,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.0.14",
+    "@types/leaflet": "^1.9.12",
     "@types/node": "^22.20.5",
     "@types/otplib": "^7.0.0",
     "@types/react": "^19",
@@ -80,6 +83,7 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
+    "playwright": "^1.65.1",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.0.14",
     "typescript": "^5.8.2",

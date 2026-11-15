@@ -1,4 +1,5 @@
 import { isUsableKey } from "@/lib/chatbot/providers";
+import { resolveRouting } from "@/lib/config/routing";
 
 export class EnvError extends Error {
   constructor(public missing: string[]) {
@@ -49,6 +50,10 @@ export function validateEnv(env: Record<string, string | undefined> = process.en
   }
   if (!has("PAYSTACK_SECRET_KEY")) {
     warnings.push("Online payment is not configured (PAYSTACK_SECRET_KEY): customers can place orders but cannot pay.");
+  }
+  const routing = resolveRouting(env);
+  if (!routing.usable) {
+    warnings.push(`Road routing is not available: ${routing.reason} Customers and delivery people will see a straight-line estimate, clearly marked as one, with no turn-by-turn directions.`);
   }
   return { warnings };
 }

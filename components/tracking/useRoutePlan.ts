@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 
 export interface RouteView {
   available: boolean;
+  /** "road": real road route with turns. "estimate": a straight line only (no turns). */
+  kind?: "road" | "estimate";
+  fallbackReason?: string;
   reason?: string;
   geometry?: [number, number][];
   distanceMetres?: number;

@@ -111,6 +111,8 @@ model Livraison {
   /// Latest estimate, refreshed while the delivery person shares their position.
   etaSecondes     Int?     @map("eta_secondes")
   distanceMetres  Int?     @map("distance_metres")
+  /// "route" when the time came from a road route, "estimate" when it is only a straight-line guess.
+  etaSource       String?  @map("eta_source") @db.VarChar(10)
   etaMisAJour     DateTime? @map("eta_mis_a_jour")
   /// When the customer was last sent a "your delivery is N minutes away" reminder.
   dernierRappel   DateTime? @map("dernier_rappel")

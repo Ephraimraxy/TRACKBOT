@@ -1,7 +1,7 @@
 import { CommandeStatut, UserRole, type PrismaClient } from "@prisma/client";
 
 import { OrderError, type StatusActor } from "@/lib/services/orderService";
-import { distanceToLineMetres, planRoute, type RoutePlan } from "@/lib/services/etaService";
+import { distanceToLineMetres, planRoute, type FallbackReason, type RoutePlan } from "@/lib/services/etaService";
 
 /** A planned route is reused for this long, so many viewers of one delivery cost the routing server one request. */
 export const ROUTE_CACHE_MS = 8_000;
@@ -12,12 +12,19 @@ export const REROUTED_SHOWN_MS = 20_000;
 
 export interface RouteView {
   available: boolean;
+  /**
+   * "road": a route along real roads, with turns.
+   * "estimate": only a straight line to the customer's spot. It is NOT a road route, and it never has turns.
+   */
+  kind?: "road" | "estimate";
+  /** For an estimate: why no road route was available. */
+  fallbackReason?: FallbackReason;
   reason?: "NO_DESTINATION" | "NO_POSITION";
   geometry?: [number, number][];
   distanceMetres?: number;
   durationSeconds?: number;
   source?: "route" | "estimate";
-  /** The next turn and how far away it is. Only the delivery person and the owner get it. */
+  /** The next turn and how far away it is. Only for a road route, and only for the delivery person and the owner. */
   nextStep?: { instruction: string; distanceMetres: number } | null;
   rerouted?: boolean;
   updatedAt?: string;
@@ -85,6 +92,8 @@ export async function getRoutePlan(
 
   const view: RouteView = {
     available: true,
+    kind: p.source === "route" ? "road" : "estimate",
+    ...(p.source === "route" ? {} : { fallbackReason: p.fallbackReason }),
     geometry: p.geometry,
     distanceMetres: p.distanceMetres,
     durationSeconds: p.durationSeconds,
@@ -92,10 +101,11 @@ export async function getRoutePlan(
     rerouted: reroutedAt !== null && now - reroutedAt < REROUTED_SHOWN_MS,
     updatedAt: new Date(entry!.at).toISOString(),
   };
-  if (actor.role !== UserRole.CLIENT) {
+  // Turn-by-turn directions exist only for a real road route, and only the delivery person and the owner read them.
+  // For a straight-line estimate nothing is sent: there are no turns to give, and inventing some would mislead.
+  if (actor.role !== UserRole.CLIENT && p.source === "route") {
     // The next manoeuvre is at the start of the second step; the first step's length is how far away it is.
-    // A straight-line fallback has no turns: its one useful instruction is to head for the customer's spot.
-    view.nextStep = p.source === "route" && p.steps.length > 1 ? { instruction: p.steps[1].instruction, distanceMetres: p.steps[0].distanceMetres } : p.steps[0] ?? null;
+    view.nextStep = p.steps.length > 1 ? { instruction: p.steps[1].instruction, distanceMetres: p.steps[0].distanceMetres } : p.steps[0] ?? null;
   }
   return view;
 }

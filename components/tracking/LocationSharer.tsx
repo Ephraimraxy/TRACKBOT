@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import { ShieldAlert } from "lucide-react";
 
 import { useI18n } from "@/components/i18n/LocaleProvider";
@@ -11,10 +10,7 @@ import { useRoutePlan } from "@/components/tracking/useRoutePlan";
 
 import StreetPhotos from "@/components/tracking/StreetPhotos";
 
-const TrackingMap = dynamic(() => import("@/components/tracking/LiveMap"), {
-  ssr: false,
-  loading: () => <div className="mt-2 h-72 md:h-96 w-full animate-pulse rounded border bg-gray-100" />,
-});
+import TrackingMap from "@/components/tracking/TrackingMap";
 
 const SEND_EVERY_MS = 4000;
 const TRAIL_KEPT = 60;
@@ -40,7 +36,7 @@ export default function LocationSharer({ orderId, autoStart = false, destination
   const [last, setLast] = useState<{ latitude: number; longitude: number; accuracy: number; at: number } | null>(null);
   const [trail, setTrail] = useState<MapPoint[]>([]);
   // Time and distance left to the customer, as the server works it out from each position we send.
-  const [eta, setEta] = useState<{ durationSeconds: number; distanceMetres: number } | null>(null);
+  const [eta, setEta] = useState<{ durationSeconds: number; distanceMetres: number; source?: string } | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const watchId = useRef<number | null>(null);
   const lastSent = useRef(0);
@@ -120,7 +116,7 @@ export default function LocationSharer({ orderId, autoStart = false, destination
           setMessage(t("Tracking has ended for this order."));
         } else if (res.ok) {
           const json = await res.json().catch(() => null);
-          if (json?.data?.eta) setEta({ durationSeconds: json.data.eta.durationSeconds, distanceMetres: json.data.eta.distanceMetres });
+          if (json?.data?.eta) setEta({ durationSeconds: json.data.eta.durationSeconds, distanceMetres: json.data.eta.distanceMetres, source: json.data.eta.source });
           const point = { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy, at };
           setLast(point);
           setTrail((tr) => [...tr, { latitude: point.latitude, longitude: point.longitude }].slice(-TRAIL_KEPT));
@@ -199,7 +195,7 @@ export default function LocationSharer({ orderId, autoStart = false, destination
           </p>
           {eta ? (
             <div className="mt-2 rounded-lg bg-blue-50 p-3 text-blue-950">
-              <p className="text-lg font-semibold">{t("About {time} to the customer", { time: formatMinutes(eta.durationSeconds) })}</p>
+              <p className="text-lg font-semibold">{t("About {time} to the customer", { time: formatMinutes(eta.durationSeconds) })}{eta.source === "estimate" ? ` (${t("estimate")})` : ""}</p>
               <p className="text-xs">{t("{distance} away. Updated as you move.", { distance: formatDistance(eta.distanceMetres) })}</p>
             </div>
           ) : (
@@ -209,12 +205,18 @@ export default function LocationSharer({ orderId, autoStart = false, destination
               </p>
             )
           )}
-          {plan?.nextStep && (
+          {plan?.kind === "road" && plan.nextStep && (
             <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sky-950">
               <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t("Next turn")}</p>
               <p className="text-base font-semibold">{plan.nextStep.instruction}</p>
               <p className="text-xs">{t("in {distance}", { distance: formatDistance(plan.nextStep.distanceMetres) })}</p>
               {plan.rerouted && <p className="mt-1 text-xs font-medium text-sky-800">{t("Rerouted: new road worked out from where you are.")}</p>}
+            </div>
+          )}
+          {plan?.kind === "estimate" && (
+            <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900" data-testid="estimate-notice">
+              <p className="font-semibold">{t("Straight-line estimate only")}</p>
+              <p>{t("Road directions are not available right now. The dotted line goes straight to the customer's spot and is not a road route: choose your own road.")}</p>
             </div>
           )}
           {(approach || landmark) && (
@@ -224,7 +226,7 @@ export default function LocationSharer({ orderId, autoStart = false, destination
               <p className="mt-1 text-xs text-red-800">{t("The building on the customer's pin is coloured red on the map, where the map data has it.")}</p>
             </div>
           )}
-          {last && <TrackingMap position={{ latitude: last.latitude, longitude: last.longitude, accuracy: last.accuracy, updatedAt: new Date(last.at) }} trail={trail} destination={destination} plannedRoute={plan?.available ? plan.geometry ?? null : null} rerouted={plan?.rerouted ?? false} className="mt-2 h-72 md:h-96" />}
+          {last && <TrackingMap position={{ latitude: last.latitude, longitude: last.longitude, accuracy: last.accuracy, updatedAt: new Date(last.at) }} trail={trail} destination={destination} plannedRoute={plan?.available ? plan.geometry ?? null : null} rerouted={plan?.kind === "road" && (plan?.rerouted ?? false)} routeKind={plan?.available ? plan.kind ?? null : null} className="mt-2 h-72 md:h-96" />}
           {destination && <StreetPhotos latitude={destination.latitude} longitude={destination.longitude} />}
           <p className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-900">
             {t("Keep this page open and your screen on. Phones pause location when the screen is off or you switch apps.")}

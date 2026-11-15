@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { GeoJSONSource, Map as MapLibreMap, Marker } from "maplibre-gl";
+import type { Map as MapLibreMap, Marker } from "maplibre-gl";
+import type { Circle, Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
+import "leaflet/dist/leaflet.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Box, Crosshair, Layers, X } from "lucide-react";
 
 import { T } from "@/components/i18n/T";
 import { useI18n } from "@/components/i18n/LocaleProvider";
+import { LABELS, SATELLITE, STREET } from "@/lib/config/mapLayers";
+import { pickEngine } from "@/lib/maps/engine";
+import { safeSetData, safely } from "@/lib/maps/safe";
 import { highlightDestinationBuilding } from "@/lib/maps/destination";
 import { circlePolygon, ensureMapStyles, fallbackFor, HOME_PIN_SVG, MAX_ZOOM, styleFor, TILT, type MapMode } from "@/lib/maps/styles";
 
@@ -33,6 +38,9 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
   onChangeRef.current = onChange;
   const pinRef = useRef(pin);
   pinRef.current = pin;
+  // The flat 2D map (Leaflet), used where the browser has no WebGL.
+  const [engine, setEngine] = useState<"webgl" | "2d">("webgl");
+  const flat = useRef<{ L: typeof import("leaflet"); map: LeafletMap; marker: LeafletMarker | null; halo: Circle; tiles: import("leaflet").LayerGroup } | null>(null);
   const accuracyRef = useRef<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
@@ -56,39 +64,88 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
   useEffect(() => {
     let cancelled = false;
     ensureMapStyles();
+    const buildFlat = async () => {
+      setEngine("2d");
+      const L = (await import("leaflet")).default as typeof import("leaflet");
+      if (cancelled || !box.current || flat.current) return;
+      const start = pinRef.current ? ([pinRef.current.latitude, pinRef.current.longitude] as [number, number]) : ([START[1], START[0]] as [number, number]);
+      const lm = L.map(box.current, { center: start, zoom: pinRef.current ? 18 : 15, maxZoom: 21 });
+      const tiles = L.layerGroup().addTo(lm);
+      const halo = L.circle(start, { radius: 0, color: "#2563eb", weight: 1, fillOpacity: 0.14 }).addTo(lm);
+      flat.current = { L, map: lm, marker: null, halo, tiles };
+      lm.on("click", (e) => onChangeRef.current({ latitude: e.latlng.lat, longitude: e.latlng.lng }));
+      drawFlatTiles("satellite");
+      drawFlatPin(pinRef.current);
+    };
     (async () => {
+      if (pickEngine() === "2d") return buildFlat();
       const ml = await import("maplibre-gl");
       if (cancelled || !box.current || map.current) return;
       lib.current = ml;
       const start = pinRef.current ? ([pinRef.current.longitude, pinRef.current.latitude] as [number, number]) : START;
-      const m = new ml.Map({ container: box.current, style: styleFor("satellite"), center: start, zoom: pinRef.current ? 18 : 15, pitch: TILT, maxPitch: 80, maxZoom: MAX_ZOOM, attributionControl: { compact: true } });
+      let m: MapLibreMap;
+      try {
+        m = new ml.Map({ container: box.current, style: styleFor("satellite"), center: start, zoom: pinRef.current ? 18 : 15, pitch: TILT, maxPitch: 80, maxZoom: MAX_ZOOM, attributionControl: { compact: true } });
+      } catch {
+        return buildFlat(); // no WebGL: use the flat map
+      }
       map.current = m;
       m.addControl(new ml.NavigationControl({ visualizePitch: true }), "bottom-left");
-      m.on("style.load", () => addHalo(m));
+      m.on("style.load", () => safely(() => addHalo(m), undefined));
       let fellBack = false;
       m.on("error", (e) => {
         const status = (e as unknown as { error?: { status?: number } }).error?.status;
-        if (!fellBack && !m.isStyleLoaded() && !status) {
+        if (!fellBack && !safely(() => m.isStyleLoaded(), true) && !status) {
           fellBack = true;
-          m.setStyle(fallbackFor(modeRef.current));
+          safely(() => m.setStyle(fallbackFor(modeRef.current)), undefined);
         }
       });
       m.on("click", (e) => onChangeRef.current({ latitude: e.lngLat.lat, longitude: e.lngLat.lng }));
       // The building on the pin is coloured red in 3D, so the customer can confirm it is the right one.
-      highlightDestinationBuilding(m, () => pinRef.current);
+      safely(() => highlightDestinationBuilding(m, () => pinRef.current), undefined);
       // A pin that was already chosen (for example after coming back to the page) is drawn straight away.
       drawPin(pinRef.current);
     })();
     return () => {
       cancelled = true;
-      map.current?.remove();
+      safely(() => map.current?.remove(), undefined);
       map.current = null;
       marker.current = null;
+      safely(() => flat.current?.map.remove(), undefined);
+      flat.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function drawFlatTiles(next: MapMode) {
+    const f = flat.current;
+    if (!f) return;
+    f.tiles.clearLayers();
+    const cfg = next === "satellite" ? SATELLITE : STREET;
+    f.L.tileLayer(cfg.url, { attribution: cfg.attribution, maxZoom: cfg.maxZoom, maxNativeZoom: cfg.maxNativeZoom, tileSize: cfg.tileSize ?? 256, zoomOffset: cfg.zoomOffset ?? 0 }).addTo(f.tiles);
+    if (next === "satellite" && LABELS) f.L.tileLayer(LABELS.url, { maxZoom: LABELS.maxZoom, maxNativeZoom: LABELS.maxNativeZoom }).addTo(f.tiles);
+  }
+
+  function drawFlatPin(p: Pin | null) {
+    const f = flat.current;
+    if (!f) return;
+    if (!p) {
+      f.marker?.remove();
+      f.marker = null;
+      return;
+    }
+    if (!f.marker) {
+      f.marker = f.L.marker([p.latitude, p.longitude], { draggable: true, icon: f.L.divIcon({ className: "tb-home", html: HOME_PIN_SVG, iconSize: [34, 44], iconAnchor: [17, 44] }) }).addTo(f.map);
+      f.marker.on("dragend", () => {
+        const at = f.marker!.getLatLng();
+        setAccuracy(null);
+        onChangeRef.current({ latitude: at.lat, longitude: at.lng });
+      });
+    } else f.marker.setLatLng([p.latitude, p.longitude]);
+  }
+
   function drawPin(p: Pin | null) {
+    if (flat.current) return drawFlatPin(p);
     const ml = lib.current;
     const m = map.current;
     if (!ml || !m) return;
@@ -116,21 +173,34 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
   // Keep the pin and the halo drawn in step with the chosen value.
   useEffect(() => {
     drawPin(pin);
+    const f = flat.current;
+    if (f) {
+      if (pin) {
+        f.map.setView([pin.latitude, pin.longitude], Math.max(f.map.getZoom(), 17));
+        f.halo.setLatLng([pin.latitude, pin.longitude]);
+      }
+      f.halo.setRadius(pin && accuracy ? accuracy : 0);
+      return;
+    }
     const m = map.current;
     if (!m) return;
-    if (pin) m.easeTo({ center: [pin.longitude, pin.latitude], zoom: Math.max(m.getZoom(), 17), duration: 700 });
-    const src = m.getSource("halo") as GeoJSONSource | undefined;
-    src?.setData(circlePolygon(pin?.longitude ?? 0, pin?.latitude ?? 0, pin && accuracy ? accuracy : 0));
+    if (pin) safely(() => m.easeTo({ center: [pin.longitude, pin.latitude], zoom: Math.max(m.getZoom(), 17), duration: 700 }), undefined);
+    safeSetData(m, "halo", circlePolygon(pin?.longitude ?? 0, pin?.latitude ?? 0, pin && accuracy ? accuracy : 0));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pin, accuracy]);
 
   const changeMode = () => {
+    const next: MapMode = mode === "satellite" ? "street" : "satellite";
+    if (flat.current) {
+      modeRef.current = next;
+      setMode(next);
+      return drawFlatTiles(next);
+    }
     const m = map.current;
     if (!m) return;
-    const next: MapMode = mode === "satellite" ? "street" : "satellite";
     modeRef.current = next;
     setMode(next);
-    m.setStyle(styleFor(next));
+    safely(() => m.setStyle(styleFor(next)), undefined);
   };
 
   const toggleTilt = () => {
@@ -154,7 +224,8 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
       setLocating(false);
       setAccuracy(pos.coords.accuracy);
       onChange({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      map.current?.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 18, duration: 900 });
+      if (flat.current) flat.current.map.setView([pos.coords.latitude, pos.coords.longitude], 18);
+      else safely(() => map.current?.flyTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 18, duration: 900 }), undefined);
       if (pos.coords.accuracy > 200) {
         setMessage(t("Your device gave only an approximate position. Drag the pin onto your exact spot."));
       }
@@ -209,6 +280,7 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
           <Layers className="h-4 w-4" />
           {mode === "satellite" ? <T>Street map</T> : <T>Satellite</T>}
         </button>
+        {engine === "webgl" && (
         <button
           type="button"
           onClick={toggleTilt}
@@ -218,6 +290,7 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
           <Box className="h-4 w-4" />
           {tilted ? <T>3D view</T> : <T>Flat view</T>}
         </button>
+        )}
         {pin && (
           <button
             type="button"
@@ -237,6 +310,7 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
         className="relative z-0 mt-4 h-80 w-full overflow-hidden rounded-xl border border-black/10"
         data-testid="pin-picker"
         data-pinned={pin ? "true" : "false"}
+        data-map-engine={engine}
       />
       <p className="mt-2 text-xs text-gray-500">
         {pin ? <T>Pin placed. Drag it to adjust.</T> : <T>Tap the map to place the pin.</T>}

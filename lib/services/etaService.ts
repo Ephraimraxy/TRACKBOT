@@ -1,13 +1,20 @@
+import { resolveRouting, routeUrl, type RoutingConfig } from "@/lib/config/routing";
+
 export interface LatLng {
   latitude: number;
   longitude: number;
 }
+
+/** Why a straight-line estimate was used instead of a road route. */
+export type FallbackReason = "not_configured" | "unreachable" | "bad_response";
 
 export interface Eta {
   distanceMetres: number;
   durationSeconds: number;
   /** "route" = worked out along real roads; "estimate" = straight-line distance at an assumed speed. */
   source: "route" | "estimate";
+  /** Set when `source` is "estimate": why no road route was available. */
+  fallbackReason?: FallbackReason;
 }
 
 /** Typical speed for a delivery in town, used only when no road route can be worked out. */
@@ -27,13 +34,12 @@ export function haversineMetres(a: LatLng, b: LatLng): number {
 }
 
 /** A rough estimate that needs no network: straight line, stretched for the roads, at a town speed. */
-export function estimateStraightLine(from: LatLng, to: LatLng): Eta {
+export function estimateStraightLine(from: LatLng, to: LatLng, fallbackReason?: FallbackReason): Eta {
   const distanceMetres = Math.round(haversineMetres(from, to) * DETOUR_FACTOR);
   const metresPerSecond = (FALLBACK_SPEED_KMH * 1000) / 3600;
-  return { distanceMetres, durationSeconds: Math.round(distanceMetres / metresPerSecond), source: "estimate" };
+  return { distanceMetres, durationSeconds: Math.round(distanceMetres / metresPerSecond), source: "estimate", ...(fallbackReason ? { fallbackReason } : {}) };
 }
 
-const OSRM = "https://router.project-osrm.org/route/v1/driving";
 
 /**
  * Distance and driving time from `from` to `to` along real roads (OpenStreetMap data, through the public
@@ -41,22 +47,22 @@ const OSRM = "https://router.project-osrm.org/route/v1/driving";
  * delivery service refreshes it every few seconds per delivery, never per customer. If it cannot be
  * reached or answers badly, the straight-line estimate is returned instead, so there is always an answer.
  */
-export async function estimateRoute(from: LatLng, to: LatLng, fetchImpl: typeof fetch = fetch): Promise<Eta> {
+export async function estimateRoute(from: LatLng, to: LatLng, fetchImpl: typeof fetch = fetch, routing: RoutingConfig = resolveRouting()): Promise<Eta> {
+  if (!routing.usable) return estimateStraightLine(from, to, "not_configured");
   try {
-    const url = `${OSRM}/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=false`;
-    const res = await fetchImpl(url, {
-      headers: { "User-Agent": "TrackBot/1.0 (university project; delivery tracking)" },
+    const res = await fetchImpl(routeUrl(routing, from, to, false), {
+      headers: { "User-Agent": "TrackBot/1.0 (delivery tracking)" },
       signal: AbortSignal.timeout(3000),
     });
-    if (!res.ok) return estimateStraightLine(from, to);
+    if (!res.ok) return estimateStraightLine(from, to, "unreachable");
     const body = (await res.json()) as { code?: string; routes?: { distance?: number; duration?: number }[] };
     const route = body.routes?.[0];
     if (body.code !== "Ok" || typeof route?.distance !== "number" || typeof route.duration !== "number") {
-      return estimateStraightLine(from, to);
+      return estimateStraightLine(from, to, "bad_response");
     }
     return { distanceMetres: Math.round(route.distance), durationSeconds: Math.round(route.duration), source: "route" };
   } catch {
-    return estimateStraightLine(from, to);
+    return estimateStraightLine(from, to, "unreachable");
   }
 }
 
@@ -102,18 +108,16 @@ export function describeStep(step: OsrmStep): string {
 }
 
 /** The straight-line fallback as a route, so callers always get a line to draw. */
-function straightPlan(from: LatLng, to: LatLng): RoutePlan {
-  const eta = estimateStraightLine(from, to);
+function straightPlan(from: LatLng, to: LatLng, reason: FallbackReason): RoutePlan {
+  const eta = estimateStraightLine(from, to, reason);
   return {
     ...eta,
     geometry: [
       [from.longitude, from.latitude],
       [to.longitude, to.latitude],
     ],
-    steps: [
-      { instruction: "Head towards the customer's spot", distanceMetres: eta.distanceMetres },
-      { instruction: "You have arrived at the customer's spot", distanceMetres: 0 },
-    ],
+    // No steps: a straight line has no turns, and none must ever be read out as if it were a road.
+    steps: [],
   };
 }
 
@@ -121,14 +125,14 @@ function straightPlan(from: LatLng, to: LatLng): RoutePlan {
  * The road route from `from` to `to`, with the line to draw and the turns to follow. Same server and same
  * fallback as `estimateRoute`: if the routing server cannot be reached the straight line is returned.
  */
-export async function planRoute(from: LatLng, to: LatLng, fetchImpl: typeof fetch = fetch): Promise<RoutePlan> {
+export async function planRoute(from: LatLng, to: LatLng, fetchImpl: typeof fetch = fetch, routing: RoutingConfig = resolveRouting()): Promise<RoutePlan> {
+  if (!routing.usable) return straightPlan(from, to, "not_configured");
   try {
-    const url = `${OSRM}/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson&steps=true`;
-    const res = await fetchImpl(url, {
-      headers: { "User-Agent": "TrackBot/1.0 (university project; delivery tracking)" },
+    const res = await fetchImpl(routeUrl(routing, from, to, true), {
+      headers: { "User-Agent": "TrackBot/1.0 (delivery tracking)" },
       signal: AbortSignal.timeout(4000),
     });
-    if (!res.ok) return straightPlan(from, to);
+    if (!res.ok) return straightPlan(from, to, "unreachable");
     const body = (await res.json()) as {
       code?: string;
       routes?: { distance?: number; duration?: number; geometry?: { coordinates?: [number, number][] }; legs?: { steps?: OsrmStep[] }[] }[];
@@ -136,7 +140,7 @@ export async function planRoute(from: LatLng, to: LatLng, fetchImpl: typeof fetc
     const route = body.routes?.[0];
     const coords = route?.geometry?.coordinates;
     if (body.code !== "Ok" || typeof route?.distance !== "number" || typeof route.duration !== "number" || !coords || coords.length < 2) {
-      return straightPlan(from, to);
+      return straightPlan(from, to, "bad_response");
     }
     const steps = (route.legs?.[0]?.steps ?? []).map((st) => ({ instruction: describeStep(st), distanceMetres: Math.round(st.distance ?? 0) }));
     return {
@@ -144,10 +148,11 @@ export async function planRoute(from: LatLng, to: LatLng, fetchImpl: typeof fetc
       durationSeconds: Math.round(route.duration),
       source: "route",
       geometry: coords,
-      steps: steps.length > 0 ? steps : straightPlan(from, to).steps,
+      // A road route without steps is still a road route; it simply has no turns to read out.
+      steps,
     };
   } catch {
-    return straightPlan(from, to);
+    return straightPlan(from, to, "unreachable");
   }
 }
 

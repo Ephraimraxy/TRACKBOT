@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { GeoJSONSource, Map as MapLibreMap, Marker } from "maplibre-gl";
+import type { Map as MapLibreMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Box, Camera, Crosshair, Focus, Layers, Maximize2, Minimize2 } from "lucide-react";
 
 import { useI18n } from "@/components/i18n/LocaleProvider";
 import { highlightDestinationBuilding } from "@/lib/maps/destination";
+import { safeSetData, safely } from "@/lib/maps/safe";
 import { MAPILLARY_TILES, mapillaryEnabled } from "@/lib/maps/mapillary";
 import {
   AUTO_FIT_MAX_ZOOM,
@@ -39,6 +40,10 @@ interface Props {
   plannedRoute?: [number, number][] | null;
   /** True for a few seconds after the delivery person left the planned road and the route was worked out again. */
   rerouted?: boolean;
+  /** "road": a real road route. "estimate": a straight line, drawn dotted and labelled as an estimate. */
+  routeKind?: "road" | "estimate" | null;
+  /** Called if this 3D map cannot start (no WebGL), so the page can show the 2D map instead. */
+  onUnsupported?: () => void;
   /** False once the delivery person has stopped sharing (delivered): the badge says where they stopped. */
   live?: boolean;
   className?: string;
@@ -48,6 +53,12 @@ interface Props {
 const LIVE_WITHIN_S = 30;
 /** How long the marker glides from one reported point to the next. */
 const GLIDE_MS = 1800;
+
+/** A road route is a dashed sky-blue line; a straight-line estimate is thinner, grey and dotted, so it never passes for a road. */
+const plannedPaint = (kind: "road" | "estimate" | null | undefined) =>
+  kind === "estimate"
+    ? { "line-color": "#9ca3af", "line-width": 3, "line-opacity": 0.95, "line-dasharray": [0.4, 2] }
+    : { "line-color": "#38bdf8", "line-width": 5, "line-opacity": 0.9, "line-dasharray": [1.2, 1.6] };
 
 const lngLat = (p: MapPoint): [number, number] => [p.longitude, p.latitude];
 
@@ -67,7 +78,7 @@ const routeData = (trail: MapPoint[], end: [number, number]): GeoJSON.Feature<Ge
  *    the delivery person and the destination together.
  *  - A badge says LIVE while positions keep arriving, or how long ago the last one was.
  */
-export default function LiveMap({ position, trail = [], destination = null, plannedRoute = null, rerouted = false, live: sharing = true, className = "h-[24rem]" }: Props) {
+export default function LiveMap({ position, trail = [], destination = null, plannedRoute = null, rerouted = false, routeKind = null, onUnsupported, live: sharing = true, className = "h-[24rem]" }: Props) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
@@ -78,8 +89,10 @@ export default function LiveMap({ position, trail = [], destination = null, plan
   const frame = useRef<number | null>(null);
   const followRef = useRef(true);
   const modeRef = useRef<MapMode>("satellite");
-  const latest = useRef({ position, trail, destination, plannedRoute });
-  latest.current = { position, trail, destination, plannedRoute };
+  const latest = useRef({ position, trail, destination, plannedRoute, routeKind });
+  latest.current = { position, trail, destination, plannedRoute, routeKind };
+  const onUnsupportedRef = useRef(onUnsupported);
+  onUnsupportedRef.current = onUnsupported;
   const photosRef = useRef(false);
   const [photos, setPhotos] = useState(false);
 
@@ -101,7 +114,7 @@ export default function LiveMap({ position, trail = [], destination = null, plan
     const here = shown.current;
     if (!m.getSource("planned")) {
       m.addSource("planned", { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: latest.current.plannedRoute ?? [] } } });
-      m.addLayer({ id: "planned-line", type: "line", source: "planned", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#38bdf8", "line-width": 5, "line-opacity": 0.9, "line-dasharray": [1.2, 1.6] } });
+      m.addLayer({ id: "planned-line", type: "line", source: "planned", layout: { "line-cap": "round", "line-join": "round" }, paint: plannedPaint(latest.current.routeKind) });
     }
     if (mapillaryEnabled && !m.getSource("mapillary")) {
       m.addSource("mapillary", { type: "vector", tiles: [MAPILLARY_TILES], minzoom: 6, maxzoom: 14 });
@@ -132,28 +145,36 @@ export default function LiveMap({ position, trail = [], destination = null, plan
       lib.current = ml;
       const { position: p, trail: tr, destination: dest } = latest.current;
 
-      const m = new ml.Map({
-        container: box.current,
-        style: styleFor("satellite"),
-        center: [p.longitude, p.latitude],
-        zoom: 16.5,
-        pitch: TILT,
-        maxPitch: 80,
-        maxZoom: MAX_ZOOM,
-        attributionControl: { compact: true },
-      });
+      let m: MapLibreMap;
+      try {
+        m = new ml.Map({
+          container: box.current,
+          style: styleFor("satellite"),
+          center: [p.longitude, p.latitude],
+          zoom: 16.5,
+          pitch: TILT,
+          maxPitch: 80,
+          maxZoom: MAX_ZOOM,
+          attributionControl: { compact: true },
+        });
+      } catch {
+        // No WebGL context (or the driver refused): hand over to the 2D map.
+        onUnsupportedRef.current?.();
+        return;
+      }
       map.current = m;
       m.addControl(new ml.NavigationControl({ visualizePitch: true }), "bottom-left");
-      m.on("style.load", () => addCustomLayers(m));
+      m.on("style.load", () => safely(() => addCustomLayers(m), undefined));
       // Colour the building on the customer's pin red, so the delivery person can see which one is meant.
-      if (dest) highlightDestinationBuilding(m, dest);
+      if (dest) safely(() => highlightDestinationBuilding(m, dest), undefined);
       // If the chosen style cannot be loaded (network), fall back to plain pictures so the map is never blank.
       let fellBack = false;
       m.on("error", (e) => {
-        const status = (e as unknown as { error?: { status?: number }; sourceId?: string }).error?.status;
-        if (!fellBack && !m.isStyleLoaded() && !status) {
+        const err = (e as unknown as { error?: { status?: number; message?: string } }).error;
+        if (/webgl/i.test(err?.message ?? "")) return onUnsupportedRef.current?.();
+        if (!fellBack && !safely(() => m.isStyleLoaded(), true) && !err?.status) {
           fellBack = true;
-          m.setStyle(fallbackFor(modeRef.current));
+          safely(() => m.setStyle(fallbackFor(modeRef.current)), undefined);
         }
       });
 
@@ -191,7 +212,7 @@ export default function LiveMap({ position, trail = [], destination = null, plan
     return () => {
       cancelled = true;
       if (frame.current !== null) cancelAnimationFrame(frame.current);
-      map.current?.remove();
+      safely(() => map.current?.remove(), undefined);
       map.current = null;
       driver.current = null;
       home.current = null;
@@ -215,8 +236,8 @@ export default function LiveMap({ position, trail = [], destination = null, plan
       const here: [number, number] = [from[0] + (to[0] - from[0]) * eased, from[1] + (to[1] - from[1]) * eased];
       shown.current = here;
       mk.setLngLat(here);
-      if (m.getSource("route")) (m.getSource("route") as GeoJSONSource).setData(routeData(trail, here));
-      if (m.getSource("accuracy")) (m.getSource("accuracy") as GeoJSONSource).setData(circlePolygon(here[0], here[1], position.accuracy ?? 0));
+      safeSetData(m, "route", routeData(trail, here));
+      safeSetData(m, "accuracy", circlePolygon(here[0], here[1], position.accuracy ?? 0));
 
       const dest = latest.current.destination;
       if (followRef.current) {
@@ -239,12 +260,19 @@ export default function LiveMap({ position, trail = [], destination = null, plan
   }, [position.longitude, position.latitude, position.accuracy, position.updatedAt, trail]);
 
   // The planned road ahead.
+  // The route can arrive before the map's style has loaded (the page opened mid-delivery). Then there is no "planned"
+  // source to fill yet: nothing is lost, because addCustomLayers draws the latest route when the style loads.
   useEffect(() => {
     const m = map.current;
-    const src = m?.getSource("planned") as GeoJSONSource | undefined;
-    if (!src || !plannedRoute) return;
-    src.setData({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: plannedRoute } });
-  }, [plannedRoute]);
+    if (!m) return;
+    if (plannedRoute) safeSetData(m, "planned", { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: plannedRoute } });
+    safely(() => {
+      if (m.getLayer("planned-line")) {
+        const paint = plannedPaint(routeKind);
+        for (const [k, v] of Object.entries(paint)) m.setPaintProperty("planned-line", k, v);
+      }
+    }, undefined);
+  }, [plannedRoute, routeKind]);
 
   // Street-photo coverage (Mapillary) on or off.
   const togglePhotos = () => {
@@ -253,7 +281,9 @@ export default function LiveMap({ position, trail = [], destination = null, plan
     setPhotos(next);
     const m = map.current;
     if (!m) return;
-    for (const id of ["mly-lines", "mly-points"]) if (m.getLayer(id)) m.setLayoutProperty(id, "visibility", next ? "visible" : "none");
+    safely(() => {
+      for (const id of ["mly-lines", "mly-points"]) if (m.getLayer(id)) m.setLayoutProperty(id, "visibility", next ? "visible" : "none");
+    }, undefined);
   };
 
   // Satellite <-> street.
@@ -262,7 +292,7 @@ export default function LiveMap({ position, trail = [], destination = null, plan
     if (!m || next === modeRef.current) return;
     modeRef.current = next;
     setMode(next);
-    m.setStyle(styleFor(next));
+    safely(() => m.setStyle(styleFor(next)), undefined);
   };
 
   // Tilt (3D) <-> flat.
@@ -317,6 +347,8 @@ export default function LiveMap({ position, trail = [], destination = null, plan
       className={expanded ? "fixed inset-0 z-[3000] bg-white p-2" : `relative ${className}`}
       data-expanded={expanded ? "true" : "false"}
       data-live={isLive}
+      data-map-engine="webgl"
+      data-route-kind={routeKind ?? "none"}
       data-mode={mode}
       data-tilted={tilted}
       data-trail-points={trail.length}

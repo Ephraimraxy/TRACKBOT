@@ -107,7 +107,7 @@ export async function getTracking(
       statut: true,
       clientId: true,
       adresse: { select: { rue: true, ville: true, wilaya: true, repere: true, latitude: true, longitude: true } },
-      livraison: { select: { livreur: { select: { prenom: true } }, etaSecondes: true, distanceMetres: true, etaMisAJour: true } },
+      livraison: { select: { livreur: { select: { prenom: true } }, etaSecondes: true, distanceMetres: true, etaSource: true, etaMisAJour: true } },
       historique: {
         orderBy: { date: "asc" },
         select: { id: true, ancienStatut: true, nouveauStatut: true, note: true, date: true },
@@ -145,7 +145,7 @@ export async function getTracking(
     // Time and distance left, while the delivery person is on the road (needs the customer's pin).
     eta:
       live && order.livraison?.etaSecondes != null && order.livraison.distanceMetres != null && order.livraison.etaMisAJour
-        ? { seconds: order.livraison.etaSecondes, metres: order.livraison.distanceMetres, updatedAt: order.livraison.etaMisAJour }
+        ? { seconds: order.livraison.etaSecondes, metres: order.livraison.distanceMetres, source: order.livraison.etaSource === "estimate" ? ("estimate" as const) : ("route" as const), updatedAt: order.livraison.etaMisAJour }
         : null,
     driverFirstName: order.livraison?.livreur.prenom ?? null,
     trackingActive: live,
