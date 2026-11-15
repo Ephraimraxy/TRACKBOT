@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">TrackBot Driver</string>
+    <string name="channel_name">Delivery tracking</string>
+    <string name="notification_title">Sharing your live location</string>
+    <string name="notification_text">TrackBot is sharing your position for a delivery. It stops when the delivery ends.</string>
+    <string name="notification_signed_out">Open TrackBot and sign in again to keep sending your position.</string>
+    <string name="permission_denied">Location permission is needed to share your delivery position.</string>
+</resources>
