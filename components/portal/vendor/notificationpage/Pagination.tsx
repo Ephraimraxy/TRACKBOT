@@ -66,7 +66,7 @@ export default function Pagination({
   return (
     <div className="mt-6 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
       <p className="text-sm text-gray-600">
-        Showing <span className="font-medium">{startItem}</span> à{" "}
+        Showing <span className="font-medium">{startItem}</span> to{" "}
         <span className="font-medium">{endItem}</span> of{" "}
         <span className="font-medium">{totalItems}</span> notifications
       </p>

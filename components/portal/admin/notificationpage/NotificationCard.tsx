@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { NotificationFromAPI } from "@/lib/types/notification.types";
 import { NotificationType } from "@prisma/client";
+import { notificationTypeLabel } from "@/lib/helpers/notificationType";
 import { useSession } from "next-auth/react";
 
 interface NotificationCardProps {
@@ -118,7 +119,7 @@ export default function NotificationCard({
                   getTypeColor(notification.type).split(" ")[0]
                 }`}
               >
-                {notification.type}
+                {notificationTypeLabel(notification.type)}
               </span>
               <span
                 className={`ml-2 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${
