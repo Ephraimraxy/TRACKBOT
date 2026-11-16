@@ -129,7 +129,7 @@ export default function NotificationCard({
                     : "bg-yellow-100 text-yellow-800 border border-yellow-200"
                 }`}
               >
-                {notification.estLu ? "Lu" : "Unread"}
+                {notification.estLu ? "Read" : "Unread"}
               </span>
             </div>
             <p className="text-gray-900 text-base sm:text-lg font-semibold mb-1">

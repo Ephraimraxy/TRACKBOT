@@ -3,6 +3,8 @@
 import { useI18n } from "@/components/i18n/LocaleProvider";
 
 import * as XLSX from "xlsx";
+import type { CommandeStatut } from "@prisma/client";
+import { STATUS_LABELS_EN } from "@/lib/orders/workflow";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { JSX, useEffect, useState } from "react";
@@ -144,18 +146,18 @@ export default function OrderHistoryPage(): JSX.Element {
       ID: order.id,
       Date: extractDateString(order.date),
       "Total (₦)": order.montant.toFixed(2),
-      Articles: order.produits
+      Items: order.produits
         .map(
           (produit) =>
             `${produit.nomProduit} (${produit.couleur?.nom}, ${produit.taille?.nom}): ${produit.quantite} x ₦${produit.prixUnit}`
         )
         .join(" | "),
-      Adresse: `${order.adresse?.rue ? order.adresse.rue + ", " : ""}${
+      Address: `${order.adresse?.rue ? order.adresse.rue + ", " : ""}${
         order.adresse?.ville ? order.adresse.ville + ", " : ""
       }${order.adresse?.wilaya || ""}${
         order.adresse?.codePostal ? " - " + order.adresse.codePostal : ""
       }`,
-      Statut: order.statut,
+      Status: STATUS_LABELS_EN[order.statut as CommandeStatut] ?? order.statut,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
