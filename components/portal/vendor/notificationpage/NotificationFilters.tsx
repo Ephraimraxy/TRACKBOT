@@ -36,7 +36,7 @@ export default function NotificationFilters({
 
   const statusOptions = [
     { value: "", label: "Status" },
-    { value: "lu", label: "Lu" },
+    { value: "lu", label: "Read" },
     { value: "nonlu", label: "Unread" },
   ];
 

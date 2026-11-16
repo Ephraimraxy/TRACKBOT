@@ -15,14 +15,14 @@ export default function SellsHeader({ sells, onExport }: SellsHeaderProps) {
   const handleExport = () => {
     const data = sells.map((sell) => ({
       ID: sell.id,
-      Produit: sell.nomProduit,
-      Quantité: sell.quantite,
-      Couleur: sell.couleur?.nom || "N/A",
-      Taille: sell.taille?.nom || "N/A",
-      Client: sell.commande.client ? `${sell.commande.client.nom} ${sell.commande.client.prenom}` : "N/A",
+      Product: sell.nomProduit,
+      Quantity: sell.quantite,
+      Colour: sell.couleur?.nom || "N/A",
+      Size: sell.taille?.nom || "N/A",
+      Customer: sell.commande.client ? `${sell.commande.client.nom} ${sell.commande.client.prenom}` : "N/A",
       Email: sell.commande.client?.email || "N/A",
       Date: new Date(sell.commande.date).toLocaleDateString("en-NG"),
-      "Prix unitaire (₦)": sell.prixUnit.toFixed(2),
+      "Unit price (₦)": sell.prixUnit.toFixed(2),
       "Total (₦)": sell.total.toFixed(2),
     }));
 
