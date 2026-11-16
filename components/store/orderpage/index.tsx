@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import OrderHeader from "@/components/store/orderpage/OrderHeader";
 import DeliveryAddressForm from "@/components/store/orderpage/DeliveryAddressForm";
 import DeliveryPinPicker, { type Pin } from "@/components/store/orderpage/DeliveryPinPicker";
@@ -31,6 +31,10 @@ export default function OrderPageMain() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Set only when the order was saved but Paystack's payment page could not be opened.
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  // True from the moment the order is saved until the browser leaves for Paystack. The cart is emptied in that gap, and
+  // the page must not react to the empty cart (it would flash "Your cart is empty").
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const redirecting = useRef(false);
 
   const [pin, setPin] = useState<Pin | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState({
@@ -43,6 +47,7 @@ export default function OrderPageMain() {
 
   useEffect(() => {
     const fetchOrderSummary = async () => {
+      if (redirecting.current) return;
       if (!cart || cart.items.length === 0) {
         setErrorMessage(
           "Your cart is empty. You must add products before placing an order."
@@ -165,8 +170,11 @@ export default function OrderPageMain() {
       if (response.ok) {
         const { data: order } = await response.json();
         // The order is saved, so the cart is done with. Then to Paystack to pay for it.
+        redirecting.current = true;
+        setIsRedirecting(true);
         dispatch(clearCart());
         await startPayment(order.id);
+        // startPayment leaves the page on success. If it did not, the error screen below takes over.
       } else if (response.status === 400) {
         const errorData = await response.json();
         if (errorData.data) {
@@ -199,6 +207,22 @@ export default function OrderPageMain() {
 
   if (paymentError) {
     return <IsOrderSuccessful paymentError={paymentError} />;
+  }
+
+  // The order is saved and Paystack's payment page is being opened: say so, instead of showing the emptied cart.
+  if (isRedirecting) {
+    return (
+      <main className="min-h-[calc(100dvh-125px)] py-10 bg-white" data-testid="redirecting-to-payment">
+        <div className="max-w-frame mx-auto px-4 xl:px-0">
+          <OrderHeader />
+          <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <span className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-black" />
+            <p className="text-lg font-semibold">Your order is saved.</p>
+            <p className="text-sm text-gray-600">Opening the secure payment page… please do not close this window.</p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
