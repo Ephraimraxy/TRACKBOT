@@ -7,7 +7,9 @@ import { Crosshair, Focus, Layers } from "lucide-react";
 
 import { useI18n } from "@/components/i18n/LocaleProvider";
 import type { MapPoint, MapPosition } from "@/components/tracking/LiveMap";
-import { LABELS, SATELLITE, STREET } from "@/lib/config/mapLayers";
+import { currentSatellite } from "@/lib/config/mapLayers";
+import { smoothTrail } from "@/lib/maps/trail";
+import { addBaseTiles } from "@/lib/maps/leafletSatellite";
 import { ensureMapStyles, HOME_PIN_SVG } from "@/lib/maps/styles";
 
 interface Props {
@@ -58,7 +60,7 @@ export default function LiveMap2D({ position, trail = [], destination = null, pl
       if (cancelled || !box.current || map.current) return;
       lib.current = L as typeof import("leaflet");
       const { position: p, destination: dest } = latest.current;
-      const m = L.map(box.current, { center: [p.latitude, p.longitude], zoom: 17, maxZoom: 21, zoomControl: true });
+      const m = L.map(box.current, { center: [p.latitude, p.longitude], zoom: 17, maxZoom: currentSatellite().maxZoom, zoomControl: true });
       map.current = m;
       const base = L.layerGroup().addTo(m);
       const driverIcon = L.divIcon({ className: "tb-driver", html: '<span class="ring"></span><span class="ring2"></span><span class="dot"></span>', iconSize: [24, 24], iconAnchor: [12, 12] });
@@ -93,11 +95,7 @@ export default function LiveMap2D({ position, trail = [], destination = null, pl
     const L = lib.current as unknown as typeof import("leaflet") | null;
     const l = layers.current;
     if (!ready || !L || !l) return;
-    l.base.clearLayers();
-    const cfg = mode === "satellite" ? SATELLITE : STREET;
-    const opts = { attribution: cfg.attribution, maxZoom: cfg.maxZoom, maxNativeZoom: cfg.maxNativeZoom, tileSize: cfg.tileSize ?? 256, zoomOffset: cfg.zoomOffset ?? 0 };
-    L.tileLayer(cfg.url, opts).addTo(l.base);
-    if (mode === "satellite" && LABELS) L.tileLayer(LABELS.url, { maxZoom: LABELS.maxZoom, maxNativeZoom: LABELS.maxNativeZoom }).addTo(l.base);
+    addBaseTiles(L, l.base, map.current!, mode);
   }, [mode, ready]);
 
   // New position, trail, route.
@@ -109,7 +107,7 @@ export default function LiveMap2D({ position, trail = [], destination = null, pl
     l.driver.setLatLng(here);
     l.accuracy.setLatLng(here);
     l.accuracy.setRadius(position.accuracy ?? 0);
-    l.trail.setLatLngs([...trail.map(ll), here]);
+    l.trail.setLatLngs([...smoothTrail(trail).map(ll), here]);
     if (followRef.current) {
       const L = lib.current as unknown as typeof import("leaflet");
       if (destination) m.fitBounds(L.latLngBounds([here, ll(destination)]), { padding: [70, 70], maxZoom: 18, animate: true });

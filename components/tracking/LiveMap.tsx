@@ -8,6 +8,7 @@ import { Box, Camera, Crosshair, Focus, Layers, Maximize2, Minimize2 } from "luc
 import { useI18n } from "@/components/i18n/LocaleProvider";
 import { highlightDestinationBuilding } from "@/lib/maps/destination";
 import { safeSetData, safely } from "@/lib/maps/safe";
+import { smoothTrail } from "@/lib/maps/trail";
 import { MAPILLARY_TILES, mapillaryEnabled } from "@/lib/maps/mapillary";
 import {
   AUTO_FIT_MAX_ZOOM,
@@ -15,7 +16,9 @@ import {
   ensureMapStyles,
   fallbackFor,
   HOME_PIN_SVG,
-  MAX_ZOOM,
+  maxZoomNow,
+  fallBackToEsri,
+  imageryFailed,
   styleFor,
   TILT,
   type MapMode,
@@ -65,7 +68,7 @@ const lngLat = (p: MapPoint): [number, number] => [p.longitude, p.latitude];
 const routeData = (trail: MapPoint[], end: [number, number]): GeoJSON.Feature<GeoJSON.LineString> => ({
   type: "Feature",
   properties: {},
-  geometry: { type: "LineString", coordinates: [...trail.map(lngLat), end] },
+  geometry: { type: "LineString", coordinates: [...smoothTrail(trail).map(lngLat), end] },
 });
 
 /**
@@ -154,7 +157,7 @@ export default function LiveMap({ position, trail = [], destination = null, plan
           zoom: 16.5,
           pitch: TILT,
           maxPitch: 80,
-          maxZoom: MAX_ZOOM,
+          maxZoom: maxZoomNow(),
           attributionControl: { compact: true },
         });
       } catch {
@@ -172,6 +175,8 @@ export default function LiveMap({ position, trail = [], destination = null, plan
       m.on("error", (e) => {
         const err = (e as unknown as { error?: { status?: number; message?: string } }).error;
         if (/webgl/i.test(err?.message ?? "")) return onUnsupportedRef.current?.();
+        // The satellite provider refused us (key over its limit): carry on with the free Esri pictures.
+        if (imageryFailed(e)) return void safely(() => fallBackToEsri(m), undefined);
         if (!fellBack && !safely(() => m.isStyleLoaded(), true) && !err?.status) {
           fellBack = true;
           safely(() => m.setStyle(fallbackFor(modeRef.current)), undefined);
