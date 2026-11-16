@@ -21,6 +21,8 @@ model Adresse {
   ville      String     @db.VarChar(100)
   wilaya     String     @db.VarChar(100)
   codePostal String     @map("code_postal") @db.VarChar(20)
+  /// A landmark or directions that help the delivery person find the right building ("blue gate opposite the mosque").
+  repere     String?    @db.VarChar(200)
   /// Exact delivery spot, when the customer pinned it on the map. Without it there is no distance or ETA.
   latitude   Float?
   longitude  Float?
@@ -109,7 +111,11 @@ model Livraison {
   /// Latest estimate, refreshed while the delivery person shares their position.
   etaSecondes     Int?     @map("eta_secondes")
   distanceMetres  Int?     @map("distance_metres")
+  /// "route" when the time came from a road route, "estimate" when it is only a straight-line guess.
+  etaSource       String?  @map("eta_source") @db.VarChar(10)
   etaMisAJour     DateTime? @map("eta_mis_a_jour")
+  /// The first road route worked out for this delivery ([[lng, lat], ...]), kept so the owner can compare it with the route actually driven.
+  routePlanifiee  Json?    @map("route_planifiee")
   /// When the customer was last sent a "your delivery is N minutes away" reminder.
   dernierRappel   DateTime? @map("dernier_rappel")
   /// True once the "almost there" alert has been sent, so it is sent only once.
@@ -131,7 +137,12 @@ model PositionLivraison {
   latitude   Float
   longitude  Float
   precision  Float?
+  /// When the phone captured the GPS fix. Everything (order, trail, "current position") goes by this.
   date       DateTime @default(now())
+  /// When the server stored it. Later than `date` for a point sent after the phone came back online.
+  receivedAt DateTime @default(now()) @map("received_at")
+  /// True when the point arrived late (queued while offline): it is history, never the current position.
+  backfilled Boolean  @default(false)
   commande   Commande @relation(fields: [commandeId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   livreur    User     @relation("PositionsLivreur", fields: [livreurId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -452,13 +463,15 @@ enum SignalementStatut {
 }
 
 // EN_COURS = Pending, EN_PREPARATION = Processing, EXPEDIEE = Shipped,
-// EN_LIVRAISON = Out for delivery, LIVREE = Delivered, ANNULEE = Cancelled
+// EN_LIVRAISON = Out for delivery, LIVREE = Delivered (handed over by the delivery person, waiting for the
+// customer), RECUE = Received (the customer confirmed; the delivery is closed), ANNULEE = Cancelled
 enum CommandeStatut {
   EN_COURS
   EN_PREPARATION
   EXPEDIEE
   EN_LIVRAISON
   LIVREE
+  RECUE
   ANNULEE
 }
 

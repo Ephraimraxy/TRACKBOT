@@ -94,13 +94,13 @@ export default function OrderTable({
                     );
                   }}
                   className={`w-full px-3 py-1 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 shadow-md text-xs overflow-visible ${
-                    order.statut === CommandeStatut.LIVREE ||
+                    order.statut === CommandeStatut.RECUE ||
                     order.statut === CommandeStatut.ANNULEE
                       ? "bg-gray-500 text-white cursor-not-allowed"
                       : "bg-black text-white hover:bg-gray-800"
                   }`}
                   disabled={
-                    order.statut === CommandeStatut.LIVREE ||
+                    order.statut === CommandeStatut.RECUE ||
                     order.statut === CommandeStatut.ANNULEE
                   }
                 >
@@ -232,13 +232,13 @@ export default function OrderTable({
                           );
                         }}
                         className={`px-3 py-1 sm:px-4 sm:py-2 rounded-lg flex items-center gap-2 transition-all duration-300 shadow-md text-xs sm:text-sm ${
-                          order.statut === CommandeStatut.LIVREE ||
+                          order.statut === CommandeStatut.RECUE ||
                           order.statut === CommandeStatut.ANNULEE
                             ? "bg-gray-500 text-white cursor-not-allowed"
                             : "bg-black text-white hover:bg-gray-800"
                         }`}
                         disabled={
-                          order.statut === CommandeStatut.LIVREE ||
+                          order.statut === CommandeStatut.RECUE ||
                           order.statut === CommandeStatut.ANNULEE
                         }
                       >

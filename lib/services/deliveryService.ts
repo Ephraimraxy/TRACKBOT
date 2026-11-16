@@ -28,7 +28,8 @@ export async function listDrivers(db: PrismaClient, actor: StatusActor) {
 export async function listDeliveryBoard(db: PrismaClient, actor: StatusActor) {
   if (actor.role !== UserRole.ADMIN) throw new OrderError("FORBIDDEN", "Access denied.");
   return db.commande.findMany({
-    where: { statut: { in: [...ASSIGNABLE, CommandeStatut.EN_LIVRAISON] } },
+    // Delivered orders stay on the board until the customer confirms receipt.
+    where: { statut: { in: [...ASSIGNABLE, CommandeStatut.EN_LIVRAISON, CommandeStatut.LIVREE] } },
     orderBy: { date: "desc" },
     take: 100,
     select: {
@@ -38,6 +39,7 @@ export async function listDeliveryBoard(db: PrismaClient, actor: StatusActor) {
       montant: true,
       adresse: { select: { ville: true, wilaya: true } },
       client: { select: { user: { select: { nom: true, prenom: true } } } },
+      paiement: { select: { statut: true } },
       livraison: {
         select: { livreur: { select: { id: true, nom: true, prenom: true } } },
       },
@@ -123,7 +125,7 @@ export async function listDriverDeliveries(db: PrismaClient, actor: StatusActor)
           id: true,
           statut: true,
           montant: true,
-          adresse: { select: { rue: true, ville: true, wilaya: true, codePostal: true, latitude: true, longitude: true } },
+          adresse: { select: { rue: true, ville: true, wilaya: true, codePostal: true, repere: true, latitude: true, longitude: true } },
           client: { select: { user: { select: { nom: true, prenom: true, tel: true } } } },
           lignesCommande: { select: { nomProduit: true, quantite: true } },
         },
@@ -132,7 +134,7 @@ export async function listDriverDeliveries(db: PrismaClient, actor: StatusActor)
   });
 
   // Active deliveries first, finished ones after.
-  const rank = (s: CommandeStatut) => (s === CommandeStatut.LIVREE ? 1 : 0);
+  const rank = (s: CommandeStatut) => (s === CommandeStatut.LIVREE || s === CommandeStatut.RECUE ? 1 : 0);
   return rows.sort((a, b) => rank(a.commande.statut) - rank(b.commande.statut));
 }
 

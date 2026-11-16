@@ -62,5 +62,5 @@ Files: `lib/chatbot/` (`engine.ts`, `tools.ts`, `providers.ts`, `grounding.ts`, 
 - Rule-based mode understands a fixed set of French/English phrasings; the AI path is far more flexible.
 - Rate limiting is in-memory per server instance (see `lib/utils/rateLimit.ts`).
 - Conversation history sent by the browser is untrusted text; it cannot change who the user is.
-- The requirement "admin manages chatbot responses and FAQs" is **not built yet**: there is no FAQ table or admin screen.
-- Unused packages from the old chatbot (`ai`, `@openrouter/ai-sdk-provider`) are still in `package.json`.
+- Chatbot answers about delivery, payment and returns come from the owner's FAQ entries (the `Faq` table, `/api/faqs`, admin Chatbot FAQ page), added after this phase.
+- The unused packages of the old chatbot (`ai`, `@openrouter/ai-sdk-provider`) were removed in the security review.

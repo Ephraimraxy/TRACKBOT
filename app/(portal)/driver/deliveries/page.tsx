@@ -8,6 +8,7 @@ import { CommandeStatut } from "@prisma/client";
 import { getStatusColor } from "@/lib/helpers/orderStatus";
 import { STATUS_LABELS_EN } from "@/lib/orders/workflow";
 import LocationSharer from "@/components/tracking/LocationSharer";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 type Delivery = {
   id: string;
@@ -17,7 +18,7 @@ type Delivery = {
     id: string;
     statut: CommandeStatut;
     montant: string | number;
-    adresse: { rue: string; ville: string; wilaya: string; codePostal: string; latitude: number | null; longitude: number | null } | null;
+    adresse: { rue: string; ville: string; wilaya: string; codePostal: string; repere?: string | null; latitude: number | null; longitude: number | null } | null;
     client: { user: { nom: string; prenom: string; tel: string | null } } | null;
     lignesCommande: { nomProduit: string; quantite: number }[];
   };
@@ -31,7 +32,22 @@ function mapsLink(a: { rue: string; ville: string; wilaya: string; latitude: num
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`;
 }
 
+type LocationCheck = "ok" | "denied" | "unavailable";
+
+/** Ask the phone for its position once. This shows the browser's permission question the first time. */
+function checkLocation(): Promise<LocationCheck> {
+  return new Promise((resolve) => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) return resolve("unavailable");
+    navigator.geolocation.getCurrentPosition(
+      () => resolve("ok"),
+      (err) => resolve(err.code === err.PERMISSION_DENIED ? "denied" : "unavailable"),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    );
+  });
+}
+
 export default function DriverDeliveriesPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const [items, setItems] = useState<Delivery[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -58,13 +74,40 @@ export default function DriverDeliveriesPage() {
     return () => clearInterval(t);
   }, [load]);
 
+  // How far the server last worked out the delivery person is from the customer's pinned spot (null if unknown).
+  const distanceLeft = (orderId: string): number | null => {
+    const d = items.find((x) => x.commande.id === orderId)?.distanceMetres;
+    return typeof d === "number" ? d : null;
+  };
+
   const advance = async (orderId: string, statut: CommandeStatut) => {
-    if (statut === CommandeStatut.LIVREE && !window.confirm("Confirm that the order was handed over to the customer?")) {
-      return;
+    if (statut === CommandeStatut.LIVREE) {
+      const far = distanceLeft(orderId);
+      const message =
+        far !== null && far > 300
+          ? `The map shows you about ${Math.round(far)} m from the customer's spot. Only mark the order delivered once you have reached the customer and handed it over. The customer will then be asked to confirm that they received it.`
+          : "Confirm that you reached the customer and handed over the order? The customer will then be asked to confirm that they received it.";
+      if (!(await confirm({ title: "Mark as delivered", message, confirmLabel: "Yes, delivered" }))) return;
     }
     setBusyId(orderId);
     setError(null);
     try {
+      // The customer follows this delivery on a map, so check the phone can share its position BEFORE the order is
+      // marked Out for delivery. This is also the moment the browser asks for permission.
+      if (statut === CommandeStatut.EN_LIVRAISON) {
+        const outcome = await checkLocation();
+        if (outcome === "denied") {
+          throw new Error("Location is blocked for this site. Tap the lock icon beside the web address, set Location to Allow, then press Start delivery again. The customer needs your location to follow the delivery.");
+        }
+        if (outcome === "unavailable") {
+          const goOn = await confirm({
+            title: "Location not found",
+            message: "We could not find your position yet (weak GPS signal or Location is off). If you start now, the customer will not see you on the map. Start anyway?",
+            confirmLabel: "Start anyway",
+          });
+          if (!goOn) return;
+        }
+      }
       const res = await fetch(`/api/delivery/orders/${orderId}/status`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
@@ -82,6 +125,7 @@ export default function DriverDeliveriesPage() {
 
   return (
     <div className="p-4 md:p-6">
+      {confirmDialog}
       <h1 className="text-2xl font-semibold"><T>My deliveries</T></h1>
       <p className="mb-4 text-sm text-gray-500"><T>Updates automatically every 10 seconds.</T></p>
 
@@ -127,6 +171,11 @@ export default function DriverDeliveriesPage() {
                 {c.adresse.rue}, {c.adresse.ville}, {c.adresse.wilaya} {c.adresse.codePostal}
               </p>
             )}
+            {c.adresse?.repere && (
+              <p className="mb-2 rounded bg-amber-50 p-2 text-sm text-amber-900">
+                <span className="font-semibold"><T>Landmark:</T></span> {c.adresse.repere}
+              </p>
+            )}
             {c.adresse && (c.statut === CommandeStatut.EXPEDIEE || c.statut === CommandeStatut.EN_LIVRAISON) && (
               <a
                 href={mapsLink(c.adresse)}
@@ -167,11 +216,17 @@ export default function DriverDeliveriesPage() {
                   orderId={c.id}
                   autoStart={justStarted === c.id}
                   destination={c.adresse?.latitude != null && c.adresse.longitude != null ? { latitude: c.adresse.latitude, longitude: c.adresse.longitude } : null}
+                  landmark={c.adresse?.repere ?? null}
                 />
               </>
             )}
             {c.statut === CommandeStatut.LIVREE && (
-              <p className="text-center text-sm text-green-700"><T>Delivered ✔</T></p>
+              <p className="rounded bg-teal-50 p-3 text-center text-sm text-teal-800">
+                <T>Delivered ✔ Waiting for the customer to confirm that they received it.</T>
+              </p>
+            )}
+            {c.statut === CommandeStatut.RECUE && (
+              <p className="text-center text-sm text-green-700"><T>Received ✔ The customer confirmed this delivery.</T></p>
             )}
             {(c.statut === CommandeStatut.EN_COURS || c.statut === CommandeStatut.EN_PREPARATION) && (
               <p className="rounded bg-amber-50 p-3 text-center text-sm text-amber-900">

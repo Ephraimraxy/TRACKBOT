@@ -1,17 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import { ShieldAlert } from "lucide-react";
 
 import { useI18n } from "@/components/i18n/LocaleProvider";
-import type { MapPoint } from "@/components/tracking/TrackingMap";
-import { formatDistance, formatMinutes } from "@/lib/services/etaService";
+import type { MapPoint } from "@/components/tracking/LiveMap";
+import { describeApproach, formatDistance, formatMinutes } from "@/lib/services/etaService";
+import { nativeTracker, parseNativeStatus, type NativeStatus } from "@/lib/native/bridge";
+import { createLocationQueue, flushQueue, type LocationQueue, type QueuedPoint } from "@/lib/tracking/locationQueue";
+import { useRoutePlan } from "@/components/tracking/useRoutePlan";
 
-const TrackingMap = dynamic(() => import("@/components/tracking/TrackingMap"), {
-  ssr: false,
-  loading: () => <div className="mt-2 h-72 md:h-96 w-full animate-pulse rounded border bg-gray-100" />,
-});
+import StreetPhotos from "@/components/tracking/StreetPhotos";
+
+import TrackingMap from "@/components/tracking/TrackingMap";
 
 const SEND_EVERY_MS = 4000;
 const TRAIL_KEPT = 60;
@@ -29,7 +30,7 @@ type Permission = "unknown" | "prompt" | "granted" | "denied";
  * - Sharing stops with the button, when the order leaves "out for delivery" (the server answers 409), or
  *   when this panel is removed from the page.
  */
-export default function LocationSharer({ orderId, autoStart = false, destination = null }: { orderId: string; autoStart?: boolean; destination?: MapPoint | null }) {
+export default function LocationSharer({ orderId, autoStart = false, destination = null, landmark = null }: { orderId: string; autoStart?: boolean; destination?: MapPoint | null; landmark?: string | null }) {
   const { t } = useI18n();
   const [sharing, setSharing] = useState(false);
   const [permission, setPermission] = useState<Permission>("unknown");
@@ -37,12 +38,18 @@ export default function LocationSharer({ orderId, autoStart = false, destination
   const [last, setLast] = useState<{ latitude: number; longitude: number; accuracy: number; at: number } | null>(null);
   const [trail, setTrail] = useState<MapPoint[]>([]);
   // Time and distance left to the customer, as the server works it out from each position we send.
-  const [eta, setEta] = useState<{ durationSeconds: number; distanceMetres: number } | null>(null);
+  const [eta, setEta] = useState<{ durationSeconds: number; distanceMetres: number; source?: string } | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const watchId = useRef<number | null>(null);
   const lastSent = useRef(0);
   const wakeLock = useRef<WakeLockSentinel | null>(null);
   const autoStarted = useRef(false);
+  // Points that could not be sent (no signal) wait here, with the time the GPS captured them, and are sent when back online.
+  const queue = useRef<LocationQueue | null>(null);
+  const [waiting, setWaiting] = useState(0);
+  // In the TrackBot Driver app the app's foreground service shares the position (it keeps working with the screen off).
+  const [native, setNative] = useState<NativeStatus | null>(null);
+  const nativeMode = useRef(false);
 
   const holdScreenAwake = useCallback(async () => {
     try {
@@ -54,6 +61,13 @@ export default function LocationSharer({ orderId, autoStart = false, destination
   }, []);
 
   const stop = useCallback(() => {
+    if (nativeMode.current) {
+      nativeMode.current = false;
+      nativeTracker()?.stop();
+      setNative(null);
+      setSharing(false);
+      return;
+    }
     if (watchId.current !== null) {
       navigator.geolocation.clearWatch(watchId.current);
       watchId.current = null;
@@ -101,43 +115,140 @@ export default function LocationSharer({ orderId, autoStart = false, destination
     return () => status?.removeEventListener("change", apply);
   }, []);
 
+  const queueFor = useCallback(() => {
+    if (!queue.current) {
+      let store: Storage | null = null;
+      try {
+        store = window.localStorage;
+      } catch {
+        store = null;
+      }
+      queue.current = createLocationQueue(store, orderId);
+    }
+    return queue.current;
+  }, [orderId]);
+
+  /** Send the kept points, oldest first, with their original capture times. */
+  const flush = useCallback(async () => {
+    const q = queueFor();
+    if (q.size() === 0) return;
+    await flushQueue(q, async (points) => {
+      try {
+        const res = await fetch(`/api/delivery/orders/${orderId}/location`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ points: points.map((p) => ({ latitude: p.latitude, longitude: p.longitude, accuracy: p.accuracy ?? undefined, capturedAt: p.capturedAt })) }),
+        });
+        if (res.status === 403 || res.status === 409) return "stop";
+        return res.ok ? "sent" : "retry";
+      } catch {
+        return "retry";
+      }
+    });
+    setWaiting(q.size());
+  }, [orderId, queueFor]);
+
   const send = useCallback(
     async (pos: GeolocationPosition) => {
       const at = Date.now();
       if (at - lastSent.current < SEND_EVERY_MS) return;
       lastSent.current = at;
+      // When the phone's GPS captured this fix, which can be earlier than now.
+      const capturedAt = pos.timestamp || at;
+      const keep = () => {
+        const q = queueFor();
+        q.add({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy, capturedAt } satisfies QueuedPoint);
+        setWaiting(q.size());
+      };
       try {
         const res = await fetch(`/api/delivery/orders/${orderId}/location`, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+          body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy, capturedAt }),
         });
         if (res.status === 409 || res.status === 403) {
+          queueFor().clear();
+          setWaiting(0);
           stop();
           setMessage(t("Tracking has ended for this order."));
         } else if (res.ok) {
           const json = await res.json().catch(() => null);
-          if (json?.data?.eta) setEta({ durationSeconds: json.data.eta.durationSeconds, distanceMetres: json.data.eta.distanceMetres });
+          if (json?.data?.eta) setEta({ durationSeconds: json.data.eta.durationSeconds, distanceMetres: json.data.eta.distanceMetres, source: json.data.eta.source });
           const point = { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy, at };
           setLast(point);
           setTrail((tr) => [...tr, { latitude: point.latitude, longitude: point.longitude }].slice(-TRAIL_KEPT));
           setMessage(null);
+          if (queueFor().size() > 0) void flush(); // back online: send what was kept while there was no signal
         } else if (res.status !== 429) {
+          keep();
           setMessage(t("Could not send your position. Trying again…"));
         }
       } catch {
-        setMessage(t("No connection. Trying again…"));
+        keep();
+        setMessage(t("No connection. Your route is being saved and will be sent when you are back online."));
       }
     },
-    [orderId, stop, t]
+    [orderId, stop, t, queueFor, flush]
   );
+
+  // App mode: show what the app's service reports (last position, points waiting) and notice when it ended.
+  useEffect(() => {
+    if (!sharing || !nativeMode.current) return;
+    let seenRunning = false;
+    const read = () => {
+      const st = parseNativeStatus(nativeTracker()?.status());
+      if (!st) return;
+      setNative(st);
+      if (st.lastFix) {
+        const fix = st.lastFix;
+        setLast((prev) => {
+          if (prev && prev.at === fix.capturedAt) return prev;
+          setTrail((tr) => [...tr, { latitude: fix.latitude, longitude: fix.longitude }].slice(-TRAIL_KEPT));
+          return { latitude: fix.latitude, longitude: fix.longitude, accuracy: fix.accuracy ?? 0, at: fix.capturedAt };
+        });
+      }
+      if (st.tracking) seenRunning = true;
+      else if (seenRunning) {
+        // The app's service ended by itself: the server said tracking is over for this order (delivered or cancelled).
+        nativeMode.current = false;
+        setNative(null);
+        setSharing(false);
+        setMessage(t("Tracking has ended for this order."));
+      }
+    };
+    read();
+    const timer = setInterval(read, 3000);
+    return () => clearInterval(timer);
+  }, [sharing, t]);
+
+  // The moment the phone gets a connection back, send what was kept.
+  useEffect(() => {
+    if (!sharing) return;
+    const onOnline = () => void flush();
+    window.addEventListener("online", onOnline);
+    void flush(); // anything left from before the page was reloaded
+    return () => window.removeEventListener("online", onOnline);
+  }, [sharing, flush]);
 
   const start = useCallback(() => {
     if (!("geolocation" in navigator)) {
       setMessage(t("Location is not available on this device."));
       return;
     }
-    if (watchId.current !== null) return;
+    if (watchId.current !== null || nativeMode.current) return;
+    const app = nativeTracker();
+    if (app) {
+      // Hand the delivery to the app: it asks for location permission itself and keeps sharing in the background.
+      const answer = app.start(orderId);
+      if (answer === "invalid") {
+        setMessage(t("The app could not start sharing for this order."));
+        return;
+      }
+      nativeMode.current = true;
+      setMessage(answer === "needs_permission" ? t("Allow location access in the app…") : null);
+      setSharing(true);
+      return;
+    }
     setMessage(t("Allow location access in your browser…"));
     watchId.current = navigator.geolocation.watchPosition(
       send,
@@ -163,7 +274,7 @@ export default function LocationSharer({ orderId, autoStart = false, destination
     });
     setSharing(true);
     void holdScreenAwake();
-  }, [send, stop, holdScreenAwake, t]);
+  }, [send, stop, holdScreenAwake, t, orderId]);
 
   // Start by itself right after "Start delivery", or when location was already allowed for this site.
   useEffect(() => {
@@ -175,6 +286,11 @@ export default function LocationSharer({ orderId, autoStart = false, destination
   }, [autoStart, permission, sharing, start]);
 
   const ago = last ? Math.max(0, Math.round((now - last.at) / 1000)) : null;
+  // The road ahead and the next turn, worked out again from the latest position (so it follows a change of road).
+  const plan = useRoutePlan(orderId, sharing);
+  // In the app the server's answer to each point is not seen by the page, so the time left comes from the route instead.
+  const shownEta = eta ?? (nativeMode.current && plan?.available && plan.durationSeconds != null && plan.distanceMetres != null ? { durationSeconds: plan.durationSeconds, distanceMetres: plan.distanceMetres, source: plan.source as string | undefined } : null);
+  const approach = last && destination ? describeApproach(last, destination) : null;
 
   return (
     <div className="mt-3 rounded-lg border bg-white p-3 text-sm">
@@ -191,10 +307,30 @@ export default function LocationSharer({ orderId, autoStart = false, destination
             {ago === null ? t("Getting your position…") : t("Last sent {n}s ago", { n: ago })}
             {last ? ` · ±${Math.round(last.accuracy)} m` : ""}
           </p>
-          {eta ? (
+          {native?.signedOut && (
+            <p className="mt-1 rounded bg-red-50 p-2 text-xs text-red-800" data-testid="native-signed-out">
+              {t("The app is signed out. Sign in again in the app to keep sending your position.")}
+            </p>
+          )}
+          {nativeMode.current && (
+            <p className="mt-1 text-xs text-green-800" data-testid="native-active">
+              {t("Sharing runs in the TrackBot app, so it keeps working with the screen off.")}
+            </p>
+          )}
+          {(native?.queued ?? 0) > 0 && (
+            <p className="mt-1 text-xs text-amber-800" data-testid="queued-points">
+              {t("{n} saved points will be sent when you are back online.", { n: native?.queued ?? 0 })}
+            </p>
+          )}
+          {waiting > 0 && !nativeMode.current && (
+            <p className="mt-1 text-xs text-amber-800" data-testid="queued-points">
+              {t("{n} saved points will be sent when you are back online.", { n: waiting })}
+            </p>
+          )}
+          {shownEta ? (
             <div className="mt-2 rounded-lg bg-blue-50 p-3 text-blue-950">
-              <p className="text-lg font-semibold">{t("About {time} to the customer", { time: formatMinutes(eta.durationSeconds) })}</p>
-              <p className="text-xs">{t("{distance} away. Updated as you move.", { distance: formatDistance(eta.distanceMetres) })}</p>
+              <p className="text-lg font-semibold">{t("About {time} to the customer", { time: formatMinutes(shownEta.durationSeconds) })}{shownEta.source === "estimate" ? ` (${t("estimate")})` : ""}</p>
+              <p className="text-xs">{t("{distance} away. Updated as you move.", { distance: formatDistance(shownEta.distanceMetres) })}</p>
             </div>
           ) : (
             !destination && (
@@ -203,9 +339,31 @@ export default function LocationSharer({ orderId, autoStart = false, destination
               </p>
             )
           )}
-          {last && <TrackingMap position={{ latitude: last.latitude, longitude: last.longitude, accuracy: last.accuracy, updatedAt: new Date(last.at) }} trail={trail} destination={destination} className="mt-2 h-72 md:h-96" />}
+          {plan?.kind === "road" && plan.nextStep && (
+            <div className="mt-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sky-950">
+              <p className="text-xs font-semibold uppercase tracking-wide text-sky-700">{t("Next turn")}</p>
+              <p className="text-base font-semibold">{plan.nextStep.instruction}</p>
+              <p className="text-xs">{t("in {distance}", { distance: formatDistance(plan.nextStep.distanceMetres) })}</p>
+              {plan.rerouted && <p className="mt-1 text-xs font-medium text-sky-800">{t("Rerouted: new road worked out from where you are.")}</p>}
+            </div>
+          )}
+          {plan?.kind === "estimate" && (
+            <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900" data-testid="estimate-notice">
+              <p className="font-semibold">{t("Straight-line estimate only")}</p>
+              <p>{t("Road directions are not available right now. The dotted line goes straight to the customer's spot and is not a road route: choose your own road.")}</p>
+            </div>
+          )}
+          {(approach || landmark) && (
+            <div className="mt-2 rounded-lg bg-red-50 p-3 text-sm text-red-950">
+              {approach && <p className="font-medium">{t("Customer's spot: {distance} to the {direction}", { distance: formatDistance(approach.distanceMetres), direction: t(approach.direction) })}</p>}
+              {landmark && <p className="mt-1"><span className="font-semibold">{t("Landmark:")}</span> {landmark}</p>}
+              <p className="mt-1 text-xs text-red-800">{t("The building on the customer's pin is coloured red on the map, where the map data has it.")}</p>
+            </div>
+          )}
+          {last && <TrackingMap position={{ latitude: last.latitude, longitude: last.longitude, accuracy: last.accuracy, updatedAt: new Date(last.at) }} trail={trail} destination={destination} plannedRoute={plan?.available ? plan.geometry ?? null : null} rerouted={plan?.kind === "road" && (plan?.rerouted ?? false)} routeKind={plan?.available ? plan.kind ?? null : null} className="mt-2 h-72 md:h-96" />}
+          {destination && <StreetPhotos latitude={destination.latitude} longitude={destination.longitude} />}
           <p className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-900">
-            {t("Keep this page open and your screen on. Phones pause location when the screen is off or you switch apps.")}
+            {nativeMode.current ? t("You can switch apps or turn the screen off. Sharing stops when the delivery ends.") : t("Keep this page open and your screen on. Phones pause location when the screen is off or you switch apps.")}
           </p>
         </>
       ) : (

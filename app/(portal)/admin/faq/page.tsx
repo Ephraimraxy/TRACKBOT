@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { useConfirm } from "@/components/ui/confirm-dialog";
+
 type Faq = {
   id: string;
   question: string;
@@ -13,6 +15,7 @@ type Faq = {
 const EMPTY = { question: "", answer: "", keywords: "" };
 
 export default function AdminFaqPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [form, setForm] = useState(EMPTY);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -74,7 +77,7 @@ export default function AdminFaqPage() {
   };
 
   const remove = async (f: Faq) => {
-    if (!window.confirm(`Delete “${f.question}”?`)) return;
+    if (!(await confirm({ title: "Delete FAQ entry", message: `Delete “${f.question}”?`, confirmLabel: "Delete", destructive: true }))) return;
     try {
       await call(`/api/faqs/${f.id}`, "DELETE");
       if (editingId === f.id) {
@@ -95,6 +98,7 @@ export default function AdminFaqPage() {
 
   return (
     <div className="p-4 md:p-6">
+      {confirmDialog}
       <h1 className="text-2xl font-semibold">Chatbot FAQ</h1>
       <p className="mb-4 text-sm text-gray-500">
         The chatbot answers questions about delivery, payment, returns and opening hours{" "}

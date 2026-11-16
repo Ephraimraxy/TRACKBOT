@@ -43,7 +43,6 @@ const order = await call('POST', '/api/orders', client, {
   userId: client.id,
   addresse: { rue: '12 Rue Live', ville: 'Keffi', wilaya: 'Nasarawa', codePostal: '961101' },
   produits: [{ produitId: productId, quantite: 1 }],
-  payment: { cardNumber: '4242424242424242', cvc: '123', expirationDate: '12/30', legalName: 'Live Test' },
 });
 check('customer places order', order.status === 201, `status=${order.status}`);
 const orderId = order.body?.data?.id;
@@ -90,7 +89,7 @@ for (let page = 1; page <= 20 && !notified; page++) {
 }
 check('customer notified (Delivered)', notified);
 const dn = await call('GET', `/api/users/${d1.id}/notifications`, d1);
-check('driver notified of assignment', dn.status === 200 && JSON.stringify(dn.body).includes('Nouvelle livraison'), `status=${dn.status}`);
+check('driver notified of assignment', dn.status === 200 && JSON.stringify(dn.body).includes('New delivery assigned'), `status=${dn.status}`);
 
 // 7 pages (route guards and compilation)
 const page = async (path, who) => (await fetch(`${BASE}${path}`, { redirect: 'manual', headers: { cookie: who?.cookie ?? '' } }));

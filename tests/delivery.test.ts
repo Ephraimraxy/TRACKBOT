@@ -123,16 +123,18 @@ describe("assignDriver", () => {
 });
 
 describe("delivery board (admin)", () => {
-  it("lists assignable and in-delivery orders with their driver, excluding delivered and cancelled", async () => {
+  it("lists assignable, in-delivery and delivered-but-unconfirmed orders with their driver, excluding received and cancelled", async () => {
     const { client, admin, driver } = await world();
     const open = await orderAt(client, admin, S.EXPEDIEE);
     const rolling = await orderAt(client, admin, S.EN_LIVRAISON);
-    await orderAt(client, admin, S.LIVREE);
+    const delivered = await orderAt(client, admin, S.LIVREE); // the customer has not confirmed receipt yet
+    const closed = await orderAt(client, admin, S.LIVREE);
+    await changeOrderStatus(db, { orderId: closed, to: S.RECUE, actor: { id: client.id, role: R.CLIENT } });
     await orderAt(client, admin, S.ANNULEE);
     await assignDriver(db, { orderId: open, driverId: driver.id, actor: adminActor(admin) });
 
     const board = await listDeliveryBoard(db, adminActor(admin));
-    expect(board.map((o) => o.id).sort()).toEqual([open, rolling].sort());
+    expect(board.map((o) => o.id).sort()).toEqual([open, rolling, delivered].sort());
     expect(board.find((o) => o.id === open)?.livraison?.livreur.id).toBe(driver.id);
     expect(board.find((o) => o.id === rolling)?.livraison).toBeNull();
   });

@@ -23,7 +23,22 @@ function r2Pattern() {
   }
 }
 
+// Headers sent with every response. A full Content-Security-Policy is not set because the map tiles,
+// image storage and Next.js inline scripts would each need a hand-tuned allowance (see the report, 5.4).
+const securityHeaders = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+  // Only this site may ask for the position (the delivery person's phone); camera and microphone are never used.
+  { key: "Permissions-Policy", value: "geolocation=(self), camera=(), microphone=()" },
+];
+
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
   env: { NEXT_PUBLIC_R2_PUBLIC_URL: r2PublicUrl ?? "" },
   images: {
     remotePatterns: r2Pattern(),

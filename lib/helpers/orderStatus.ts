@@ -14,7 +14,9 @@ export const getStatusColor = (statut: string): string => {
     case CommandeStatut.EN_LIVRAISON:
       return "text-cyan-600 bg-cyan-100";
     case CommandeStatut.LIVREE:
-      return "text-green-600 bg-green-100";
+      return "text-teal-700 bg-teal-100";
+    case CommandeStatut.RECUE:
+      return "text-green-700 bg-green-100";
     case CommandeStatut.ANNULEE:
       return "text-red-600 bg-red-100";
     default:

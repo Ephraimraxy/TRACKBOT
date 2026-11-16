@@ -35,7 +35,7 @@ export async function GET(_req: NextRequest) {
       prisma.commande.aggregate({
         _sum: { montant: true },
         where: {
-          statut: CommandeStatut.LIVREE,
+          statut: { in: [CommandeStatut.LIVREE, CommandeStatut.RECUE] },
           lignesCommande: {
             some: {
               produit: {
@@ -96,7 +96,7 @@ export async function GET(_req: NextRequest) {
       }),
       prisma.commande.findMany({
         where: {
-          statut: CommandeStatut.LIVREE,
+          statut: { in: [CommandeStatut.LIVREE, CommandeStatut.RECUE] },
           lignesCommande: {
             some: {
               produit: {

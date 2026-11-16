@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import getAuth from "@/lib/auth/getAuth";
 import { triggerEmailVerification } from "@/lib/helpers/emailService";
 import { ERROR_MESSAGES } from "@/lib/constants/settings";
+import { createRateLimiter } from "@/lib/utils/rateLimit";
+
+// A code e-mail costs money and can be used to pester someone: 3 requests per 10 minutes per account.
+const allowSend = createRateLimiter({ limit: 3, windowMs: 10 * 60_000 });
 
 export async function POST(req: Request) {
   try {
@@ -32,6 +36,13 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { message: "Email address already verified" },
         { status: 200 }
+      );
+    }
+
+    if (!allowSend(session.user.id)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a few minutes and try again." },
+        { status: 429 }
       );
     }
 

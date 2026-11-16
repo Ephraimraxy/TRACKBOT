@@ -10,6 +10,7 @@ interface DeliveryAddressFormProps {
     city: string;
     wilaya: string;
     postalCode: string;
+    landmark: string;
   };
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   errors: { [key: string]: string };
@@ -144,6 +145,35 @@ export default function DeliveryAddressForm({
             <p className="text-red-500 text-sm float-right">
               {errors["addresse.codePostal"]}
             </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <InputGroup className="focus-within:shadow-none">
+            <InputGroup.Text
+              className={cn(satoshi.className, "text-gray-700 font-medium")}
+            >
+              <T>Landmark</T>
+            </InputGroup.Text>
+            <InputGroup.Input
+              type="text"
+              name="landmark"
+              value={deliveryAddress.landmark}
+              onChange={onChange}
+              maxLength={200}
+              placeholder="e.g. blue gate opposite the mosque (optional)"
+              className={cn(
+                satoshi.className,
+                "text-black placeholder:text-gray-400 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none transition-all duration-200",
+                errors["addresse.repere"] && "border-red-500"
+              )}
+            />
+          </InputGroup>
+          <p className="text-xs text-gray-500">
+            <T>A landmark or directions help the delivery person find the right building.</T>
+          </p>
+          {errors["addresse.repere"] && (
+            <p className="text-red-500 text-sm float-right">{errors["addresse.repere"]}</p>
           )}
         </div>
       </div>

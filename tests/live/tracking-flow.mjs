@@ -40,9 +40,8 @@ const otherDriver = await login('livreur2@email.com');
 const productId = (await call('GET', '/api/products?pageSize=1')).body.data[0].id;
 const order = await call('POST', '/api/orders', client, {
   userId: client.id,
-  addresse: { rue: '5 Rue GPS', ville: 'Keffi', wilaya: 'Nasarawa', codePostal: '961101' },
+  addresse: { rue: '5 Rue GPS', ville: 'Keffi', wilaya: 'Nasarawa', codePostal: '961101', latitude: 8.852, longitude: 7.879 },
   produits: [{ produitId: productId, quantite: 1 }],
-  payment: { cardNumber: '4242424242424242', cvc: '123', expirationDate: '12/30', legalName: 'GPS Test' },
 });
 const id = order.body.data.id;
 for (const s of ['EN_PREPARATION', 'EXPEDIEE']) await call('PATCH', `/api/orders/${id}/status`, admin, { statut: s });
@@ -67,6 +66,19 @@ check('invalid coordinates rejected (400)', (await call('POST', `/api/delivery/o
 check('driver posts a point (201)', (await call('POST', `/api/delivery/orders/${id}/location`, driver, here)).status === 201);
 check('immediate repeat is throttled (429)', (await call('POST', `/api/delivery/orders/${id}/location`, driver, here)).status === 429);
 
+// the planned road and the next turn. Turns exist only for a real road route; if the routing server is unreachable the
+// answer is a straight-line estimate, labelled as such, and must carry no turn-by-turn directions.
+const routeD = await call('GET', `/api/orders/${id}/route`, driver);
+const rd = routeD.body?.data;
+check('the delivery person gets a route: turns for a road, none for a straight-line estimate',
+  routeD.status === 200 && rd.geometry.length >= 2 &&
+  (rd.kind === 'road' ? typeof rd.nextStep?.instruction === 'string' : rd.kind === 'estimate' && rd.nextStep === undefined),
+  `kind=${rd?.kind}`);
+const routeC = await call('GET', `/api/orders/${id}/route`, client);
+check('the customer gets the route line but not the turn-by-turn steps', routeC.status === 200 && routeC.body.data.geometry.length >= 2 && routeC.body.data.nextStep === undefined);
+check('a stranger cannot read the route (403)', (await call('GET', `/api/orders/${id}/route`, stranger)).status === 403);
+check('anonymous cannot read the route (401)', (await call('GET', `/api/orders/${id}/route`, null)).status === 401);
+
 t = await call('GET', `/api/orders/${id}/tracking`, client);
 check('customer sees the point', t.body.data.location?.latitude === here.latitude && t.body.data.location?.longitude === here.longitude);
 check('driver privacy: first name only, no ids/emails', typeof t.body.data.driverFirstName === 'string' && !JSON.stringify(t.body).includes(driver.id) && !JSON.stringify(t.body).includes('livreur1@'));
@@ -86,9 +98,19 @@ check('tracking page redirects anonymous to login', anonPage.status >= 300 && an
 
 await call('PATCH', `/api/delivery/orders/${id}/status`, driver, { statut: 'LIVREE' });
 t = await call('GET', `/api/orders/${id}/tracking`, client);
-check('after delivery the location is no longer exposed', t.body.data.status === 'LIVREE' && t.body.data.location === null && t.body.data.trackingActive === false);
-check('after delivery the driver cannot post (409)', (await call('POST', `/api/delivery/orders/${id}/location`, driver, moved)).status === 409);
-check('timeline has all five steps', t.body.data.history.length === 5);
+// Delivered is not the end: the delivery stays open and the map keeps showing where the driver stopped.
+check('after "delivered" the delivery stays open, waiting for the customer', t.body.data.status === 'LIVREE' && t.body.data.awaitingConfirmation === true && t.body.data.mapOpen === true && t.body.data.location !== null && t.body.data.trackingActive === false);
+check('after delivered the driver cannot post more positions (409)', (await call('POST', `/api/delivery/orders/${id}/location`, driver, moved)).status === 409);
+check('the driver cannot close the delivery', (await call('POST', `/api/orders/${id}/receive`, driver)).status === 403);
+check('another customer cannot close it', (await call('POST', `/api/orders/${id}/receive`, stranger)).status === 404);
+check('the owner is not a customer, so the customer endpoint refuses', (await call('POST', `/api/orders/${id}/receive`, admin)).status === 403);
+
+const received = await call('POST', `/api/orders/${id}/receive`, client);
+check('the customer confirms receipt (200)', received.status === 200 && received.body.data.statut === 'RECUE');
+t = await call('GET', `/api/orders/${id}/tracking`, client);
+check('once received the location is no longer exposed', t.body.data.status === 'RECUE' && t.body.data.location === null && t.body.data.mapOpen === false);
+check('confirming twice is refused (409)', (await call('POST', `/api/orders/${id}/receive`, client)).status === 409);
+check('timeline has all six steps plus the placed order', t.body.data.history.length === 6);
 
 console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
 process.exit(failures === 0 ? 0 : 1);

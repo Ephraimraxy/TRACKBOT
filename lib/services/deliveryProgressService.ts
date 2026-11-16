@@ -40,6 +40,7 @@ export async function updateEtaAndReminders(
       id: true,
       etaSecondes: true,
       distanceMetres: true,
+      etaSource: true,
       etaMisAJour: true,
       dernierRappel: true,
       alerteProcheEnvoyee: true,
@@ -64,12 +65,12 @@ export async function updateEtaAndReminders(
     delivery.distanceMetres != null &&
     now.getTime() - delivery.etaMisAJour.getTime() < ETA_REFRESH_SECONDS * 1000;
   if (fresh) {
-    eta = { durationSeconds: delivery.etaSecondes!, distanceMetres: delivery.distanceMetres!, source: "route", updatedAt: delivery.etaMisAJour! };
+    eta = { durationSeconds: delivery.etaSecondes!, distanceMetres: delivery.distanceMetres!, source: delivery.etaSource === "estimate" ? "estimate" : "route", updatedAt: delivery.etaMisAJour! };
   } else {
     const computed = await estimate(position, { latitude: destination.latitude, longitude: destination.longitude });
     await db.livraison.update({
       where: { id: delivery.id },
-      data: { etaSecondes: computed.durationSeconds, distanceMetres: computed.distanceMetres, etaMisAJour: now },
+      data: { etaSecondes: computed.durationSeconds, distanceMetres: computed.distanceMetres, etaSource: computed.source, etaMisAJour: now },
     });
     eta = { ...computed, updatedAt: now };
   }
