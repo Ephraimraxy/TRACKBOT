@@ -41,7 +41,7 @@ export default function ConfirmationModal({
               Confirm status change
             </h3>
             <p className="text-sm text-gray-600 mb-6">
-              Do you really want to change the status of order #{orderId} à{" "}
+              Do you really want to change the status of order #{orderId} to{" "}
               <span className="font-semibold">{statusLabels[newStatus]}</span> ?
             </p>
             <div className="flex justify-end gap-4">

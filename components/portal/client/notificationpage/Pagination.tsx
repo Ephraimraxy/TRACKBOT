@@ -70,7 +70,7 @@ export default function Pagination({
   return (
     <div className="mt-6 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
       <p className="text-sm text-gray-600">
-        <T>Showing</T> <span className="font-medium">{startItem}</span> à{" "}
+        <T>Showing</T> <span className="font-medium">{startItem}</span> <T>to</T>{" "}
         <span className="font-medium">{endItem}</span> <T>of</T>{" "}
         <span className="font-medium">{totalItems}</span> <T>notifications</T>
       </p>
