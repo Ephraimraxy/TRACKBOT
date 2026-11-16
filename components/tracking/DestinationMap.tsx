@@ -6,7 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import { highlightDestinationBuilding } from "@/lib/maps/destination";
 import { safely } from "@/lib/maps/safe";
-import { ensureMapStyles, fallbackFor, HOME_PIN_SVG, MAX_ZOOM, styleFor, TILT } from "@/lib/maps/styles";
+import { ensureMapStyles, fallBackToEsri, fallbackFor, HOME_PIN_SVG, imageryFailed, maxZoomNow, styleFor, TILT } from "@/lib/maps/styles";
 
 /** A 3D satellite map with one pin: the delivery address the customer chose. Shown before the delivery starts. */
 export default function DestinationMap({ latitude, longitude, className = "h-72", onUnsupported }: { latitude: number; longitude: number; className?: string; onUnsupported?: () => void }) {
@@ -23,7 +23,7 @@ export default function DestinationMap({ latitude, longitude, className = "h-72"
       if (cancelled || !box.current || map.current) return;
       let m: MapLibreMap;
       try {
-        m = new ml.Map({ container: box.current, style: styleFor("satellite"), center: [longitude, latitude], zoom: 17.5, pitch: TILT, maxPitch: 80, maxZoom: MAX_ZOOM, attributionControl: { compact: true } });
+        m = new ml.Map({ container: box.current, style: styleFor("satellite"), center: [longitude, latitude], zoom: 17.5, pitch: TILT, maxPitch: 80, maxZoom: maxZoomNow(), attributionControl: { compact: true } });
       } catch {
         unsupported.current?.();
         return;
@@ -31,6 +31,7 @@ export default function DestinationMap({ latitude, longitude, className = "h-72"
       m.addControl(new ml.NavigationControl({ visualizePitch: true }), "bottom-left");
       let fellBack = false;
       m.on("error", (e) => {
+        if (imageryFailed(e)) return void safely(() => fallBackToEsri(m), undefined);
         const status = (e as unknown as { error?: { status?: number } }).error?.status;
         if (!fellBack && !safely(() => m.isStyleLoaded(), true) && !status) {
           fellBack = true;

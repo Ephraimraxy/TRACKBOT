@@ -1,6 +1,6 @@
 import type { StyleSpecification } from "maplibre-gl";
 
-import { LABELS, SATELLITE } from "@/lib/config/mapLayers";
+import { currentLabels, currentSatellite, imageryFallback, SATELLITE, type BaseLayer } from "@/lib/config/mapLayers";
 
 /**
  * Map styles for the tracking and pin maps (MapLibre GL, which draws maps in 3D with WebGL).
@@ -19,11 +19,16 @@ export const STREET_STYLE_URL = `${OPENFREEMAP}/styles/liberty`;
 /** Zoom at which buildings start to stand up. */
 const BUILDINGS_FROM_ZOOM = 14;
 
+/** The closest zoom worth showing for a satellite layer: one level past its real pictures (map zoom, so tile size is allowed for). */
+export const zoomCapFor = (layer: BaseLayer): number => Math.min(22, layer.maxZoom + (layer.zoomOffset ?? 0));
+
 export function satelliteStyle(): StyleSpecification {
-  const tileSize = SATELLITE.tileSize ?? 256;
-  const maxzoom = SATELLITE.maxNativeZoom + (SATELLITE.zoomOffset ?? 0);
+  const SAT = currentSatellite();
+  const LABELS = currentLabels();
+  const tileSize = SAT.tileSize ?? 256;
+  const maxzoom = SAT.maxNativeZoom + (SAT.zoomOffset ?? 0);
   const sources: StyleSpecification["sources"] = {
-    imagery: { type: "raster", tiles: [SATELLITE.url], tileSize, maxzoom, attribution: SATELLITE.attribution },
+    imagery: { type: "raster", tiles: [SAT.url], tileSize, maxzoom, attribution: SAT.attribution },
     // Building shapes and heights, drawn in 3D over the picture.
     openmaptiles: { type: "vector", url: `${OPENFREEMAP}/planet`, attribution: "© OpenStreetMap contributors © OpenFreeMap" },
   };
@@ -106,8 +111,32 @@ export function ensureMapStyles() {
 export const HOME_PIN_SVG =
   '<svg width="34" height="44" viewBox="0 0 30 38" xmlns="http://www.w3.org/2000/svg"><path d="M15 1C7.8 1 2 6.6 2 13.6 2 23 15 37 15 37s13-14 13-23.4C28 6.6 22.2 1 15 1z" fill="#dc2626" stroke="#fff" stroke-width="2"/><path d="M8.5 14.2 15 8.5l6.5 5.7V21a1 1 0 0 1-1 1h-3.3v-5h-4.4v5H9.5a1 1 0 0 1-1-1z" fill="#fff"/></svg>';
 
-export const MAX_ZOOM = 21;
+/** The closest the map zooms: one level past the real pictures of the chosen provider, so nobody zooms into a blur. */
+export const MAX_ZOOM = zoomCapFor(SATELLITE);
+/** Same, for a map being created now (lower after the visit has switched to Esri). */
+export const maxZoomNow = (): number => zoomCapFor(currentSatellite());
 /** The closest the automatic framing goes; the person can always zoom closer by hand. */
 export const AUTO_FIT_MAX_ZOOM = 18;
 /** Camera tilt used by the 3D view, in degrees. */
 export const TILT = 55;
+
+/** Is this map error the satellite provider refusing us (bad or over-limit key)? Then the free Esri pictures should take over. */
+export function imageryFailed(e: unknown): boolean {
+  const ev = e as { sourceId?: string; error?: { status?: number } } | null | undefined;
+  return ev?.sourceId === "imagery" && [401, 402, 403, 429].includes(ev?.error?.status ?? 0);
+}
+
+/**
+ * Switch a map to the free Esri pictures after the chosen provider failed. Once per page visit; keeps the viewer where
+ * they were and lowers the zoom limit to Esri's. Returns true if it switched.
+ */
+export function fallBackToEsri(map: { setStyle(style: StyleSpecification): unknown; setMaxZoom(z: number): unknown; getZoom(): number; setZoom(z: number): unknown }): boolean {
+  const switched = imageryFallback.activate();
+  const cap = zoomCapFor(currentSatellite());
+  if (switched || imageryFallback.active()) {
+    map.setStyle(satelliteStyle());
+    map.setMaxZoom(cap);
+    if (map.getZoom() > cap) map.setZoom(cap);
+  }
+  return switched;
+}

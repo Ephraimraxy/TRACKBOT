@@ -9,11 +9,12 @@ import { Box, Crosshair, Layers, X } from "lucide-react";
 
 import { T } from "@/components/i18n/T";
 import { useI18n } from "@/components/i18n/LocaleProvider";
-import { LABELS, SATELLITE, STREET } from "@/lib/config/mapLayers";
+import { currentSatellite } from "@/lib/config/mapLayers";
+import { addBaseTiles } from "@/lib/maps/leafletSatellite";
 import { pickEngine } from "@/lib/maps/engine";
 import { safeSetData, safely } from "@/lib/maps/safe";
 import { highlightDestinationBuilding } from "@/lib/maps/destination";
-import { circlePolygon, ensureMapStyles, fallbackFor, HOME_PIN_SVG, MAX_ZOOM, styleFor, TILT, type MapMode } from "@/lib/maps/styles";
+import { circlePolygon, ensureMapStyles, fallBackToEsri, fallbackFor, HOME_PIN_SVG, imageryFailed, maxZoomNow, styleFor, TILT, type MapMode } from "@/lib/maps/styles";
 
 export interface Pin {
   latitude: number;
@@ -69,7 +70,7 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
       const L = (await import("leaflet")).default as typeof import("leaflet");
       if (cancelled || !box.current || flat.current) return;
       const start = pinRef.current ? ([pinRef.current.latitude, pinRef.current.longitude] as [number, number]) : ([START[1], START[0]] as [number, number]);
-      const lm = L.map(box.current, { center: start, zoom: pinRef.current ? 18 : 15, maxZoom: 21 });
+      const lm = L.map(box.current, { center: start, zoom: pinRef.current ? 18 : 15, maxZoom: currentSatellite().maxZoom });
       const tiles = L.layerGroup().addTo(lm);
       const halo = L.circle(start, { radius: 0, color: "#2563eb", weight: 1, fillOpacity: 0.14 }).addTo(lm);
       flat.current = { L, map: lm, marker: null, halo, tiles };
@@ -85,7 +86,7 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
       const start = pinRef.current ? ([pinRef.current.longitude, pinRef.current.latitude] as [number, number]) : START;
       let m: MapLibreMap;
       try {
-        m = new ml.Map({ container: box.current, style: styleFor("satellite"), center: start, zoom: pinRef.current ? 18 : 15, pitch: TILT, maxPitch: 80, maxZoom: MAX_ZOOM, attributionControl: { compact: true } });
+        m = new ml.Map({ container: box.current, style: styleFor("satellite"), center: start, zoom: pinRef.current ? 18 : 15, pitch: TILT, maxPitch: 80, maxZoom: maxZoomNow(), attributionControl: { compact: true } });
       } catch {
         return buildFlat(); // no WebGL: use the flat map
       }
@@ -94,6 +95,7 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
       m.on("style.load", () => safely(() => addHalo(m), undefined));
       let fellBack = false;
       m.on("error", (e) => {
+        if (imageryFailed(e)) return void safely(() => fallBackToEsri(m), undefined);
         const status = (e as unknown as { error?: { status?: number } }).error?.status;
         if (!fellBack && !safely(() => m.isStyleLoaded(), true) && !status) {
           fellBack = true;
@@ -120,10 +122,7 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
   function drawFlatTiles(next: MapMode) {
     const f = flat.current;
     if (!f) return;
-    f.tiles.clearLayers();
-    const cfg = next === "satellite" ? SATELLITE : STREET;
-    f.L.tileLayer(cfg.url, { attribution: cfg.attribution, maxZoom: cfg.maxZoom, maxNativeZoom: cfg.maxNativeZoom, tileSize: cfg.tileSize ?? 256, zoomOffset: cfg.zoomOffset ?? 0 }).addTo(f.tiles);
-    if (next === "satellite" && LABELS) f.L.tileLayer(LABELS.url, { maxZoom: LABELS.maxZoom, maxNativeZoom: LABELS.maxNativeZoom }).addTo(f.tiles);
+    addBaseTiles(f.L, f.tiles, f.map, next);
   }
 
   function drawFlatPin(p: Pin | null) {
