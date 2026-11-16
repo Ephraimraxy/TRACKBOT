@@ -146,7 +146,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-10">
           <WelcomeCard
             firstName={session?.user?.prenom || "First name"}
-            lastName={session?.user?.nom || "Nom"}
+            lastName={session?.user?.nom || "Name"}
           />
           <DashboardStats stats={stats} />
         </div>

@@ -44,11 +44,13 @@ export async function POST(req: NextRequest) {
 
     const ligneCommandeData = await Promise.all(
       produits.map(async (line) => {
+        // A colour or size is checked only when the cart line has one. A product that has no colours or no sizes
+        // (a hand tool set sold in one standard size, say) must still be orderable.
         const produit = await prisma.produit.findUnique({
           where: {
             id: line.produitId,
-            couleurs: { some: { id: line.couleurId } },
-            tailles: { some: { id: line.tailleId } },
+            ...(line.couleurId ? { couleurs: { some: { id: line.couleurId } } } : {}),
+            ...(line.tailleId ? { tailles: { some: { id: line.tailleId } } } : {}),
           },
           select: {
             id: true,
@@ -56,11 +58,13 @@ export async function POST(req: NextRequest) {
             prix: true,
             couleurs: {
               select: { id: true, nom: true, code: true },
-              where: { id: line.couleurId },
+              where: { id: line.couleurId ?? "" },
+              take: 1,
             },
             tailles: {
               select: { id: true, nom: true },
-              where: { id: line.tailleId },
+              where: { id: line.tailleId ?? "" },
+              take: 1,
             },
             images: { select: { imagePublicId: true }, take: 1 },
           },
@@ -84,15 +88,10 @@ export async function POST(req: NextRequest) {
           prixUnit,
           imagePublicId: produit.images[0]?.imagePublicId ?? null,
           produitId: produit.id,
-          couleur: {
-            id: produit.couleurs[0].id,
-            nom: produit.couleurs[0].nom,
-            code: produit.couleurs[0].code,
-          },
-          taille: {
-            id: produit.tailles[0].id,
-            nom: produit.tailles[0].nom,
-          },
+          couleur: produit.couleurs[0]
+            ? { id: produit.couleurs[0].id, nom: produit.couleurs[0].nom, code: produit.couleurs[0].code }
+            : null,
+          taille: produit.tailles[0] ? { id: produit.tailles[0].id, nom: produit.tailles[0].nom } : null,
           tailleId: line.tailleId ?? null,
         };
       })

@@ -1,6 +1,7 @@
 "use client";
 
 import * as XLSX from "xlsx";
+import type { CommandeStatut } from "@prisma/client";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { JSX, useEffect, useState } from "react";
@@ -146,14 +147,14 @@ export default function OrderHistoryPage(): JSX.Element {
   const handleExport = () => {
     const data = orders.map((order) => ({
       ID: order.id,
-      Client: order.client
+      Customer: order.client
         ? `${order.client.prenom} ${order.client.nom}`
         : "Unknown",
       Email: order.client?.email || "Unknown",
       Date: extractDateString(order.date),
-      Statut: order.statut,
+      Status: STATUS_LABELS_EN[order.statut as CommandeStatut] ?? order.statut,
       "Total (₦)": order.montant.toFixed(2),
-      Articles: order.produits
+      Items: order.produits
         .map(
           (item) =>
             `${item.nomProduit} (${item.couleur?.nom}, ${item.taille?.nom}): ${item.quantite} x ₦${item.prixUnit}`
