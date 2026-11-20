@@ -153,3 +153,56 @@ describe("the owner's list", () => {
     await expect(resolvePaymentIssue(db, { actor: owner, id: "nope" })).rejects.toMatchObject({ code: "ORDER_NOT_FOUND" });
   });
 });
+
+describe("checking waiting payments with Paystack", () => {
+  const ago = (min: number) => new Date(Date.now() - min * 60_000);
+
+  async function waiting(answer: Partial<PaystackTransaction>, startedMinAgo = 30) {
+    const p = await startedPayment();
+    await db.paiementCommande.update({ where: { commandeId: p.orderId }, data: { date: ago(startedMinAgo) } });
+    return { ...p, client2: fake({ amount: p.expected, ...answer }) };
+  }
+
+  it("marks an order paid when Paystack says the customer did pay but the webhook never arrived", async () => {
+    const { reconcilePendingPayments } = await import("@/lib/services/paymentService");
+    const p = await waiting({});
+    const r = await reconcilePendingPayments(db, p.client2, { actor: { id: p.admin.id, role: R.ADMIN } });
+    expect(r).toMatchObject({ checked: 1, markedPaid: 1, stillWaiting: 0 });
+    expect((await db.paiementCommande.findUniqueOrThrow({ where: { commandeId: p.orderId } })).statut).toBe(P.VALIDE);
+    // running it again does nothing more
+    expect(await reconcilePendingPayments(db, p.client2, { actor: { id: p.admin.id, role: R.ADMIN } })).toMatchObject({ checked: 0 });
+  });
+
+  it("leaves abandoned payments waiting, records failures, and sends wrong amounts to review", async () => {
+    const { reconcilePendingPayments } = await import("@/lib/services/paymentService");
+    const owner = { id: (await world()).admin.id, role: R.ADMIN };
+    void owner;
+    const a = await waiting({ status: "abandoned" });
+    expect(await reconcilePendingPayments(db, a.client2, { actor: { id: a.admin.id, role: R.ADMIN } })).toMatchObject({ checked: 1, stillWaiting: 1 });
+    await resetDb();
+    const f = await waiting({ status: "failed" });
+    expect(await reconcilePendingPayments(db, f.client2, { actor: { id: f.admin.id, role: R.ADMIN } })).toMatchObject({ failed: 1 });
+    await resetDb();
+    const m = await waiting({ amount: 1 });
+    expect(await reconcilePendingPayments(db, m.client2, { actor: { id: m.admin.id, role: R.ADMIN } })).toMatchObject({ needsReview: 1 });
+    expect(await issues(m.orderId)).toHaveLength(1);
+  });
+
+  it("skips payments started a moment ago (the customer may still be paying), and cancelled orders", async () => {
+    const { reconcilePendingPayments } = await import("@/lib/services/paymentService");
+    const fresh = await waiting({}, 1);
+    expect(await reconcilePendingPayments(db, fresh.client2, { actor: { id: fresh.admin.id, role: R.ADMIN } })).toMatchObject({ checked: 0 });
+    await db.commande.update({ where: { id: fresh.orderId }, data: { statut: "ANNULEE" } });
+    await db.paiementCommande.update({ where: { commandeId: fresh.orderId }, data: { date: ago(60) } });
+    expect(await reconcilePendingPayments(db, fresh.client2, { actor: { id: fresh.admin.id, role: R.ADMIN } })).toMatchObject({ checked: 0 });
+  });
+
+  it("counts a payment it could not check, and is closed to everyone but the owner", async () => {
+    const { reconcilePendingPayments } = await import("@/lib/services/paymentService");
+    const p = await waiting({});
+    const broken: PaystackClient = { initialize: p.client2.initialize, verify: async () => { throw new Error("Paystack down"); } };
+    expect(await reconcilePendingPayments(db, broken, { actor: { id: p.admin.id, role: R.ADMIN } })).toMatchObject({ checked: 1, couldNotCheck: 1 });
+    await expect(reconcilePendingPayments(db, p.client2, { actor: { id: p.client.id, role: R.CLIENT } })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(reconcilePendingPayments(db, p.client2, { actor: { id: p.driver.id, role: R.LIVREUR } })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+});

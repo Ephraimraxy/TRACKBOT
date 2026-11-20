@@ -5,6 +5,7 @@ import Link from "next/link";
 
 type Analytics = {
   deliveries: number; averageMinutes: number | null; averageKm: number | null; withGpsProblems: number; withDeviations: number; tooFewPoints: number;
+  etaAccuracy?: { measured: number; road: { measured: number; averageErrorMinutes: number | null; within20Percent: number; tooOptimistic: number } | null; estimate: { measured: number; averageErrorMinutes: number | null; tooOptimistic: number } | null };
   drivers: { driverId: string; name: string; deliveries: number; averageMinutes: number | null; averageKm: number | null; averageSpeedKmh: number | null; withGpsProblems: number; withDeviations: number }[];
   recent: { orderId: string; driver: string; minutes: number | null; km: number | null; speedKmh: number | null; gpsProblems: boolean; deviations: boolean; tooFewPoints: boolean }[];
 };
@@ -51,6 +52,27 @@ export default function DeliveryAnalyticsPage() {
               <div key={k} className="rounded-lg border bg-white p-3"><dt className="text-xs text-gray-500">{k}</dt><dd className="text-base font-semibold">{v}</dd></div>
             ))}
           </dl>
+          <h2 className="mb-1 mt-5 text-sm font-semibold">How good were the time estimates?</h2>
+          {!data.etaAccuracy || data.etaAccuracy.measured === 0 ? (
+            <p className="rounded border border-dashed p-3 text-sm text-gray-600" data-testid="eta-accuracy">No finished delivery has both a first time estimate and a delivery time yet. It fills in as deliveries finish.</p>
+          ) : (
+            <div className="grid gap-2 text-sm sm:grid-cols-2" data-testid="eta-accuracy">
+              {data.etaAccuracy.road && (
+                <div className="rounded-lg border bg-white p-3">
+                  <p className="text-xs text-gray-500">Road-route estimates ({data.etaAccuracy.road.measured} deliveries)</p>
+                  <p className="text-base font-semibold">Off by {data.etaAccuracy.road.averageErrorMinutes} min on average</p>
+                  <p className="text-xs text-gray-600">{data.etaAccuracy.road.within20Percent} within 20% of the real time · {data.etaAccuracy.road.tooOptimistic} promised too little time</p>
+                </div>
+              )}
+              {data.etaAccuracy.estimate && (
+                <div className="rounded-lg border bg-white p-3">
+                  <p className="text-xs text-gray-500">Straight-line estimates ({data.etaAccuracy.estimate.measured} deliveries)</p>
+                  <p className="text-base font-semibold">Off by {data.etaAccuracy.estimate.averageErrorMinutes} min on average</p>
+                  <p className="text-xs text-gray-600">{data.etaAccuracy.estimate.tooOptimistic} promised too little time. A routing provider makes these better.</p>
+                </div>
+              )}
+            </div>
+          )}
           <h2 className="mb-1 mt-5 text-sm font-semibold">By delivery person</h2>
           <div className="overflow-x-auto rounded-lg border bg-white">
             <table className="w-full text-left text-sm">

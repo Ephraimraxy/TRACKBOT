@@ -6,7 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import { highlightDestinationBuilding } from "@/lib/maps/destination";
 import { safely } from "@/lib/maps/safe";
-import { ensureMapStyles, fallBackToEsri, fallbackFor, HOME_PIN_SVG, imageryFailed, maxZoomNow, styleFor, TILT } from "@/lib/maps/styles";
+import { addFootprintsLayer, ensureMapStyles, fallBackToEsri, fallbackFor, HOME_PIN_SVG, imageryFailed, maxZoomNow, styleFor, TILT } from "@/lib/maps/styles";
 
 /** A 3D satellite map with one pin: the delivery address the customer chose. Shown before the delivery starts. */
 export default function DestinationMap({ latitude, longitude, className = "h-72", onUnsupported }: { latitude: number; longitude: number; className?: string; onUnsupported?: () => void }) {
@@ -42,6 +42,7 @@ export default function DestinationMap({ latitude, longitude, className = "h-72"
       pin.className = "tb-home";
       pin.innerHTML = HOME_PIN_SVG;
       new ml.Marker({ element: pin, anchor: "bottom" }).setLngLat([longitude, latitude]).addTo(m);
+      m.on("style.load", () => safely(() => addFootprintsLayer(m), undefined));
       safely(() => highlightDestinationBuilding(m, { latitude, longitude }), undefined);
       map.current = m;
     })();

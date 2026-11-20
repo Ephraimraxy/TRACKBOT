@@ -33,11 +33,11 @@ Payment is separate from these steps: Paid, Awaiting payment or Payment failed.
 - Tap **Confirm delivery** at the door.
 
 ## The shop owner
-- **Payments to look at** (link on the Deliveries page): a wrong amount, a second payment, a dispute or a refund. Do the refund or the dispute answer in Paystack, then mark it resolved.
+- **Payments to look at** (link on the Deliveries page): a wrong amount, a second payment, a dispute or a refund. Do the refund or the dispute answer in Paystack, then mark it resolved. The button **Check waiting payments with Paystack** asks Paystack about payments that were started but never confirmed (for example the customer closed the browser and the webhook did not arrive) and updates those orders.
 - **Deliveries page:** assign delivery people, **Watch live**, **Close as received**, **Replay the route** for delivered orders, and **Delivery analytics**.
 - **Watch live:** the same map as the customer, plus the next turn when a road route exists.
 - **Replay the route:** play or scrub the movement. Findings in plain words: GPS went quiet (gaps), vague fixes, impossible jumps (ignored), late points, stops, and whether the delivery person left the planned road.
-- **Delivery analytics:** finished deliveries, average time and distance, GPS problems and detours, per delivery person.
+- **Delivery analytics:** finished deliveries, average time and distance, GPS problems and detours, per delivery person, and **how good the time estimates were**: the first estimate of each delivery against how long it really took, for road routes and straight-line estimates separately.
 - **Ask the assistant:** "how did delivery a1b2c3d4 go?", "who is busy?", "what is stuck?". It reads the same reports and tells you which button to press.
 - **Settings in Railway:** see `docs/routing-provider.md` (road routing) and the satellite variables in `.env.example`. Variables starting with `NEXT_PUBLIC_` need a redeploy.
 
@@ -49,6 +49,6 @@ Payment is separate from these steps: Paid, Awaiting payment or Payment failed.
 
 ## Known limits
 - No routing provider is configured by default: times are straight-line estimates until one is set.
-- The 3D buildings come from OpenStreetMap; where a house was never mapped it shows flat.
+- The 3D buildings come from OpenStreetMap; where a house was never mapped it shows flat. Open footprint data can fill the gap: see `docs/footprints.md`.
 - Tracking needs the page open with the screen on (browser limit).
 - Payments: wrong amounts, double payments, disputes and refunds are recorded on the **Payments to look at** page, but refunds and dispute answers are done in the Paystack dashboard (see `docs/payment-issues.md`).

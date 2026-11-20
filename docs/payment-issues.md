@@ -22,8 +22,11 @@ Each issue is stored once per (Paystack reference, kind), so Paystack retrying a
 In the Paystack dashboard, Settings, API Keys & Webhooks, the webhook URL is `https://<your-site>/api/payments/paystack/webhook`
 (already needed for payments). Paystack sends dispute and refund events to the same address; no new setting is needed.
 
+## Waiting payments
+The button **Check waiting payments with Paystack** (`POST /api/admin/payments/reconcile`, owner only, 5 a minute) asks Paystack about up to the 50 newest payments that were started at least 5 minutes ago and never confirmed. Each answer is applied exactly as the return page and the webhook do (paid, failed, still waiting, or sent to review), so it is safe to repeat. Cancelled orders and payments started a moment ago are skipped.
+
 ## Limits (be honest about them)
 - The system **does not move money**: refunds and dispute answers are done in the Paystack dashboard.
 - The dispute and refund event shapes follow Paystack's documentation and are read defensively, but they have **not been tested against real Paystack events**. Trigger a test dispute or refund in Paystack's test mode before relying on them.
 - A customer cannot normally choose the amount on Paystack's page, so wrong amounts should be rare; the check protects against a changed price between checkout and payment, tampering and unexpected channels.
-- Nothing yet reconciles Paystack's transaction list against orders automatically: a payment whose webhook never arrives is only caught when the customer returns to the site or the owner checks Paystack.
+- Reconciliation is on demand (the button), not automatic, and only covers payments that were started in this app. A Paystack payment that has no matching order here is not found.

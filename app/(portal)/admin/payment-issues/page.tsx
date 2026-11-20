@@ -17,6 +17,8 @@ export default function PaymentIssuesPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [checking, setChecking] = useState(false);
+  const [checked, setChecked] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -48,6 +50,23 @@ export default function PaymentIssuesPage() {
     }
   };
 
+  const reconcile = async () => {
+    setChecking(true);
+    setChecked(null);
+    try {
+      const res = await fetch("/api/admin/payments/reconcile", { method: "POST" });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error ?? "Could not check with Paystack.");
+      const d = json.data as { checked: number; markedPaid: number; stillWaiting: number; failed: number; needsReview: number; couldNotCheck: number };
+      setChecked(d.checked === 0 ? "No waiting payments to check." : `Checked ${d.checked}: ${d.markedPaid} marked paid, ${d.stillWaiting} still waiting, ${d.failed} failed, ${d.needsReview} need review${d.couldNotCheck ? `, ${d.couldNotCheck} could not be checked` : ""}.`);
+      await load();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setChecking(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-4xl p-4" data-testid="payment-issues">
       <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -57,6 +76,12 @@ export default function PaymentIssuesPage() {
           <option value="resolved">Resolved</option>
         </select>
         <Link href="/admin/deliveries" className="ml-auto text-sm text-blue-700 underline">Deliveries</Link>
+      </div>
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <button type="button" onClick={reconcile} disabled={checking} className="rounded border border-blue-600 px-3 py-1 text-sm text-blue-700 hover:bg-blue-50 disabled:opacity-40" data-testid="reconcile">
+          {checking ? "Checking…" : "Check waiting payments with Paystack"}
+        </button>
+        {checked && <span className="text-sm text-gray-700" data-testid="reconcile-result">{checked}</span>}
       </div>
       <p className="mb-3 text-sm text-gray-600">An order is only marked paid when Paystack reports exactly the order total in naira. Anything else, a second payment, or a dispute shows here. Refunds and dispute answers are done in the Paystack dashboard; mark an item resolved when you have dealt with it.</p>
       {error && <p className="mb-3 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}

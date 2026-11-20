@@ -9,7 +9,7 @@ export interface LngLatPoint {
 
 const EMPTY: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
 /** The 3D building layers of the two styles (satellite and street). */
-const BUILDING_LAYERS = ["buildings-3d", "building-3d"];
+const BUILDING_LAYERS = ["buildings-3d", "building-3d", "footprints-3d"];
 
 /**
  * Destination intelligence: colour the building that stands on the customer's pin red, in 3D, so the delivery person

@@ -71,3 +71,22 @@ describe("the assistant and payment issues", () => {
     expect(buildSystemPrompt("en", R.ADMIN)).toContain("payment_issues");
   });
 });
+
+import { POST as reconcileRoute } from "@/app/api/admin/payments/reconcile/route";
+
+describe("POST /api/admin/payments/reconcile", () => {
+  it("401 for visitors, 403 for customers and delivery people, and a clear 503 for the owner when Paystack is not configured", async () => {
+    const w = await withIssue();
+    const keep = process.env.PAYSTACK_SECRET_KEY;
+    delete process.env.PAYSTACK_SECRET_KEY;
+    login(null);
+    expect((await reconcileRoute()).status).toBe(401);
+    login({ id: w.client.id, role: R.CLIENT });
+    expect((await reconcileRoute()).status).toBe(403);
+    login({ id: w.driver.id, role: R.LIVREUR });
+    expect((await reconcileRoute()).status).toBe(403);
+    login({ id: w.admin.id, role: R.ADMIN });
+    expect((await reconcileRoute()).status).toBe(503);
+    if (keep) process.env.PAYSTACK_SECRET_KEY = keep;
+  });
+});

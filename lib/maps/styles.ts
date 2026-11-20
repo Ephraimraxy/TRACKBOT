@@ -140,3 +140,34 @@ export function fallBackToEsri(map: { setStyle(style: StyleSpecification): unkno
   }
   return switched;
 }
+
+/**
+ * Optional 3D houses from an open building-footprint file (see scripts/build-footprints.ts), for towns where OpenStreetMap
+ * has few buildings. Off unless NEXT_PUBLIC_BUILDINGS_URL is set (for example /data/keffi-buildings.geojson). Safe to call
+ * after every style load; does nothing if the layer is already there or the map is not ready.
+ */
+export const FOOTPRINTS_URL = process.env.NEXT_PUBLIC_BUILDINGS_URL?.trim() || "";
+export const FOOTPRINT_LAYER = "footprints-3d";
+
+export function addFootprintsLayer(map: { getSource(id: string): unknown; addSource(id: string, s: unknown): unknown; addLayer(l: unknown): unknown }, url: string = FOOTPRINTS_URL): boolean {
+  if (!url) return false;
+  try {
+    if (map.getSource("footprints")) return false;
+    map.addSource("footprints", { type: "geojson", data: url });
+    map.addLayer({
+      id: FOOTPRINT_LAYER,
+      type: "fill-extrusion",
+      source: "footprints",
+      minzoom: 15,
+      paint: {
+        "fill-extrusion-color": "#e8e1d4",
+        "fill-extrusion-height": ["coalesce", ["get", "height"], 5],
+        "fill-extrusion-base": 0,
+        "fill-extrusion-opacity": 0.85,
+      },
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}

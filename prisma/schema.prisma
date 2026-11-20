@@ -117,6 +117,11 @@ model Livraison {
   etaMisAJour         DateTime? @map("eta_mis_a_jour")
   /// The first road route worked out for this delivery ([[lng, lat], ...]), kept so the owner can compare it with the route actually driven.
   routePlanifiee      Json?     @map("route_planifiee")
+  /// The FIRST time estimate of this delivery (seconds), when it was made and whether it was "route" or "estimate": kept so the
+  /// owner can compare it with how long the delivery really took.
+  etaInitialeSecondes Int?      @map("eta_initiale_secondes")
+  etaInitialeSource   String?   @map("eta_initiale_source") @db.VarChar(10)
+  etaInitialeAt       DateTime? @map("eta_initiale_at")
   /// When the customer was last sent a "your delivery is N minutes away" reminder.
   dernierRappel       DateTime? @map("dernier_rappel")
   /// True once the "almost there" alert has been sent, so it is sent only once.

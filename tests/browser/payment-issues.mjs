@@ -21,6 +21,9 @@ await a.page.getByRole("button", { name: /mark resolved/i }).first().click();
 await a.page.locator('[data-testid="payment-issue"]').filter({ hasText: ref }).waitFor({ state: "detached", timeout: 15000 }).catch(() => undefined);
 check("after 'Mark resolved' it leaves the open list", (await a.page.locator('[data-testid="payment-issue"]').filter({ hasText: ref }).count()) === 0);
 check("and the database has the owner's note", psql(`select resolution_note from incident_paiement where reference = '${ref}'`) === "refunded ₦1,000 in Paystack");
+await a.page.locator('[data-testid="reconcile"]').click();
+await a.page.waitForSelector('text=/not set up|Checked|No waiting payments/', { timeout: 15000 }).catch(() => undefined);
+check("the owner can use 'Check waiting payments with Paystack' (answers, never crashes)", /not set up|Checked|No waiting payments/.test(await a.page.locator("body").innerText()));
 check("no crash, no uncaught error", a.errors.length === 0, a.errors[0] ?? "");
 await a.ctx.close();
 
