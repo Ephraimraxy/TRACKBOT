@@ -119,6 +119,7 @@ export async function listDriverDeliveries(db: PrismaClient, actor: StatusActor)
       dateAssignation: true,
       etaSecondes: true,
       distanceMetres: true,
+      etaSource: true,
       etaMisAJour: true,
       commande: {
         select: {
