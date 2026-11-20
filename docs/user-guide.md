@@ -33,6 +33,7 @@ Payment is separate from these steps: Paid, Awaiting payment or Payment failed.
 - Tap **Confirm delivery** at the door.
 
 ## The shop owner
+- **Payments to look at** (link on the Deliveries page): a wrong amount, a second payment, a dispute or a refund. Do the refund or the dispute answer in Paystack, then mark it resolved.
 - **Deliveries page:** assign delivery people, **Watch live**, **Close as received**, **Replay the route** for delivered orders, and **Delivery analytics**.
 - **Watch live:** the same map as the customer, plus the next turn when a road route exists.
 - **Replay the route:** play or scrub the movement. Findings in plain words: GPS went quiet (gaps), vague fixes, impossible jumps (ignored), late points, stops, and whether the delivery person left the planned road.
@@ -44,10 +45,10 @@ Payment is separate from these steps: Paid, Awaiting payment or Payment failed.
 - It answers prices, stock, orders and delivery status **only from the shop's data**, never from memory, and says so when it does not know.
 - A customer sees only their own orders. Delivery people see only their own deliveries. Only the owner can ask for shop-wide data and delivery reports. The assistant never shows coordinates.
 - It says plainly when a time is a straight-line estimate or a position may be out of date.
-- It does not handle disputes or refunds: for those, contact the shop owner.
+- It cannot refund or settle disputes. The owner can ask it about payment problems; customers should contact the shop owner.
 
 ## Known limits
 - No routing provider is configured by default: times are straight-line estimates until one is set.
 - The 3D buildings come from OpenStreetMap; where a house was never mapped it shows flat.
 - Tracking needs the page open with the screen on (browser limit).
-- Payments: amount mismatches and double payments are not yet recorded for the owner; disputes and refunds are handled in the Paystack dashboard.
+- Payments: wrong amounts, double payments, disputes and refunds are recorded on the **Payments to look at** page, but refunds and dispute answers are done in the Paystack dashboard (see `docs/payment-issues.md`).

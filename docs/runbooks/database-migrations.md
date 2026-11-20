@@ -73,7 +73,7 @@ Never edit a migration that has already been applied anywhere. Never run `prisma
 There are no automatic "down" migrations. Three options, in order of preference:
 
 **A. Roll back the code only.** Redeploy the previous release and leave the schema as it is. Safe when the migration only
-added nullable or defaulted columns, or tables (as `20261115100000_eta_source` and `20261115110000_position_capture_times` do): the old code ignores them (drilled: existing rows
+added nullable or defaulted columns, or tables (as `20261115100000_eta_source`, `20261115110000_position_capture_times` and the new table in `20261120100000_payment_issues` do): the old code ignores them (drilled: existing rows
 read back with the new column empty). This loses nothing.
 
 **B. Restore the backup.** Restore into a new database, check it (section 6), point `DATABASE_URL` at it. This is the

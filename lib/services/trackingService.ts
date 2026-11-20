@@ -226,7 +226,7 @@ export async function getTracking(
           updatedAt: point.date,
         }
       : null,
-    trail: trail.map((p) => ({ latitude: p.latitude, longitude: p.longitude, at: p.date })),
+    trail: trail.map((p) => ({ latitude: p.latitude, longitude: p.longitude, accuracy: p.precision, at: p.date })),
     history: order.historique.map((h) => ({
       id: h.id,
       from: h.ancienStatut,
