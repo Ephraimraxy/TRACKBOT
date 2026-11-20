@@ -13,6 +13,7 @@ import {
   findOrder,
   listDeliveries,
   listDeliveryTeam,
+  deliveryReport,
   myDeliveries,
   shopOverview,
 } from "@/lib/chatbot/roleTools";
@@ -245,6 +246,9 @@ async function trackMyOrder(db: PrismaClient, ctx: ChatContext, raw: unknown): P
       payment: payment ? (payment.statut === "VALIDE" ? "Paid" : payment.statut === "ECHOUE" ? "Payment failed" : "Awaiting payment") : "No payment started",
       whatHappensNext: NEXT_STEP_EN[t.status],
       minutesLeft: t.eta ? Math.max(1, Math.round(t.eta.seconds / 60)) : null,
+      // "road_route": worked out along real roads. "straight_line_estimate": only a straight line to the customer's spot (road
+      // directions were not available), so it is a rough guide and the real drive is usually longer.
+      timeLeftKind: t.eta ? (t.eta.source === "estimate" ? "straight_line_estimate" : "road_route") : null,
       kmLeft: t.eta ? Math.round(t.eta.metres / 100) / 10 : null,
       etaNote: t.eta ? null : t.trackingActive ? "No time estimate: no delivery spot was pinned on the map, or the delivery person has not shared a position yet." : null,
       outForDelivery: t.trackingActive,
@@ -252,6 +256,9 @@ async function trackMyOrder(db: PrismaClient, ctx: ChatContext, raw: unknown): P
       // Coordinates are deliberately not given to the chatbot; the tracking page shows the map.
       liveLocationAvailable: t.location !== null,
       liveLocationUpdatedAt: t.location?.updatedAt ?? null,
+      // How old the last position is. Over a minute while out for delivery means the phone went quiet (screen locked, no signal).
+      lastPositionSecondsAgo: t.location ? Math.max(0, Math.round((Date.now() - new Date(t.location.updatedAt).getTime()) / 1000)) : null,
+      positionLooksOutOfDate: t.trackingActive && t.location ? Date.now() - new Date(t.location.updatedAt).getTime() > 60_000 : false,
       trackingPage: `/client/orders/${t.orderId}/track`,
       history: t.history.map((h) => ({ status: h.label, at: h.date })),
     };
@@ -294,6 +301,9 @@ export async function executeTool(
         break;
       case "find_order":
         output = await findOrder(db, ctx, args);
+        break;
+      case "delivery_report":
+        output = await deliveryReport(db, ctx, args);
         break;
       case "list_delivery_team":
         output = await listDeliveryTeam(db, ctx);

@@ -4,6 +4,8 @@ import { z } from "zod";
 import type { ChatContext, ToolSpec } from "@/lib/chatbot/types";
 import { STATUS_LABELS_EN } from "@/lib/orders/workflow";
 import { listDriverDeliveries } from "@/lib/services/deliveryService";
+import { getDeliveryReport } from "@/lib/services/deliveryReportService";
+import { OrderError } from "@/lib/services/orderService";
 
 /**
  * Tools for the shop owner (system-wide view) and for delivery people (their own assignments).
@@ -17,6 +19,10 @@ const num = (d: Prisma.Decimal | number | null | undefined) => (d == null ? 0 : 
 const shortRef = (id: string) => id.slice(-8);
 const minutes = (s: number | null) => (s == null ? null : Math.max(1, Math.round(s / 60)));
 const km = (m: number | null) => (m == null ? null : Math.round(m / 100) / 10);
+
+/** "road_route" or "straight_line_estimate" (only a straight line was available), or null when there is no estimate. */
+const timeLeftKind = (seconds: number | null | undefined, source: string | null | undefined) =>
+  seconds == null ? null : source === "estimate" ? "straight_line_estimate" : "road_route";
 
 const PAYMENT_LABEL: Record<PaiementStatut, string> = {
   [PaiementStatut.VALIDE]: "Paid",
@@ -65,6 +71,16 @@ export const ADMIN_TOOL_SPECS: ToolSpec[] = [
     name: "find_order",
     description:
       "Shop owner only. Full detail of any one order by its 8-character reference: items, total, payment, address, delivery person, live time left and what should happen next.",
+    parameters: {
+      type: "object",
+      properties: { reference: { type: "string", description: "Order reference, e.g. 'a1b2c3d4'" } },
+      required: ["reference"],
+    },
+  },
+  {
+    name: "delivery_report",
+    description:
+      "Shop owner only. How one delivery actually went, from its recorded GPS: time on the road, distance driven, average speed, number of GPS points, stops, signal gaps, whether the delivery person left the planned road, and plain-language findings. Use it for questions like 'how did delivery a1b2c3d4 go?', 'was there a GPS problem?' or 'did the driver take a detour?'. The full replay is on the Deliveries page (Replay the route).",
     parameters: {
       type: "object",
       properties: { reference: { type: "string", description: "Order reference, e.g. 'a1b2c3d4'" } },
@@ -153,7 +169,7 @@ const orderSelect = {
   adresse: { select: { rue: true, ville: true, wilaya: true, latitude: true, longitude: true } },
   client: { select: { user: { select: { prenom: true, nom: true, tel: true } } } },
   paiement: { select: { statut: true, canal: true } },
-  livraison: { select: { etaSecondes: true, distanceMetres: true, etaMisAJour: true, livreur: { select: { prenom: true, nom: true } } } },
+  livraison: { select: { etaSecondes: true, distanceMetres: true, etaSource: true, etaMisAJour: true, livreur: { select: { prenom: true, nom: true } } } },
   lignesCommande: { select: { nomProduit: true, quantite: true } },
 } satisfies Prisma.CommandeSelect;
 
@@ -169,6 +185,7 @@ function summarize(o: OrderRow, detailed = false): ToolOutput {
     deliveryPerson: o.livraison ? `${o.livraison.livreur.prenom} ${o.livraison.livreur.nom}` : null,
     minutesLeft: minutes(o.livraison?.etaSecondes ?? null),
     kmLeft: km(o.livraison?.distanceMetres ?? null),
+    timeLeftKind: timeLeftKind(o.livraison?.etaSecondes, o.livraison?.etaSource),
     nextStep: NEXT_STEP_EN[o.statut],
   };
   if (detailed) {
@@ -215,6 +232,41 @@ export async function findOrder(db: PrismaClient, ctx: ChatContext, raw: unknown
   return { order: summarize(rows[0], true) };
 }
 
+export async function deliveryReport(db: PrismaClient, ctx: ChatContext, raw: unknown): Promise<ToolOutput> {
+  const denied = adminOnly(ctx);
+  if (denied) return denied;
+  const { reference } = findArgs.parse(raw);
+
+  const rows = await db.commande.findMany({ where: { id: { endsWith: reference.replace(/^#/, "") } }, take: 2, select: { id: true } });
+  if (rows.length === 0) return { error: "ORDER_NOT_FOUND" };
+  if (rows.length > 1) return { error: "AMBIGUOUS_REFERENCE" };
+
+  try {
+    // The same owner-only report as the replay page, read through the same permission check.
+    const r = await getDeliveryReport(db, { orderId: rows[0].id, actor: { id: ctx.userId!, role: UserRole.ADMIN } });
+    const a = r.analysis;
+    return {
+      reference: shortRef(r.orderId),
+      status: STATUS_LABELS_EN[r.status],
+      deliveryPerson: r.driver.name,
+      minutesOnTheRoad: a.points > 1 ? Math.round(a.durationSeconds / 60) : null,
+      kmDriven: a.points > 1 ? Math.round(a.distanceMetres / 100) / 10 : null,
+      averageSpeedKmh: a.averageSpeedKmh,
+      gpsPoints: a.points,
+      stops: a.stops.length,
+      signalGaps: a.gaps.length,
+      longestSignalGapSeconds: a.gps.longestGapSeconds,
+      latePointsSentAfterSignalReturned: a.gps.backfilledPoints,
+      leftThePlannedRoad: a.deviations === null ? "unknown (no road route was kept for this delivery)" : a.deviations.length,
+      findings: r.findings.map((f) => f.text),
+      replayPage: `/admin/deliveries/${r.orderId}/replay`,
+    };
+  } catch (e) {
+    if (e instanceof OrderError) return { error: e.code };
+    throw e;
+  }
+}
+
 export async function listDeliveryTeam(db: PrismaClient, ctx: ChatContext): Promise<ToolOutput> {
   const denied = adminOnly(ctx);
   if (denied) return denied;
@@ -255,6 +307,7 @@ export async function myDeliveries(db: PrismaClient, ctx: ChatContext): Promise<
       customerPinnedOnMap: d.commande.adresse?.latitude != null && d.commande.adresse.longitude != null,
       minutesLeft: minutes(d.etaSecondes),
       kmLeft: km(d.distanceMetres),
+      timeLeftKind: timeLeftKind(d.etaSecondes, d.etaSource),
       nextStep: NEXT_STEP_EN[d.commande.statut],
     })),
   };

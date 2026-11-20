@@ -64,3 +64,18 @@ Files: `lib/chatbot/` (`engine.ts`, `tools.ts`, `providers.ts`, `grounding.ts`, 
 - Conversation history sent by the browser is untrusted text; it cannot change who the user is.
 - Chatbot answers about delivery, payment and returns come from the owner's FAQ entries (the `Faq` table, `/api/faqs`, admin Chatbot FAQ page), added after this phase.
 - The unused packages of the old chatbot (`ai`, `@openrouter/ai-sdk-provider`) were removed in the security review.
+
+## Update: knowing the upgraded delivery features
+- **Road route or estimate.** `track_my_order`, `list_deliveries`, `find_order` and `my_deliveries` now return `timeLeftKind`
+  (`road_route` or `straight_line_estimate`). The system prompt forbids presenting an estimate as a road route or inventing
+  turn-by-turn directions, and the rule-based fallback says "rough estimate, not a road route" for an estimate.
+- **Stale position.** `track_my_order` returns `lastPositionSecondsAgo` and `positionLooksOutOfDate` (over 60 s while out for
+  delivery). The assistant says the position and the time left may be out of date.
+- **New owner-only tool `delivery_report`** (read-only): time, distance, speed, GPS points, stops, signal gaps, late points,
+  whether the delivery person left the planned road, plain-language findings and the replay page. It uses the same
+  owner-only report as the replay page and is refused for customers, delivery people and visitors (`ADMIN_ONLY`,
+  `LOGIN_REQUIRED`); it is not even offered to those roles.
+- **Prompt** now covers the full flow including Received, the map buttons and the LIVE / "Last seen" badges, the owner's
+  Replay and Analytics pages, blur at close zoom, and what to tell delivery people when the signal drops.
+- Tests: `tests/chatbotUpgrade.test.ts`. User-facing guide: `docs/user-guide.md`.
+- Not covered: payment mismatches and disputes (not built), and translations of the two new rule sentences beyond French.

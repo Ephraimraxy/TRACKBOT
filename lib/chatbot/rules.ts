@@ -130,6 +130,8 @@ const S = {
     fr: "La position du livreur est visible sur la page de suivi.",
   },
   timeLeft: { en: "About {m} min away ({d} km).", fr: "Environ {m} min restantes ({d} km)." },
+  timeLeftEstimate: { en: "About {m} min away ({d} km in a straight line). This is a rough estimate, not a road route, so the real drive is usually longer.", fr: "Environ {m} min restantes ({d} km en ligne droite). C'est une estimation approximative, pas un itinéraire routier : le trajet réel est généralement plus long." },
+  positionOutOfDate: { en: "The delivery person's position may be out of date (their phone has gone quiet), so the time left may be wrong.", fr: "La position du livreur est peut-être périmée (son téléphone ne répond plus), le temps restant peut donc être inexact." },
   detailedTracking: { en: "Detailed tracking: {link}", fr: "Suivi détaillé : {link}" },
 };
 export const RULE_SENTENCES = Object.values(S).map((s) => s.en);
@@ -247,6 +249,7 @@ ${extra}` : ""}`, usedTools: used };
     const o = r.output as {
       reference: string; status: string; outForDelivery: boolean; driverFirstName: string | null;
       liveLocationAvailable: boolean; trackingPage: string; minutesLeft: number | null; kmLeft: number | null;
+      timeLeftKind?: string | null; positionLooksOutOfDate?: boolean;
     };
     const parts = [pick(S.orderStatus, lang, { ref: o.reference, status: translate(lang, o.status) })];
     if (o.outForDelivery) {
@@ -256,7 +259,8 @@ ${extra}` : ""}`, usedTools: used };
           : pick(S.outForDelivery, lang)
       );
       if (o.liveLocationAvailable) parts.push(pick(S.livePosition, lang));
-      if (o.minutesLeft != null) parts.push(pick(S.timeLeft, lang, { m: o.minutesLeft, d: o.kmLeft ?? 0 }));
+      if (o.minutesLeft != null) parts.push(pick(o.timeLeftKind === "straight_line_estimate" ? S.timeLeftEstimate : S.timeLeft, lang, { m: o.minutesLeft, d: o.kmLeft ?? 0 }));
+      if (o.positionLooksOutOfDate) parts.push(pick(S.positionOutOfDate, lang));
     }
     parts.push(pick(S.detailedTracking, lang, { link: o.trackingPage }));
     return { reply: parts.join(" "), usedTools: used };
