@@ -15,7 +15,7 @@
     "test": "vitest run",
     "drill:migrations": "bash scripts/migration-drill.sh",
     "test:browser:imagery": "node tests/browser/imagery-fallback.mjs",
-    "test:browser": "node tests/browser/p1-server.mjs && node tests/browser/p2-replay.mjs && node tests/browser/native-app.mjs && node tests/browser/payment-redirect.mjs && node tests/browser/map-race.mjs && node tests/browser/offline-queue.mjs && node tests/browser/webgl.mjs && node tests/browser/route-fallback.mjs",
+    "test:browser": "node tests/browser/p1-server.mjs && node tests/browser/p2-replay.mjs && node tests/browser/native-app.mjs && node tests/browser/payment-redirect.mjs && node tests/browser/payment-issues.mjs && node tests/browser/map-race.mjs && node tests/browser/offline-queue.mjs && node tests/browser/webgl.mjs && node tests/browser/route-fallback.mjs",
     "postinstall": "prisma generate"
   },
   "prisma": {

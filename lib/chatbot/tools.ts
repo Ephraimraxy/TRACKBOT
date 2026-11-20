@@ -14,6 +14,7 @@ import {
   listDeliveries,
   listDeliveryTeam,
   deliveryReport,
+  paymentIssues,
   myDeliveries,
   shopOverview,
 } from "@/lib/chatbot/roleTools";
@@ -301,6 +302,9 @@ export async function executeTool(
         break;
       case "find_order":
         output = await findOrder(db, ctx, args);
+        break;
+      case "payment_issues":
+        output = await paymentIssues(db, ctx, args);
         break;
       case "delivery_report":
         output = await deliveryReport(db, ctx, args);

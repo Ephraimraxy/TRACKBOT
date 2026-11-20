@@ -78,4 +78,5 @@ Files: `lib/chatbot/` (`engine.ts`, `tools.ts`, `providers.ts`, `grounding.ts`, 
 - **Prompt** now covers the full flow including Received, the map buttons and the LIVE / "Last seen" badges, the owner's
   Replay and Analytics pages, blur at close zoom, and what to tell delivery people when the signal drops.
 - Tests: `tests/chatbotUpgrade.test.ts`. User-facing guide: `docs/user-guide.md`.
-- Not covered: payment mismatches and disputes (not built), and translations of the two new rule sentences beyond French.
+- Owner-only tool `payment_issues` (read-only): open wrong-amount, double-payment, dispute and refund items, in naira. Refused for customers, delivery people and visitors; never described to them. See `docs/payment-issues.md`.
+- Translations: Spanish and French added for all the new interface text and the two new fallback-bot sentences; Hausa, Igbo and Yoruba fall back to English.

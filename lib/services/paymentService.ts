@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
-import { CommandeStatut, NotificationType, PaiementStatut, type PrismaClient } from "@prisma/client";
+import { CommandeStatut, NotificationType, PaiementStatut, PaymentIssueKind, PaymentIssueStatus, Prisma, UserRole, type PrismaClient } from "@prisma/client";
 
 import { PaymentError, toTransaction, verifyWebhookSignature, type PaystackClient, type PaystackTransaction } from "@/lib/payments/paystack";
-import { notifyAdmins, TX_OPTIONS } from "@/lib/services/orderService";
+import { notifyAdmins, OrderError, TX_OPTIONS, type StatusActor } from "@/lib/services/orderService";
 
 /** Naira to kobo, the unit Paystack counts in. Always computed from the stored order total. */
 export const toKobo = (naira: { toString(): string } | number) => Math.round(Number(naira.toString()) * 100);
@@ -15,6 +15,49 @@ export type PaymentOutcome =
   | { status: "mismatch"; orderId: string };
 
 const shortId = (id: string) => id.slice(-8);
+const naira = (kobo: number) => `₦${(kobo / 100).toLocaleString("en-NG", { minimumFractionDigits: kobo % 100 === 0 ? 0 : 2 })}`;
+
+/**
+ * Record a payment the owner must look at, once per (reference, kind), and tell the owners. A repeated webhook finds the
+ * row already there and does nothing. Returns true when this call created it.
+ * `info` rows (a refund that already happened) are stored as resolved and only announced.
+ */
+async function recordIssue(
+  db: PrismaClient,
+  args: { orderId: string; kind: PaymentIssueKind; reference: string; paidKobo?: number; expectedKobo?: number; currency?: string; note: string; info?: boolean; customerText?: string }
+): Promise<boolean> {
+  try {
+    await db.paymentIssue.create({
+      data: {
+        commandeId: args.orderId,
+        kind: args.kind,
+        reference: args.reference,
+        amountPaidKobo: args.paidKobo ?? null,
+        expectedKobo: args.expectedKobo ?? null,
+        currency: args.currency ?? null,
+        note: args.note.slice(0, 500),
+        status: args.info ? PaymentIssueStatus.RESOLVED : PaymentIssueStatus.OPEN,
+        dateResolution: args.info ? new Date() : null,
+      },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return false; // already recorded
+    throw e;
+  }
+  await notifyAdmins(db, {
+    type: NotificationType.PAIEMENT,
+    objet: args.info ? "Payment update" : "Payment needs review",
+    text: `Order #${shortId(args.orderId)}: ${args.note}`.slice(0, 1000),
+    url: "/admin/payment-issues",
+  });
+  if (args.customerText) {
+    const order = await db.commande.findUnique({ where: { id: args.orderId }, select: { clientId: true } });
+    if (order?.clientId) {
+      await db.notification.create({ data: { userId: order.clientId, type: NotificationType.PAIEMENT, objet: "About your payment", text: args.customerText.slice(0, 1000), urlRedirection: "/client/orders" } });
+    }
+  }
+  return true;
+}
 
 /**
  * Start paying for an order. The amount comes from the database, never from the browser, and only the
@@ -63,11 +106,38 @@ async function applyTransaction(
   const payment = await db.paiementCommande.findUniqueOrThrow({ where: { id: paymentId }, include: { commande: true } });
   const order = payment.commande;
 
-  if (payment.statut === PaiementStatut.VALIDE) return { status: "paid", alreadyPaid: true, orderId: order.id };
+  if (payment.statut === PaiementStatut.VALIDE) {
+    // The order is already paid. A DIFFERENT successful transaction for it means the customer paid twice.
+    if (tx.status === "success" && tx.reference && tx.reference !== payment.reference) {
+      await recordIssue(db, {
+        orderId: order.id,
+        kind: PaymentIssueKind.DOUBLE_PAYMENT,
+        reference: tx.reference,
+        paidKobo: tx.amount,
+        expectedKobo: toKobo(order.montant),
+        currency: tx.currency,
+        note: `A second payment of ${naira(tx.amount)} (reference ${tx.reference}) was received for an order that was already paid. Refund it in Paystack, then resolve this.`,
+        customerText: `We received a second payment for order #${shortId(order.id)}, which was already paid. The shop will refund it.`,
+      });
+    }
+    return { status: "paid", alreadyPaid: true, orderId: order.id };
+  }
 
   if (tx.status === "success") {
     if (tx.currency !== "NGN" || tx.amount !== toKobo(order.montant)) {
-      console.error(`[payment] amount mismatch for order ${order.id}: paid ${tx.amount} ${tx.currency}, expected ${toKobo(order.montant)} NGN`);
+      const expected = toKobo(order.montant);
+      console.error(`[payment] amount mismatch for order ${order.id}: paid ${tx.amount} ${tx.currency}, expected ${expected} NGN`);
+      const kind = tx.currency !== "NGN" ? "in " + (tx.currency || "an unknown currency") + " instead of NGN" : tx.amount > expected ? "an OVERPAYMENT" : "an UNDERPAYMENT";
+      await recordIssue(db, {
+        orderId: order.id,
+        kind: PaymentIssueKind.AMOUNT_MISMATCH,
+        reference: tx.reference || payment.reference || `order-${order.id}`,
+        paidKobo: tx.amount,
+        expectedKobo: expected,
+        currency: tx.currency,
+        note: `Paystack reports ${naira(tx.amount)} paid for an order of ${naira(expected)}: ${kind}. The order was NOT marked paid. Refund or collect the difference in Paystack, then resolve this.`,
+        customerText: `We received a payment for order #${shortId(order.id)} that does not match its price. The shop has been told and will contact you; please keep your payment reference ${tx.reference}.`,
+      });
       return { status: "mismatch", orderId: order.id };
     }
 
@@ -162,7 +232,9 @@ export async function processWebhook(
   } catch {
     return { handled: false };
   }
-  if (event.event !== "charge.success" || !event.data) return { handled: false };
+  if (!event.data) return { handled: false };
+  if (event.event && /^(charge\.dispute\.|refund\.)/.test(event.event)) return handleDisputeOrRefund(db, event.event, event.data);
+  if (event.event !== "charge.success") return { handled: false };
 
   const tx = toTransaction(event.data);
   const metadata = (event.data.metadata ?? {}) as { orderId?: unknown };
@@ -177,4 +249,95 @@ export async function processWebhook(
 
   await applyTransaction(db, payment.id, tx);
   return { handled: true };
+}
+
+
+const text = (v: unknown) => (typeof v === "string" ? v : undefined);
+const numberOf = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+
+/**
+ * Disputes (chargebacks) and refunds reported by Paystack. Shapes follow Paystack's documentation for
+ * charge.dispute.create / charge.dispute.resolve and refund.processed; every field is read defensively, and an event whose
+ * transaction we cannot find is ignored rather than guessed at.
+ */
+async function handleDisputeOrRefund(db: PrismaClient, event: string, data: Record<string, unknown>): Promise<{ handled: boolean }> {
+  const nested = (data.transaction ?? {}) as Record<string, unknown>;
+  const reference = text(data.transaction_reference) ?? text(nested.reference) ?? text(data.reference);
+  if (!reference) return { handled: false };
+  const metadata = (nested.metadata ?? data.metadata ?? {}) as { orderId?: unknown };
+  let payment = await db.paiementCommande.findUnique({ where: { reference } });
+  if (!payment && typeof metadata.orderId === "string") payment = await db.paiementCommande.findUnique({ where: { commandeId: metadata.orderId } });
+  if (!payment) return { handled: false };
+
+  const paid = numberOf(nested.amount) ?? numberOf(data.amount);
+
+  if (event === "charge.dispute.create") {
+    const why = text(data.category) ?? text(data.reason);
+    await recordIssue(db, {
+      orderId: payment.commandeId,
+      kind: PaymentIssueKind.DISPUTE,
+      reference,
+      paidKobo: paid,
+      note: `The customer's bank disputed this payment${why ? ` (${why})` : ""}. Answer the dispute in the Paystack dashboard before the deadline, then resolve this.`,
+    });
+    return { handled: true };
+  }
+  if (event === "charge.dispute.resolve") {
+    const resolution = text(data.resolution) ?? "resolved";
+    await db.paymentIssue.updateMany({
+      where: { reference, kind: PaymentIssueKind.DISPUTE, status: PaymentIssueStatus.OPEN },
+      data: { status: PaymentIssueStatus.RESOLVED, dateResolution: new Date(), resolutionNote: `Paystack: ${resolution}`.slice(0, 500) },
+    });
+    return { handled: true };
+  }
+  if (event === "refund.processed") {
+    const refunded = numberOf(data.amount) ?? numberOf(data.refund_amount);
+    await recordIssue(db, {
+      orderId: payment.commandeId,
+      kind: PaymentIssueKind.REFUND,
+      reference,
+      paidKobo: refunded,
+      info: true,
+      note: `A refund${refunded ? ` of ${naira(refunded)}` : ""} was processed by Paystack for this payment.`,
+    });
+    return { handled: true };
+  }
+  return { handled: false };
+}
+
+/** The owner's list of payments to look at, newest first. Owner only. */
+export async function listPaymentIssues(db: PrismaClient, params: { actor: StatusActor; status?: "open" | "resolved"; limit?: number }) {
+  if (params.actor.role !== UserRole.ADMIN) throw new OrderError("FORBIDDEN", "Access denied.");
+  const rows = await db.paymentIssue.findMany({
+    where: params.status ? { status: params.status === "open" ? PaymentIssueStatus.OPEN : PaymentIssueStatus.RESOLVED } : {},
+    orderBy: { dateCreation: "desc" },
+    take: Math.min(params.limit ?? 50, 200),
+    include: { commande: { select: { id: true, montant: true, client: { select: { user: { select: { prenom: true, nom: true, email: true } } } } } } },
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    kind: r.kind,
+    status: r.status,
+    orderRef: shortId(r.commandeId),
+    orderId: r.commandeId,
+    reference: r.reference,
+    amountPaidKobo: r.amountPaidKobo,
+    expectedKobo: r.expectedKobo,
+    note: r.note,
+    customer: r.commande.client ? `${r.commande.client.user.prenom} ${r.commande.client.user.nom}` : null,
+    customerEmail: r.commande.client?.user.email ?? null,
+    createdAt: r.dateCreation,
+    resolvedAt: r.dateResolution,
+    resolutionNote: r.resolutionNote,
+  }));
+}
+
+/** The owner says an issue has been dealt with (refunded, collected, answered). Owner only; repeating it changes nothing. */
+export async function resolvePaymentIssue(db: PrismaClient, params: { actor: StatusActor; id: string; note?: string }) {
+  if (params.actor.role !== UserRole.ADMIN) throw new OrderError("FORBIDDEN", "Access denied.");
+  const issue = await db.paymentIssue.findUnique({ where: { id: params.id }, select: { id: true, status: true } });
+  if (!issue) throw new OrderError("ORDER_NOT_FOUND", "Payment issue not found.");
+  if (issue.status === PaymentIssueStatus.RESOLVED) return { id: issue.id, status: "RESOLVED" as const, alreadyResolved: true };
+  await db.paymentIssue.update({ where: { id: issue.id }, data: { status: PaymentIssueStatus.RESOLVED, dateResolution: new Date(), resolutionNote: params.note?.trim().slice(0, 500) || null } });
+  return { id: issue.id, status: "RESOLVED" as const, alreadyResolved: false };
 }

@@ -5,6 +5,7 @@ import type { ChatContext, ToolSpec } from "@/lib/chatbot/types";
 import { STATUS_LABELS_EN } from "@/lib/orders/workflow";
 import { listDriverDeliveries } from "@/lib/services/deliveryService";
 import { getDeliveryReport } from "@/lib/services/deliveryReportService";
+import { listPaymentIssues } from "@/lib/services/paymentService";
 import { OrderError } from "@/lib/services/orderService";
 
 /**
@@ -86,6 +87,12 @@ export const ADMIN_TOOL_SPECS: ToolSpec[] = [
       properties: { reference: { type: "string", description: "Order reference, e.g. 'a1b2c3d4'" } },
       required: ["reference"],
     },
+  },
+  {
+    name: "payment_issues",
+    description:
+      "Shop owner only. Payments that need the owner's attention: a wrong amount (overpayment or underpayment), a customer who paid twice, a dispute (chargeback) or a refund, with the order, the amounts and what to do. Use it for questions about payment problems, refunds, disputes or why an order is not marked paid. Refunds and dispute answers are done in the Paystack dashboard; the owner marks items resolved on the Payments to look at page.",
+    parameters: { type: "object", properties: { status: { type: "string", enum: ["open", "resolved"], description: "default open" } } },
   },
   {
     name: "list_delivery_team",
@@ -265,6 +272,27 @@ export async function deliveryReport(db: PrismaClient, ctx: ChatContext, raw: un
     if (e instanceof OrderError) return { error: e.code };
     throw e;
   }
+}
+
+export async function paymentIssues(db: PrismaClient, ctx: ChatContext, raw: unknown): Promise<ToolOutput> {
+  const denied = adminOnly(ctx);
+  if (denied) return denied;
+  const { status } = z.object({ status: z.enum(["open", "resolved"]).optional() }).parse(raw ?? {});
+  const rows = await listPaymentIssues(db, { actor: { id: ctx.userId!, role: UserRole.ADMIN }, status: status ?? "open", limit: 10 });
+  const kobo = (k: number | null) => (k == null ? null : k / 100);
+  return {
+    count: rows.length,
+    issues: rows.map((r) => ({
+      kind: { AMOUNT_MISMATCH: "wrong amount", DOUBLE_PAYMENT: "paid twice", DISPUTE: "dispute", REFUND: "refund" }[r.kind],
+      status: r.status === "OPEN" ? "open" : "resolved",
+      orderReference: r.orderRef,
+      customer: r.customer,
+      amountPaid: kobo(r.amountPaidKobo),
+      orderTotal: kobo(r.expectedKobo),
+      what: r.note,
+      page: "/admin/payment-issues",
+    })),
+  };
 }
 
 export async function listDeliveryTeam(db: PrismaClient, ctx: ChatContext): Promise<ToolOutput> {

@@ -117,3 +117,18 @@ describe("the switch itself, with a key configured", () => {
     vi.resetModules();
   });
 });
+
+describe("tidying the route with each fix's own accuracy", () => {
+  const at = (metresEast: number, accuracy: number | null) => ({ latitude: 8.84, longitude: 7.87 + metresEast / 111_000, accuracy });
+
+  it("drops moves smaller than the fix's own accuracy circle (the phone cannot tell it moved)", () => {
+    const pts = [at(0, 5), at(25, 40), at(30, 40), at(35, 40), at(200, 5)]; // 25-35 m moves with ±40 m accuracy
+    const out = smoothTrail(pts);
+    expect(out).toHaveLength(2 + 0); // start and end only: nothing in between is a real move
+  });
+
+  it("keeps a move bigger than the accuracy, and caps a very vague fix so it cannot hide a real drive", () => {
+    expect(smoothTrail([at(0, 5), at(60, 20), at(130, 20), at(200, 5)])).toHaveLength(4);
+    expect(smoothTrail([at(0, 5), at(70, 900), at(200, 5)])).toHaveLength(3); // 70 m > the 50 m cap
+  });
+});
