@@ -17,5 +17,5 @@ Tests: `tests/trackAnalysis.test.ts`, `tests/deliveryReport.test.ts`, `tests/cov
 - Deliveries finished before P1/P2 have no kept road route and no late-point flags; their deviation cannot be judged.
 - "Average time" is the span of recorded GPS points, not start-to-delivered clock time. A delivery with few points is counted under "too few GPS points".
 - Playback shows recorded points (thinned to 4000 for very long deliveries), not an interpolated road path; speed up by the control, not by smoothing.
-- No ETA-accuracy measure yet: the first estimate of each delivery is not stored. Add that before relying on "on time" statistics.
+- **Estimate accuracy** (added later): the first estimate of each delivery is now kept (`eta_initiale_*`, migration `20261122100000_eta_initial`) and compared with the time to "Delivered" on the analytics page, road and straight-line estimates separately. Only deliveries made after that migration count. "Actual" includes the driver's stops.
 - The new migration is additive (a nullable column, no default).

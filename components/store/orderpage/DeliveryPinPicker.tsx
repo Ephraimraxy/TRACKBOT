@@ -14,7 +14,7 @@ import { addBaseTiles } from "@/lib/maps/leafletSatellite";
 import { pickEngine } from "@/lib/maps/engine";
 import { safeSetData, safely } from "@/lib/maps/safe";
 import { highlightDestinationBuilding } from "@/lib/maps/destination";
-import { circlePolygon, ensureMapStyles, fallBackToEsri, fallbackFor, HOME_PIN_SVG, imageryFailed, maxZoomNow, styleFor, TILT, type MapMode } from "@/lib/maps/styles";
+import { addFootprintsLayer, circlePolygon, ensureMapStyles, fallBackToEsri, fallbackFor, HOME_PIN_SVG, imageryFailed, maxZoomNow, styleFor, TILT, type MapMode } from "@/lib/maps/styles";
 
 export interface Pin {
   latitude: number;
@@ -92,7 +92,7 @@ export default function DeliveryPinPicker({ pin, onChange }: { pin: Pin | null; 
       }
       map.current = m;
       m.addControl(new ml.NavigationControl({ visualizePitch: true }), "bottom-left");
-      m.on("style.load", () => safely(() => addHalo(m), undefined));
+      m.on("style.load", () => safely(() => { addFootprintsLayer(m); addHalo(m); }, undefined));
       let fellBack = false;
       m.on("error", (e) => {
         if (imageryFailed(e)) return void safely(() => fallBackToEsri(m), undefined);

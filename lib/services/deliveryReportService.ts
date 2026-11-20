@@ -1,6 +1,7 @@
 import { CommandeStatut, UserRole, type PrismaClient } from "@prisma/client";
 
 import { analyseTrack, findingsFor, type TrackAnalysis, type TrackPoint } from "@/lib/analytics/trackAnalysis";
+import { sampleOf, summariseEtaAccuracy, type EtaSample } from "@/lib/analytics/etaAccuracy";
 import { OrderError, type StatusActor } from "@/lib/services/orderService";
 
 /** Most points sent for one replay (a very long delivery is thinned evenly, keeping the first and last). */
@@ -88,12 +89,16 @@ export async function getDeliveryAnalytics(db: PrismaClient, params: { actor: St
     take: limit,
     select: {
       id: true,
-      livraison: { select: { livreur: { select: { id: true, prenom: true, nom: true } }, routePlanifiee: true } },
+      livraison: { select: { livreur: { select: { id: true, prenom: true, nom: true } }, routePlanifiee: true, etaInitialeSecondes: true, etaInitialeSource: true, etaInitialeAt: true } },
+      historique: { where: { nouveauStatut: CommandeStatut.LIVREE }, orderBy: { date: "asc" }, take: 1, select: { date: true } },
       positions: { orderBy: { date: "asc" }, select: { latitude: true, longitude: true, precision: true, date: true, backfilled: true } },
     },
   });
 
+  const etaSamples: EtaSample[] = [];
   const rows = orders.map((o) => {
+    const sample = sampleOf({ predictedSeconds: o.livraison?.etaInitialeSecondes, source: o.livraison?.etaInitialeSource, firstAt: o.livraison?.etaInitialeAt, deliveredAt: o.historique[0]?.date });
+    if (sample) etaSamples.push(sample);
     const points: TrackPoint[] = o.positions.map((r) => ({ latitude: r.latitude, longitude: r.longitude, accuracy: r.precision, at: r.date.getTime(), backfilled: r.backfilled }));
     const a: TrackAnalysis = analyseTrack(points, routeOf(o.livraison?.routePlanifiee));
     const kinds = findingsFor(a).map((f) => f.kind);
@@ -135,6 +140,7 @@ export async function getDeliveryAnalytics(db: PrismaClient, params: { actor: St
     withDeviations: rows.filter((r) => r.deviations).length,
     tooFewPoints: rows.filter((r) => r.tooFewPoints).length,
     drivers,
+    etaAccuracy: summariseEtaAccuracy(etaSamples),
     recent: rows.slice(0, 20),
   };
 }

@@ -44,15 +44,15 @@ check "migrate status says the database is up to date" "prisma_with '$A' '$WORK/
 echo "== 2. Upgrade with real data: a production-like copy, one migration behind"
 if pg_dump -Fc "$SRC" -f "$WORK/sample.dump" 2>/dev/null; then
   pg_restore --no-owner -d "$B" "$WORK/sample.dump" >/dev/null 2>&1
-  q "$B" "DROP TABLE IF EXISTS incident_paiement; DROP TYPE IF EXISTS \"PaymentIssueKind\"; DROP TYPE IF EXISTS \"PaymentIssueStatus\"" >/dev/null
+  q "$B" "ALTER TABLE livraison DROP COLUMN IF EXISTS eta_initiale_secondes, DROP COLUMN IF EXISTS eta_initiale_source, DROP COLUMN IF EXISTS eta_initiale_at" >/dev/null
   q "$B" "DELETE FROM _prisma_migrations WHERE migration_name = '$LATEST'" >/dev/null
   BEFORE="$(q "$B" "SELECT (SELECT count(*) FROM commande)||'/'||(SELECT count(*) FROM position_livraison)||'/'||(SELECT count(*) FROM livraison)||'/'||(SELECT count(*) FROM \"user\")")"
   prisma_with "$B" "$WORK/p" migrate deploy >"$WORK/2.log" 2>&1; RC=$?
   AFTER="$(q "$B" "SELECT (SELECT count(*) FROM commande)||'/'||(SELECT count(*) FROM position_livraison)||'/'||(SELECT count(*) FROM livraison)||'/'||(SELECT count(*) FROM \"user\")")"
   check "the pending migration ($LATEST) is applied" "[ $RC -eq 0 ] && grep -q '$LATEST' $WORK/2.log"
   check "no rows lost (orders/positions/deliveries/users before $BEFORE, after $AFTER)" "[ -n '$BEFORE' ] && [ '$BEFORE' = '$AFTER' ]"
-  check "the new table exists and is empty (a new table changes nothing that already existed; the previous app version never touches it)" "[ \"\$(q '$B' 'SELECT count(*) FROM incident_paiement')\" = '0' ]"
-  check "its two new types exist" "[ \"\$(q '$B' \"SELECT count(*) FROM pg_type WHERE typname IN ('PaymentIssueKind','PaymentIssueStatus')\")\" = '2' ]"
+  check "the three new columns exist, are nullable and have no default, so the previous app version (which never writes them) keeps working" "[ \"\$(q '$B' \"SELECT count(*) FROM information_schema.columns WHERE table_name='livraison' AND column_name LIKE 'eta_initiale_%' AND is_nullable='YES' AND column_default IS NULL\")\" = '3' ]"
+  check "existing deliveries read back with them empty" "[ \"\$(q '$B' 'SELECT count(*) FROM livraison WHERE eta_initiale_secondes IS NULL')\" = \"\$(q '$B' 'SELECT count(*) FROM livraison')\" ]"
 else
   echo "SKIP  could not read a sample copy of $SRC_DB"
 fi

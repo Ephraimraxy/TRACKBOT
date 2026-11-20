@@ -41,6 +41,7 @@ export async function updateEtaAndReminders(
       etaSecondes: true,
       distanceMetres: true,
       etaSource: true,
+      etaInitialeSecondes: true,
       etaMisAJour: true,
       dernierRappel: true,
       alerteProcheEnvoyee: true,
@@ -70,7 +71,14 @@ export async function updateEtaAndReminders(
     const computed = await estimate(position, { latitude: destination.latitude, longitude: destination.longitude });
     await db.livraison.update({
       where: { id: delivery.id },
-      data: { etaSecondes: computed.durationSeconds, distanceMetres: computed.distanceMetres, etaSource: computed.source, etaMisAJour: now },
+      data: {
+        etaSecondes: computed.durationSeconds,
+        distanceMetres: computed.distanceMetres,
+        etaSource: computed.source,
+        etaMisAJour: now,
+        // The very first estimate is kept, for the owner's estimate-accuracy statistics.
+        ...(delivery.etaInitialeSecondes == null ? { etaInitialeSecondes: computed.durationSeconds, etaInitialeSource: computed.source, etaInitialeAt: now } : {}),
+      },
     });
     eta = { ...computed, updatedAt: now };
   }

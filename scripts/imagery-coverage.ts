@@ -35,7 +35,7 @@ const templates: Record<string, string | undefined> = {
   maptiler: MAPTILER ? `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${MAPTILER}` : undefined,
   osm: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
 };
-let template = provider === "configured" ? (MAPBOX ? templates.mapbox : MAPTILER ? templates.maptiler : templates.esri) : templates[provider];
+const template = provider === "configured" ? (MAPBOX ? templates.mapbox : MAPTILER ? templates.maptiler : templates.esri) : templates[provider];
 if (!template && !compare) {
   console.error(`No URL for provider "${provider}" (is its key set?)`);
   process.exit(2);

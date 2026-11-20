@@ -341,3 +341,47 @@ export async function resolvePaymentIssue(db: PrismaClient, params: { actor: Sta
   await db.paymentIssue.update({ where: { id: issue.id }, data: { status: PaymentIssueStatus.RESOLVED, dateResolution: new Date(), resolutionNote: params.note?.trim().slice(0, 500) || null } });
   return { id: issue.id, status: "RESOLVED" as const, alreadyResolved: false };
 }
+
+export interface ReconcileSummary {
+  checked: number;
+  markedPaid: number;
+  stillWaiting: number;
+  failed: number;
+  needsReview: number;
+  couldNotCheck: number;
+}
+
+/** Payments started at least this long ago and still waiting are worth asking Paystack about. */
+export const RECONCILE_AFTER_MINUTES = 5;
+export const RECONCILE_MAX = 50;
+
+/**
+ * Ask Paystack about orders whose payment was started but never confirmed (the customer closed the browser and the webhook
+ * did not arrive). Each answer is applied exactly like the return page and the webhook do, so it is safe to run any number
+ * of times. Owner only. Looks at the newest RECONCILE_MAX waiting payments.
+ */
+export async function reconcilePendingPayments(db: PrismaClient, client: PaystackClient, params: { actor: StatusActor; now?: Date }): Promise<ReconcileSummary> {
+  if (params.actor.role !== UserRole.ADMIN) throw new OrderError("FORBIDDEN", "Access denied.");
+  const before = new Date((params.now ?? new Date()).getTime() - RECONCILE_AFTER_MINUTES * 60_000);
+  const waiting = await db.paiementCommande.findMany({
+    where: { statut: PaiementStatut.EN_COURS, reference: { not: null }, date: { lte: before }, commande: { statut: { not: CommandeStatut.ANNULEE } } },
+    orderBy: { date: "desc" },
+    take: RECONCILE_MAX,
+    select: { id: true, reference: true },
+  });
+  const summary: ReconcileSummary = { checked: 0, markedPaid: 0, stillWaiting: 0, failed: 0, needsReview: 0, couldNotCheck: 0 };
+  for (const p of waiting) {
+    summary.checked++;
+    try {
+      const outcome = await applyTransaction(db, p.id, await client.verify(p.reference as string));
+      if (outcome.status === "paid") summary.markedPaid++;
+      else if (outcome.status === "failed") summary.failed++;
+      else if (outcome.status === "mismatch") summary.needsReview++;
+      else summary.stillWaiting++;
+    } catch (e) {
+      console.error("[payment] could not check", p.reference, (e as Error).message);
+      summary.couldNotCheck++;
+    }
+  }
+  return summary;
+}

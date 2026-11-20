@@ -16,6 +16,7 @@ import {
   ensureMapStyles,
   fallbackFor,
   HOME_PIN_SVG,
+  addFootprintsLayer,
   maxZoomNow,
   fallBackToEsri,
   imageryFailed,
@@ -113,6 +114,7 @@ export default function LiveMap({ position, trail = [], destination = null, plan
 
   /** (Re)create the route line and the accuracy halo. Runs after every style load, because a new style clears them. */
   const addCustomLayers = useCallback((m: MapLibreMap) => {
+    addFootprintsLayer(m); // optional 3D houses from open footprint data, under the route lines
     const { position: p, trail: tr } = latest.current;
     const here = shown.current;
     if (!m.getSource("planned")) {
